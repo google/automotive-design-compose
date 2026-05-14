@@ -412,6 +412,8 @@ internal fun Background.asBrush(
         return null
     }
 
+    val backgroundOpacity = if (this.opacity == 0.0f) 1.0f else this.opacity
+
     if (hasLinearGradient()) {
         when (linearGradient.colorStopsCount) {
             0 -> {
@@ -423,7 +425,7 @@ internal fun Background.asBrush(
                 val color =
                     linearGradient.getColorStops(0).colorOrNull?.getValue(variableState)
                         ?: Color.Transparent
-                return Pair(SolidColor(color), 1.0f)
+                return Pair(SolidColor(color), backgroundOpacity)
             }
             else ->
                 return Pair(
@@ -435,7 +437,7 @@ internal fun Background.asBrush(
                         start = Offset(linearGradient.startX, linearGradient.startY),
                         end = Offset(linearGradient.endX, linearGradient.endY),
                     ),
-                    1.0f,
+                    backgroundOpacity,
                 )
         }
     }
@@ -453,7 +455,7 @@ internal fun Background.asBrush(
                         radialGradient.getColorStops(0).colorOrNull?.getValue(variableState)
                             ?: Color.Transparent
                     ),
-                    1.0f,
+                    backgroundOpacity,
                 )
             }
             else ->
@@ -469,7 +471,7 @@ internal fun Background.asBrush(
                         radiusY = radialGradient.radiusY,
                         angle = radialGradient.angle,
                     ),
-                    1.0f,
+                    backgroundOpacity,
                 )
         }
     }
@@ -486,7 +488,7 @@ internal fun Background.asBrush(
                         angularGradient.getColorStops(0).colorOrNull?.getValue(variableState)
                             ?: Color.Transparent
                     ),
-                    1.0f,
+                    backgroundOpacity,
                 )
             }
             else ->
@@ -501,7 +503,7 @@ internal fun Background.asBrush(
                             },
                         stops = angularGradient.colorStopsList.map { it.position },
                     ),
-                    1.0f,
+                    backgroundOpacity,
                 )
         }
     }

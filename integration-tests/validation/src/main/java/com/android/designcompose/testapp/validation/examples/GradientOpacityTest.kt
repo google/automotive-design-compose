@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,27 +14,19 @@
  * limitations under the License.
  */
 
-module.exports = {
-  extends: [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@figma/figma-plugins/recommended",
-  ],
-  parser: "@typescript-eslint/parser",
-  parserOptions: {
-    project: "./tsconfig.json",
-  },
-  root: true,
-  rules: {
-    complexity: ["warn", 65],
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      {
-        argsIgnorePattern: "^_",
-        varsIgnorePattern: "^_",
-        caughtErrorsIgnorePattern: "^_",
-      },
-    ],
-  },
-  plugins: ["@typescript-eslint"],
-};
+package com.android.designcompose.testapp.validation.examples
+
+import androidx.compose.runtime.Composable
+import com.android.designcompose.annotation.DesignComponent
+import com.android.designcompose.annotation.DesignDoc
+
+// TEST Gradient Opacities
+@DesignDoc(id = "FGmZmscyCh6mJozRVITV1u")
+interface GradientOpacityValidation {
+    @DesignComponent(node = "#root") fun root()
+}
+
+@Composable
+fun GradientOpacityTest() {
+    GradientOpacityValidationDoc.root()
+}

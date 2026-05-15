@@ -22,18 +22,24 @@
 #![allow(dead_code)]
 #![allow(clippy::all)]
 mod component_context;
+pub mod content_hash;
 mod design_definition;
 mod document;
 mod error;
 mod extended_layout_schema;
 mod figma_schema;
+pub mod http_client;
 mod image_context;
+pub mod library_resolver;
 pub mod meter_schema;
+pub mod node_tracker;
 mod proxy_config;
 pub mod reaction_schema;
+pub mod remote_cache;
 pub mod scalableui_schema;
 pub mod shader_schema;
 
+pub mod animation_spec_schema;
 pub mod tools;
 mod transform_flexbox;
 mod variable_utils;
@@ -47,6 +53,7 @@ pub use document::HiddenNodePolicy;
 pub use error::Error;
 pub use image_context::ImageContextSession;
 pub use proxy_config::ProxyConfig;
+pub use remote_cache::RemoteNodeCache;
 
 // Internal convenience
 pub use dc_bundle::color::Color;
@@ -54,3 +61,4 @@ pub use dc_bundle::definition::NodeQuery;
 pub use dc_bundle::definition_file::load_design_def;
 pub use dc_bundle::definition_file::save_design_def;
 pub use dc_bundle::view::{View, ViewData};
+pub mod animation_override;

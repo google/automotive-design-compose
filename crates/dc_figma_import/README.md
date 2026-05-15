@@ -1,38 +1,81 @@
 # dc_figma_import
 
-=======
-This library (dc_figma_import) and binaries perform conversion from a Figma document to a self-contained serialized doc that can be interpreted and rendered by the DesignCompose library.
+This library performs conversion from a Figma document to a serialized DesignCompose
+file (`.dcf`) that can be rendered by the DesignCompose Android library.
 
-The Figma API provides access to documents, images, vectors, and interactions through a variety of access points, in a format that is specific to Figma. Additionally, one Figma document can refer to resources in other Figma documents (this is how Figma's "Component Library" or "Design System" features are implemented). This library will perform all of the neccessary fetches, will render complex vectors to rasters, and will package all of these resources up into a single document. The library can also fetch incremental changes to a document, avoiding refetching and reprocessing assets that the DesignCompose client already has.
+The Figma API provides access to documents, images, vectors, and interactions in
+Figma's own format. A single Figma document can reference resources from other
+documents (via Figma's Component Library and Design System features). This library
+fetches all necessary data, rasterizes complex vectors, and packages everything into
+a single self-contained document (.dcf file). It also supports incremental updates to avoid
+refetching assets the client already has.
 
 ## Architecture
 
-### Parsing Figma docs
+### Parsing Figma documents (.dcf files)
 
-* `figma_schema` contains definitions for Figma document contents as returned by the Figma API. The Figma API implementation does not match the documentation, so `figma_schema` is generally more accurate on which fields are omitted.
-* `reaction_schema` covers the definitions for Figma document contents relating to interactions. The Figma API doesn't return these values directly; they are only available to Figma JavaScript plugins, so our plugin copies them to the "plugin area" which can be accessed using the Figma API. These definitions in our code correspond to the interaction definitions in Figma's JavaScript Plugin API.
-* `extended_layout_schema` covers values written by our plugin for layout situations that Figma doesn't provide controls for, such as maximum line counts in text. These are returned in the "plugin area", and the code here implements the schema that our Figma plugin generates.
+* **`figma_schema`** — Definitions for Figma document contents as returned by the
+  Figma REST API. The Figma API implementation does not always match the
+  documentation, so `figma_schema` is generally more accurate about which fields
+  are optional or omitted. Unknown enum variants are handled gracefully via
+  `#[serde(other)]` fallbacks.
+* **`reaction_schema`** — Definitions for Figma interaction data. The Figma API
+  does not return these values directly; they are only available to JavaScript
+  plugins. Our Figma plugin copies them to the "plugin area", which _can_ be
+  accessed via the REST API. These definitions mirror Figma's Plugin API
+  interaction types.
+* **`extended_layout_schema`** — Values written by our Figma plugin for layout
+  features that Figma does not expose natively (e.g., maximum line count in text
+  nodes). These are stored in the plugin data area.
+* **`meter_schema`** — Definitions for dial, gauge, and progress bar data written
+  by the Dials and Gauges Figma plugin.
+* **`shader_schema`** — Definitions for custom shader data.
 
-### Generating data for a UI toolkit
+### Generating data for the UI toolkit
 
-`dc_figma_import` uses the `protobuf` serialization format to encode processed documents for the client.
+`dc_figma_import` uses the Protocol Buffers serialization format (defined in
+[`dc_bundle`](../dc_bundle/)) to encode processed documents for the Android client.
 
-* `toolkit_schema` includes the core structures that make up a serialized document.
-* `toolkit_style` includes the structures relating to style.
-  * `toolkit_font_style` includes the font related types which were originally derived from the `font-kit` library.
-  * `toolkit_layout_style` includes the layout related types which which were originally derived from the `stretch` library.
-* `serialized_document` includes types that wrap the serialized doc response and add some metadata.
+* Protobuf schema files live in `dc_bundle/src/proto/` and define the core
+  structures (views, styles, layout, fonts) that make up a serialized document.
+* The `design_definition` module provides high‑level types for the serialized
+  output.
 
-### Converting from figma_schema to toolkit_schema
+### Converting from Figma schema → toolkit schema
 
-* `document` is responsible for fetching document definitions from Figma and processing them. It knows how to check if a document hasn't changed since the last time it was converted. It also initiates image and vector processing for a document.
-* `transform_flexbox` implements the core conversion algorithm. It iterates over all of the nodes that make up the Figma document, decides which ones should be represented in the output, looks up previously encountered component definitions, and converts node properties from `figma_schema` to `toolkit_schema`.
-* `image_context` manages all of the images in the document. Figma's API takes a big set of "image references" and then returns a document containing URLs for each of those image references. `image_context` then fetches the images, and stores the network bytes and dimensions. It can encode and decode its list of fetched images and sizes -- this is how the list of previously fetched images is sent to the client and reused for the next request (avoiding having `image_context` fetch images that the client already has).
-  * `svg` is used by `document` and `image_context` to rasterize complex vectors to rasters (storing the resulting rasters as images in `image_context`). Currently vectors get rasterized at 1x, 2x, and 3x sizes so that the DesignCompose client can choose the best image based on the device's pixel density. Figma provides an API to rasterize vectors, which we don't use because it clips the edges off of rasterized vectors.
+* **`document`** — Responsible for fetching document definitions from Figma and
+  orchestrating the conversion. It checks whether a document has changed since the
+  last fetch and initiates image/vector processing.
+* **`transform_flexbox`** — Core conversion algorithm. Iterates over all Figma
+  nodes, determines which ones should appear in the output, resolves component
+  references, and converts node properties from `figma_schema` types to the
+  protobuf toolkit types.
+* **`image_context`** — Manages all images in the document. Fetches image URLs
+  returned by the Figma API, stores the raw bytes and dimensions, and supports
+  encoding/decoding its image list for incremental updates.
+  * **`svg`** — Rasterizes complex vectors at 1×, 2×, and 3× pixel densities so
+    the Android client can select the best resolution. We avoid Figma's own vector
+    rasterization API because it clips edges.
+* **`component_context`** — Tracks component definitions and instances across
+  documents, resolving cross-file component references.
+* **`variable_utils`** — Handles Figma Variables (design tokens) and their
+  resolution.
 
 ### Application binaries
 
-* `dcf_info` deserializes a serialized DesignCompose file (.dcf) and prints out some basic data about the file.
-  * Usage: `cargo run --bin dcf_info --features=dcf_info <path>`
-* `fetch` queries Figma for a file with specified nodes, then processes and serializes the response, and saves it into a .dcf file.
-  * Usage: `cargo run --bin fetch --features=fetch -- --doc-id=<figma doc ID> --api-key=<figma API key>--output=<output file> --nodes=<nodes to retrieve>`
+* **`dcf_info`** — Deserializes a `.dcf` file and prints metadata.
+
+  ```shell
+  cargo run --bin dcf_info --features=dcf_info <path>
+  ```
+
+* **`fetch`** — Queries Figma for a file, processes the response, and saves it as
+  a `.dcf` file.
+
+  ```shell
+  cargo run --bin fetch --features=fetch -- \
+    --doc-id=<figma doc ID> \
+    --api-key=<figma API key> \
+    --output=<output file> \
+    --nodes=<nodes to retrieve>
+  ```

@@ -51,6 +51,7 @@ function fetch_design_switcher {
         --nodes="#MiniMessagesCheckbox" \
         --nodes="#ShowRecompositionCheckbox" \
         --nodes="#UseLocalResCheckbox" \
+        --nodes="#LiveUpdateCheckbox" \
         --nodes="#DesignViewMain" \
         --nodes="#LiveMode" \
         --nodes="#TopStatusBar" \

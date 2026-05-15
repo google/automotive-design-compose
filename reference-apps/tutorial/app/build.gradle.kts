@@ -51,6 +51,10 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
+            // Sign with the debug key so that Android Studio can build and
+            // launch the release variant. A production app should use its own
+            // signing key here.
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

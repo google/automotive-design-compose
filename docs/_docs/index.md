@@ -81,3 +81,22 @@ git clone https://github.com/google/automotive-design-compose.git
 
 The Tutorial Android App requires [Android Studio Flamingo](https://developer.android.com/studio) or later.
 
+## Supported Android SDK levels {#SDKSupport}
+
+DesignCompose supports the following Android SDK levels:
+
+| Property | Value | Android Version |
+|---|---|---|
+| **minSdk** | 26 | Android 8.0 (Oreo) |
+| **targetSdk** | 34 | Android 14 |
+| **compileSdk** | 35 | Android 15 |
+
+- **minSdk 26** is set for broad Android Automotive compatibility, allowing
+  DesignCompose to run on a wide range of automotive head units. Note that primary
+  development and testing targets API 34+.
+- **compileSdk 35** means the SDK is compiled against the latest Android 15 APIs.
+- **targetSdk 34** indicates compatibility testing has been validated up to
+  Android 14 behavioral changes.
+
+For complete details on Android API levels, see the
+[Android API level documentation](https://developer.android.com/tools/releases/platforms){:.external}.

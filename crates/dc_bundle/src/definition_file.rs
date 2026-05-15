@@ -16,6 +16,7 @@
 
 use crate::design_compose_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
 use crate::Error;
+use log::warn;
 use protobuf::{CodedInputStream, Message};
 
 use std::fs::File;
@@ -49,7 +50,7 @@ pub fn decode_dcd_with_header(
 
     // Ensure the version of the document matches this version of automotive design compose.
     if header.dc_version != DesignComposeDefinitionHeader::current_version() {
-        println!(
+        warn!(
             "DesignComposeDefinition old version found. Expected {} Found: {}",
             DesignComposeDefinitionHeader::current_version(),
             header.dc_version

@@ -37,7 +37,7 @@ static LAYOUT_MANAGER_ID: AtomicI32 = AtomicI32::new(0);
 
 fn create_layout_manager() -> i32 {
     let manager = Arc::new(Mutex::new(LayoutManager::new(java_jni_measure_text)));
-    let mut hash = LAYOUT_MANAGERS.lock().unwrap();
+    let mut hash = LAYOUT_MANAGERS.lock().unwrap_or_else(|p| p.into_inner());
 
     let manager_id = LAYOUT_MANAGER_ID.fetch_add(1, Ordering::SeqCst);
     hash.insert(manager_id, manager);
@@ -45,7 +45,7 @@ fn create_layout_manager() -> i32 {
 }
 
 fn manager(id: i32) -> Option<Arc<Mutex<LayoutManager>>> {
-    let managers = LAYOUT_MANAGERS.lock().unwrap();
+    let managers = LAYOUT_MANAGERS.lock().unwrap_or_else(|p| p.into_inner());
     let manager = managers.get(&id);
     manager.cloned()
 }
@@ -84,7 +84,7 @@ pub(crate) fn jni_set_node_size<'local>(
     env.with_env(|env| {
         let manager = manager(manager_id);
         if let Some(manager_ref) = manager {
-            let mut mgr = manager_ref.lock().unwrap();
+            let mut mgr = manager_ref.lock().unwrap_or_else(|p| p.into_inner());
             let layout_response =
                 mgr.set_node_size(layout_id, root_layout_id, width as u32, height as u32);
             Ok(layout_response_to_bytearray(env, layout_response))
@@ -115,7 +115,7 @@ pub(crate) fn jni_add_nodes<'local>(
             }
         };
 
-        let mut manager = manager_ref.lock().unwrap();
+        let mut manager = manager_ref.lock().unwrap_or_else(|p| p.into_inner());
 
         fn deprotolize_layout_node_list(
             env: &mut Env,
@@ -181,7 +181,7 @@ pub(crate) fn jni_remove_node<'local>(
     env.with_env(|env| {
         let manager = manager(manager_id);
         if let Some(manager_ref) = manager {
-            let mut manager = manager_ref.lock().unwrap();
+            let mut manager = manager_ref.lock().unwrap_or_else(|p| p.into_inner());
             let layout_response = manager.remove_view(layout_id, root_layout_id, compute_layout);
             Ok(layout_response_to_bytearray(env, layout_response))
         } else {
@@ -200,7 +200,7 @@ pub(crate) fn jni_mark_dirty<'local>(
 ) {
     env.with_env(|env| -> Result<(), jni::errors::Error> {
         if let Some(manager_ref) = manager(manager_id) {
-            let mut manager = manager_ref.lock().unwrap();
+            let mut manager = manager_ref.lock().unwrap_or_else(|p| p.into_inner());
             manager.mark_dirty(layout_id);
         } else {
             throw_basic_exception(env, &GenericError(format!("No manager with id {}", manager_id)));
@@ -211,7 +211,7 @@ pub(crate) fn jni_mark_dirty<'local>(
 }
 
 fn get_text_size(env: &mut Env, input: &JObject) -> Result<(f32, f32), jni::errors::Error> {
-    let f_sig: jni::signature::RuntimeFieldSignature = "F".parse().unwrap();
+    let f_sig: jni::signature::RuntimeFieldSignature = "F".parse().expect("valid field signature");
     let width = env
         .get_field(input, jni::strings::JNIString::from("width"), f_sig.field_signature())?
         .f()?;
@@ -234,7 +234,9 @@ pub(crate) fn java_jni_measure_text(
                 "com/android/designcompose/DesignTextMeasure",
             ))?;
             let sig: jni::signature::RuntimeMethodSignature =
-                "(IFFFF)Lcom/android/designcompose/TextSize;".parse().unwrap();
+                "(IFFFF)Lcom/android/designcompose/TextSize;"
+                    .parse()
+                    .expect("valid method signature");
             let call_result = env.call_static_method(
                 jclass,
                 jni::strings::JNIString::from("measureTextSize"),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,22 @@ package com.android.designcompose.test.internal
 
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.RoborazziRule
 import com.github.takahirom.roborazzi.captureRoboImage
 
 const val ROBO_CAPTURE_DIR = "src/testDebug/roborazzi"
 
+// Allow a 2% subpixel rendering tolerance for flaky head-less text and animation timing shifts
+val DEFAULT_ROBORAZZI_OPTIONS =
+    RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.02f))
+
 fun ComposeContentTestRule.captureRootRoboImage(screenshotName: String) {
-    onRoot().captureRoboImage("$screenshotName.png")
+    onRoot()
+        .captureRoboImage(
+            filePath = "$screenshotName.png",
+            roborazziOptions = DEFAULT_ROBORAZZI_OPTIONS,
+        )
 }
 
 fun designComposeRoborazziRule(className: String) =

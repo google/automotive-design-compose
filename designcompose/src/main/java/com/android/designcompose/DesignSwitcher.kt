@@ -109,6 +109,7 @@ private interface DesignSwitcher {
     enum class LiveMode {
         Live,
         Offline,
+        Paused,
     }
 
     enum class TopStatusBar {
@@ -162,6 +163,7 @@ private interface DesignSwitcher {
         doc_text_edit: @Composable ((ComponentReplacementContext) -> Unit)?,
         show_help_text: Boolean,
         on_tap_go: TapCallback,
+        on_tap_live_mode: TapCallback,
         node_names_checkbox: ReplacementContent,
         mini_messages_checkbox: ReplacementContent,
         show_recomposition_checkbox: ReplacementContent,
@@ -182,6 +184,7 @@ private interface DesignSwitcher {
         customizations.setComponent("#DocIdTextEdit", doc_text_edit)
         customizations.setVisible("#HelpText", show_help_text)
         customizations.setTapCallback("#GoButton", on_tap_go)
+        customizations.setTapCallback("#LiveMode", on_tap_live_mode)
         customizations.setContent("#NodeNamesCheckbox", node_names_checkbox)
         customizations.setContent("#MiniMessagesCheckbox", mini_messages_checkbox)
         customizations.setContent("#ShowRecompositionCheckbox", show_recomposition_checkbox)
@@ -414,7 +417,7 @@ private fun GetMessages(docId: DesignDocId): ReplacementContent {
             {
                 val it = messages[index]
                 val message = if (it.count > 1) it.message + "(${it.count})" else it.message
-                val secondsAgo = (System.currentTimeMillis() - it.timestamp) / 1000
+                val secondsAgo = (android.os.SystemClock.uptimeMillis() - it.timestamp) / 1000
                 if (it.level == FeedbackLevel.Error || it.level == FeedbackLevel.Warn)
                     DesignSwitcherDoc.MessageFailed(message, elapsedTimeString(secondsAgo))
                 else DesignSwitcherDoc.Message(message, elapsedTimeString(secondsAgo))
@@ -597,6 +600,15 @@ internal fun DesignSwitcher(
                     setDocId(DesignDocId(docIdText))
                 }
             },
+            on_tap_live_mode = {
+                if (DesignSettings.liveUpdatesEnabled) {
+                    if (DocServer.pauseUpdates.value) {
+                        DocServer.startLiveUpdates()
+                    } else {
+                        DocServer.stopLiveUpdates()
+                    }
+                }
+            },
             node_names_checkbox = GetNodeNamesCheckbox(nodeNamesChecked, setNodeNamesChecked),
             mini_messages_checkbox =
                 GetMiniMessagesCheckbox(miniMessagesChecked, setMiniMessagesChecked),
@@ -604,7 +616,8 @@ internal fun DesignSwitcher(
                 GetShowRecompositionCheckbox(showRecompositionChecked, setShowRecompositionChecked),
             useLocalResCheckbox = GetUseLocalResCheckbox(useLocalResChecked, setUseLocalResChecked),
             live_mode =
-                if (DesignSettings.isDocumentLive.value) DesignSwitcher.LiveMode.Live
+                if (DocServer.pauseUpdates.value) DesignSwitcher.LiveMode.Paused
+                else if (DesignSettings.isDocumentLive.value) DesignSwitcher.LiveMode.Live
                 else DesignSwitcher.LiveMode.Offline,
             top_status_bar = topStatusBar,
         )

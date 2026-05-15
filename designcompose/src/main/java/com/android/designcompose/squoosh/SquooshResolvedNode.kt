@@ -91,7 +91,7 @@ internal class SquooshResolvedNode(
             }
             val childProgressMarkerDescendant = child.findProgressMarkerDescendant()
             if (childProgressMarkerDescendant != null) {
-                return child
+                return childProgressMarkerDescendant
             }
             child = child.nextSibling
         }

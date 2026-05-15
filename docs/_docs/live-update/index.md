@@ -85,6 +85,46 @@ To unset:
 adb shell settings put global http_proxy ":0"
 ```
 
+## Smart Cache {#SmartCache}
+
+Live Update includes a Smart Cache layer that dramatically reduces update times
+after the initial fetch. The cache stores:
+
+- **Image references** — All `/images` API responses (typically 1800+ refs)
+- **Variable data** — All `/variables` API responses
+- **Remote components** — Pre-fetched component metadata and variant nodes
+
+On subsequent fetches, these cached resources are reused instead of re-fetching
+from Figma, reducing update time from ~60s to ~17s.
+
+See [Incremental Updates][4] for technical details.
+
+## Node-Scoped Fetching {#NodeScopedFetching}
+
+Instead of downloading the entire Figma document on every update, Live Update
+uses the Figma `ids=` parameter to fetch only the specific node subtrees that
+the app renders. This reduces the Figma API response payload and processing
+time significantly.
+
+On the first fetch, Live Update discovers all top-level frames automatically
+(HAR, HVAC, Welcome, telltales, etc.) and caches their node IDs. Subsequent
+fetches use these cached IDs for faster responses.
+
+See [Dynamic Node Discovery][5] for details.
+
+## WebSocket Mode {#WebSocketMode}
+
+For faster change detection, Live Update supports an optional WebSocket mode.
+A Python relay server receives Figma webhook notifications and pushes them to
+connected devices via WebSocket, triggering immediate fetches instead of
+waiting for the next poll cycle.
+
+See [WebSocket Live Updates][6] for setup instructions.
+
 [1]: {%link _docs/live-update/setup.md %}
 [2]: {%link _docs/live-update/design-switcher.md %}
 [3]: {%link _docs/tutorial/index.md %}
+[4]: {%link _docs/live-update/incremental-updates.md %}
+[5]: {%link _docs/live-update/dynamic-node-discovery.md %}
+[6]: {%link _docs/live-update/websocket-mode.md %}
+

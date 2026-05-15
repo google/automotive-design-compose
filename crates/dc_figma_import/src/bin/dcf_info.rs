@@ -24,7 +24,6 @@
 use clap::Parser;
 use dc_figma_import::tools::dcf_info::dcf_info;
 use dc_figma_import::tools::dcf_info::Args;
-use std::process;
 
 fn main() {
     let args = Args::parse();

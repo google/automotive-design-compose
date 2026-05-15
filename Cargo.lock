@@ -250,7 +250,7 @@ dependencies = [
 
 [[package]]
 name = "dc_bundle"
-version = "0.39.0"
+version = "0.39.1"
 dependencies = [
  "log",
  "protobuf",
@@ -263,13 +263,14 @@ dependencies = [
 
 [[package]]
 name = "dc_figma_import"
-version = "0.39.0"
+version = "0.39.1"
 dependencies = [
  "anyhow",
  "clap",
  "dc_bundle",
  "dc_layout",
  "env_logger",
+ "futures",
  "image",
  "log",
  "protobuf",
@@ -282,13 +283,14 @@ dependencies = [
  "taffy",
  "tempfile",
  "thiserror 2.0.18",
+ "tokio",
  "unicode-segmentation",
  "vergen",
 ]
 
 [[package]]
 name = "dc_jni"
-version = "0.39.0"
+version = "0.39.1"
 dependencies = [
  "android_logger",
  "bytes",
@@ -307,7 +309,7 @@ dependencies = [
 
 [[package]]
 name = "dc_layout"
-version = "0.39.0"
+version = "0.39.1"
 dependencies = [
  "android_logger",
  "dc_bundle",
@@ -320,7 +322,7 @@ dependencies = [
 
 [[package]]
 name = "dc_squoosh_animation"
-version = "0.39.0"
+version = "0.39.1"
 dependencies = [
  "dc_bundle",
  "log",
@@ -330,7 +332,7 @@ dependencies = [
 
 [[package]]
 name = "dc_squoosh_parser"
-version = "0.39.0"
+version = "0.39.1"
 dependencies = [
  "dc_squoosh_animation",
  "env_logger",
@@ -456,6 +458,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "futures"
+version = "0.3.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b147ee9d1f6d097cef9ce628cd2ee62288d963e16fb287bd9286455b241382d"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "futures-executor",
+ "futures-io",
+ "futures-sink",
+ "futures-task",
+ "futures-util",
+]
+
+[[package]]
 name = "futures-channel"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -472,10 +489,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e3450815272ef58cec6d564423f6e755e25379b217b0bc688e295ba24df6b1d"
 
 [[package]]
+name = "futures-executor"
+version = "0.3.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baf29c38818342a3b26b5b923639e7b1f4a61fc5e76102d4b1981c6dc7a7579d"
+dependencies = [
+ "futures-core",
+ "futures-task",
+ "futures-util",
+]
+
+[[package]]
 name = "futures-io"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cecba35d7ad927e23624b22ad55235f2239cfa44fd10428eecbeba6d6a717718"
+
+[[package]]
+name = "futures-macro"
+version = "0.3.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e835b70203e41293343137df5c0664546da5745f82ec9b84d40be8336958447b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "futures-sink"
@@ -495,8 +534,10 @@ version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "389ca41296e6190b48053de0321d02a77f32f8a5d2461dd38762c0593805c6d6"
 dependencies = [
+ "futures-channel",
  "futures-core",
  "futures-io",
+ "futures-macro",
  "futures-sink",
  "futures-task",
  "memchr",
@@ -872,7 +913,7 @@ checksum = "3640c1c38b8e4e43584d8df18be5fc6b0aa314ce6ebf51b53313d4306cca8e46"
 dependencies = [
  "hermit-abi",
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1474,9 +1515,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-webpki"
-version = "0.103.12"
+version = "0.103.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8279bb85272c9f10811ae6a6c547ff594d6a7f3c6c6b02ee9726d1d0dcfcdd06"
+checksum = "61c429a8649f110dddef65e2a5ad240f747e85f7758a6bccc7e5777bd33f756e"
 dependencies = [
  "ring",
  "rustls-pki-types",
@@ -1886,7 +1927,19 @@ dependencies = [
  "mio",
  "pin-project-lite",
  "socket2",
+ "tokio-macros",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "385a6cb71ab9ab790c5fe8d67f1645e6c450a7ce006a33de03daa956cf70a496"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

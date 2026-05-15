@@ -35,6 +35,12 @@ android {
     namespace = "com.android.designcompose"
     compileSdk = libs.versions.compileSdk.get().toInt()
     ndkVersion = libs.versions.ndk.get()
+    defaultConfig {
+        ndk {
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("x86_64")
+        }
+    }
 
     testFixtures { enable = true }
 
@@ -91,9 +97,7 @@ listOf("publish", "publishToMavenLocal", "publishAllPublicationsToLocalDirReposi
 // Defines the configuration for the Rust JNI build
 cargo {
     crateDir.set(File(rootProject.relativePath("../crates/dc_jni")))
-    abi.add("x86") // Older Emulated devices, including the ATD Android Test device
     abi.add("x86_64") // Most Emulated Android Devices
-    abi.add("armeabi-v7a")
     abi.add("arm64-v8a")
 }
 
@@ -126,6 +130,7 @@ dependencies {
     implementation(libs.androidx.tracing.ktx)
     implementation(libs.androidx.compose.runtime.tracing)
     implementation(libs.protobuf.kotlin.lite)
+    implementation(libs.okhttp) // WebSocket client for real-time live updates
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

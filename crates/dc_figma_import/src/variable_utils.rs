@@ -165,8 +165,13 @@ fn create_variable_value(v: &figma_schema::VariableValue) -> VariableValue {
             ..Default::default()
         },
         figma_schema::VariableValue::Alias(a) => {
+            // Alias variables reference another variable by ID. The runtime client
+            // (VariableManager) resolves these by looking up the alias target in the
+            // merged variable map. If the target variable lives in a library that wasn't
+            // fetched (no component instances referenced it), resolution will fail at runtime.
             warn!(
-                "Variable alias found: {}. Full definition not available; using fallback value. Cross-library variable aliases are not fully supported.",
+                "Variable alias {} stored. If the alias target is in an un-fetched library, \
+                 it will not resolve at runtime.",
                 a.id
             );
             VariableValue {

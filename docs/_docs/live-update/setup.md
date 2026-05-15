@@ -125,7 +125,32 @@ Use the `setAutopauseTimeout` action with a long extra `TimeoutMs`. By default, 
 adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a setAutopauseTimeout --el TimeoutMs 3600000
 ```
 
+### WebSocket Mode Configuration {#WebSocketConfiguration}
+
+DesignCompose supports an optional WebSocket mode for faster change detection.
+See [WebSocket Live Updates][5] for full setup instructions.
+
+**Set WebSocket Relay URL:**
+
+```shell
+adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a setWebSocketUrl -e Url "ws://10.0.2.2:8765"
+```
+
+**Enable WebSocket Mode:**
+
+```shell
+adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a setWebSocket --ez Enabled true
+```
+
+**Disable WebSocket Mode:**
+
+```shell
+adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a setWebSocket --ez Enabled false
+```
+
 [1]: https://www.figma.com
 [2]: {%link _docs/variables.md %}
 [3]: <https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens>
 [4]: <https://developer.android.com/guide/components/intents-filters#Types>
+[5]: {%link _docs/live-update/websocket-mode.md %}
+

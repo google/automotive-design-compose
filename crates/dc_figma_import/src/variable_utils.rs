@@ -238,7 +238,14 @@ pub(crate) fn bound_variables_color(
     key_to_global_id_map: &mut HashMap<String, String>,
 ) -> ColorOrVar {
     if let Some(vars) = bound_variables {
-        ColorOrVar::from_var(vars, "color", &default_color.into(), key_to_global_id_map)
+        let fallback_color = FloatColor {
+            r: default_color.r,
+            g: default_color.g,
+            b: default_color.b,
+            a: default_color.a * last_opacity,
+            ..Default::default()
+        };
+        ColorOrVar::from_var(vars, "color", &fallback_color, key_to_global_id_map)
     } else {
         ColorOrVar {
             ColorOrVarType: Some(color_or_var::ColorOrVarType::Color(crate::Color::from_f32s(
@@ -249,5 +256,52 @@ pub(crate) fn bound_variables_color(
             ))),
             ..Default::default()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::figma_schema::{BoundVariables, FigmaColor};
+    use dc_bundle::variable::color_or_var;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_bound_variables_color_fallback_opacity() {
+        let json = serde_json::json!({
+            "color": {
+                "type": "VARIABLE_ALIAS",
+                "id": "VariableID:test_opacity_var"
+            }
+        });
+        let bound_variables = Some(serde_json::from_value::<BoundVariables>(json).unwrap());
+
+        let default_color = FigmaColor { r: 0.8, g: 0.6, b: 0.4, a: 1.0 };
+
+        let last_opacity = 0.5;
+
+        let mut key_map = HashMap::new();
+        let result =
+            bound_variables_color(&bound_variables, &default_color, last_opacity, &mut key_map);
+
+        match result.ColorOrVarType {
+            Some(color_or_var::ColorOrVarType::Var(var)) => {
+                assert_eq!(var.id, "VariableID:test_opacity_var");
+
+                let fallback = var.fallback.0.expect("Fallback color must be provided");
+
+                let expected_alpha = (1.0 * 0.5 * 255.0) as u32;
+                let expected_r = (0.8 * 255.0) as u32;
+
+                assert_eq!(fallback.a, expected_alpha);
+                assert_eq!(fallback.r, expected_r);
+            }
+            _ => panic!("Expected a ColorVar type, got something else"),
+        }
+
+        assert_eq!(
+            key_map.get("test_opacity_var"),
+            Some(&"VariableID:test_opacity_var".to_string())
+        );
     }
 }

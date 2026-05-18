@@ -19,8 +19,9 @@ use std::sync::Arc;
 // --- High Level Runtime Types ---
 
 /// Supported easing functions for interpolation.
-#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize, Default)]
 pub enum Easing {
+    #[default]
     Inherit,
     Linear,
     Instant,
@@ -31,12 +32,6 @@ pub enum Easing {
     EaseOutCubic,
     EaseInOutCubic,
     CubicBezier(f32, f32, f32, f32),
-}
-
-impl Default for Easing {
-    fn default() -> Self {
-        Easing::Inherit
-    }
 }
 
 impl Easing {

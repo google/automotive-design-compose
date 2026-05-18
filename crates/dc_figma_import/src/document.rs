@@ -2142,7 +2142,6 @@ mod tests {
     fn test_compute_component_overrides_coverage() {
         use dc_bundle::positioning::ScrollInfo;
         use dc_bundle::view::view::RenderMethod;
-        use dc_bundle::view::view_data::View_data_type;
         use dc_bundle::view_shape::ViewShape;
         use std::collections::HashMap;
 

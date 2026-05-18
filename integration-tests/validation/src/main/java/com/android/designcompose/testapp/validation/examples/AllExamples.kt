@@ -58,6 +58,11 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),
         Triple("Progress Vectors", { ProgressVectorTest() }, DialsGaugesTestDoc.javaClass.name),
         Triple("Fancy Fills", { FancyFillTest() }, FancyFillTestDoc.javaClass.name),
+        Triple(
+            "Gradient Opacity",
+            { GradientOpacityTest() },
+            GradientOpacityValidationDoc.javaClass.name,
+        ),
         Triple("Fill Container", { FillTest() }, FillTestDoc.javaClass.name),
         // H and V constraints
         Triple("H Constraints", { HConstraintsTest() }, ConstraintsDoc.javaClass.name),

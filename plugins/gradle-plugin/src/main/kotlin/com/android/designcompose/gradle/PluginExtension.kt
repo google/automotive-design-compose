@@ -90,8 +90,8 @@ fun Project.initializeExtension(extension: PluginExtension) {
 
 /**
  * Check that the Figma token file is not world-readable. On Unix/macOS systems, a world-readable
- * token file could expose the Figma access token to other users. This function emits a warning
- * if the file has overly permissive permissions.
+ * token file could expose the Figma access token to other users. This function emits a warning if
+ * the file has overly permissive permissions.
  *
  * @param tokenFile The RegularFileProperty pointing to the token file
  */
@@ -125,4 +125,3 @@ private fun Project.checkTokenFilePermissions(tokenFile: RegularFileProperty) {
         logger.debug("Could not check Figma token file permissions: ${e.message}")
     }
 }
-

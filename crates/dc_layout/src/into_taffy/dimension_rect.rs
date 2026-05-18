@@ -72,12 +72,13 @@ mod tests {
     use dc_bundle::geometry::DimensionProto;
 
     fn create_test_dimension_rect() -> DimensionRect {
-        let mut rect = DimensionRect::default();
-        rect.start = DimensionProto::new_points(10.0);
-        rect.end = DimensionProto::new_points(20.0);
-        rect.top = DimensionProto::new_points(30.0);
-        rect.bottom = DimensionProto::new_points(40.0);
-        rect
+        DimensionRect {
+            start: DimensionProto::new_points(10.0),
+            end: DimensionProto::new_points(20.0),
+            top: DimensionProto::new_points(30.0),
+            bottom: DimensionProto::new_points(40.0),
+            ..Default::default()
+        }
     }
 
     #[test]

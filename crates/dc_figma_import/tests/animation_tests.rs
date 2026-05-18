@@ -30,21 +30,18 @@ fn test_keyframes_present() {
         if let Some(style) = view.style.as_ref() {
             if let Some(node_style) = style.node_style.as_ref() {
                 if let Some(override_anim) = node_style.animation_override.as_ref() {
-                    if let Some(custom_value) = &override_anim.animation_override {
-                        match custom_value {
-                            animation_override::Animation_override::Custom(custom) => {
-                                for (prop, timeline) in &custom.custom_keyframe_data {
-                                    println!("Found timeline for prop: {} in view: {}", prop, name);
-                                    for kf in &timeline.keyframes {
-                                        println!(
-                                            "  Keyframe: fraction={}, value={:?}",
-                                            kf.fraction, kf.value
-                                        );
-                                        found_keyframes = true;
-                                    }
-                                }
+                    if let Some(animation_override::Animation_override::Custom(custom)) =
+                        &override_anim.animation_override
+                    {
+                        for (prop, timeline) in &custom.custom_keyframe_data {
+                            println!("Found timeline for prop: {} in view: {}", prop, name);
+                            for kf in &timeline.keyframes {
+                                println!(
+                                    "  Keyframe: fraction={}, value={:?}",
+                                    kf.fraction, kf.value
+                                );
+                                found_keyframes = true;
                             }
-                            _ => {}
                         }
                     }
                 }

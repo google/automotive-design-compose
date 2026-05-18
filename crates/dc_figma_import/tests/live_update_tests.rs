@@ -369,7 +369,7 @@ mod phase3_node_tracker {
             tracker.track(page_id, page_name, &children);
         }
 
-        assert!(tracker.len() > 0, "Should have tracked at least one page");
+        assert!(!tracker.is_empty(), "Should have tracked at least one page");
 
         // Self-diff should show no changes
         let same_nodes: Vec<_> = pages
@@ -452,7 +452,7 @@ mod phase4_library_resolver {
 
         // Check for alias variables
         let has_alias = variables.values().any(|v| {
-            v["valuesByMode"].as_object().map_or(false, |modes| {
+            v["valuesByMode"].as_object().is_some_and(|modes| {
                 modes.values().any(|val| {
                     val.is_object()
                         && val.get("type").and_then(|t| t.as_str()) == Some("VARIABLE_ALIAS")
@@ -615,7 +615,7 @@ mod e2e_pipeline {
         };
 
         // Time sequential vs concurrent fetches
-        let urls: Vec<String> = vec![DOC_DESIGN_SWITCHER, DOC_VARIABLES_TEST]
+        let urls: Vec<String> = [DOC_DESIGN_SWITCHER, DOC_VARIABLES_TEST]
             .iter()
             .map(|id| format!("https://api.figma.com/v1/files/{}?depth=1", id))
             .collect();

@@ -2437,7 +2437,6 @@ mod tests {
             AlignItems::ALIGN_ITEMS_BASELINE.into()
         );
     }
-
     /// Test that a node with Left-Right + Top-Bottom constraints preserves
     /// its constraint anchoring even when fetched without a parent context
     /// (i.e. as a replacement content node).

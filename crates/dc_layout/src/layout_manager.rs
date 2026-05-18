@@ -686,7 +686,7 @@ mod tests {
             layout_manager.taffy.children(*parent_node_after_remove).unwrap();
         assert_eq!(children_after_remove.len(), 0);
 
-        assert!(layout_manager.layout_id_to_taffy_node.get(&child_id).is_none());
+        assert!(!layout_manager.layout_id_to_taffy_node.contains_key(&child_id));
     }
 
     #[test]
@@ -767,7 +767,7 @@ mod tests {
         let children_before = layout_manager.taffy.children(*parent_node).unwrap();
         assert_eq!(children_before.len(), 0);
 
-        layout_manager.update_children(parent_id, &vec![child1_id, child2_id]);
+        layout_manager.update_children(parent_id, &[child1_id, child2_id]);
 
         let parent_node_after = layout_manager.layout_id_to_taffy_node.get(&parent_id).unwrap();
         let children_after = layout_manager.taffy.children(*parent_node_after).unwrap();
@@ -1173,7 +1173,7 @@ mod tests {
         lm.compute_node_layout(1);
         assert_eq!(lm.get_node_layout(2).unwrap().left, 0.0);
         assert_eq!(lm.get_node_layout(3).unwrap().left, 60.0);
-        lm.update_children(1, &vec![3, 2]);
+        lm.update_children(1, &[3, 2]);
         lm.compute_node_layout(1);
         assert_eq!(lm.get_node_layout(3).unwrap().left, 0.0);
         assert_eq!(lm.get_node_layout(2).unwrap().left, 80.0);

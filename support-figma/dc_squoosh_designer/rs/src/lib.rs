@@ -277,10 +277,7 @@ impl PropertyLookup {
             if let Some((node, prop)) = clean_key.rsplit_once('-') {
                 let property = prop.parse::<AnimatableProperty>().unwrap();
                 if let Ok(parsed) = ParsedTimelineData::parse(val) {
-                    temp_timelines
-                        .entry(node.to_string())
-                        .or_insert_with(NodeTimelines::default)
-                        .insert(property, parsed);
+                    temp_timelines.entry(node.to_string()).or_default().insert(property, parsed);
                 }
             }
         }

@@ -216,7 +216,7 @@ fn compute_layout(
             figma_schema::LayoutAlignItems::SpaceBetween => {
                 AlignItems::ALIGN_ITEMS_FLEX_START.into()
             } // XXX
-            figma_schema::LayoutAlignItems::Baseline => AlignItems::ALIGN_ITEMS_FLEX_START.into(),
+            figma_schema::LayoutAlignItems::Baseline => AlignItems::ALIGN_ITEMS_BASELINE.into(),
         };
         style.layout_style_mut().justify_content = match frame.primary_axis_align_items {
             figma_schema::LayoutAlignItems::Center => JustifyContent::JUSTIFY_CONTENT_CENTER.into(),
@@ -796,7 +796,11 @@ fn compute_background(
     if let figma_schema::PaintData::Solid { color, bound_variables } = &last_paint.data {
         let solid_bg =
             bound_variables_color(bound_variables, color, last_paint.opacity, key_to_global_id_map);
-        Background::new_with_background(Background_type::Solid(solid_bg))
+        Background {
+            background_type: Some(Background_type::Solid(solid_bg)),
+            opacity: last_paint.opacity,
+            ..Default::default()
+        }
     } else if let figma_schema::PaintData::Image {
         image_ref: Some(image_ref),
         filters,
@@ -864,27 +868,35 @@ fn compute_background(
         };
 
         if let Some(fill) = images.image_fill(image_ref, node_name) {
-            Background::new_with_background(background::Background_type::Image(background::Image {
-                key: fill,
-                filters: image_filter_list,
-                transform: Some(transform.to_2d()).into(),
-                scale_mode: bg_scale_mode.into(),
+            Background {
+                background_type: Some(background::Background_type::Image(background::Image {
+                    key: fill,
+                    filters: image_filter_list,
+                    transform: Some(transform.to_2d()).into(),
+                    scale_mode: bg_scale_mode.into(),
+                    opacity: last_paint.opacity,
+                    res_name: images.image_res(image_ref),
+                    ..Default::default()
+                })),
                 opacity: last_paint.opacity,
-                res_name: images.image_res(image_ref),
                 ..Default::default()
-            }))
+            }
         } else if !image_filter_list.is_empty() {
             // There's no image but we have filters, so store those with no image in case there's
             // a runtime customization that specifies an image source.
-            Background::new_with_background(background::Background_type::Image(background::Image {
-                key: String::new(),
-                filters: image_filter_list,
-                transform: Some(transform.to_2d()).into(),
-                scale_mode: bg_scale_mode.into(),
+            Background {
+                background_type: Some(background::Background_type::Image(background::Image {
+                    key: String::new(),
+                    filters: image_filter_list,
+                    transform: Some(transform.to_2d()).into(),
+                    scale_mode: bg_scale_mode.into(),
+                    opacity: last_paint.opacity,
+                    res_name: None,
+                    ..Default::default()
+                })),
                 opacity: last_paint.opacity,
-                res_name: None,
                 ..Default::default()
-            }))
+            }
         } else {
             Background::new_none()
         }
@@ -917,16 +929,20 @@ fn compute_background(
                 g_stops.push(g);
             }
 
-            Background::new_with_background(background::Background_type::LinearGradient(
-                background::LinearGradient {
-                    start_x,
-                    start_y,
-                    end_x,
-                    end_y,
-                    color_stops: g_stops,
-                    ..Default::default()
-                },
-            ))
+            Background {
+                background_type: Some(background::Background_type::LinearGradient(
+                    background::LinearGradient {
+                        start_x,
+                        start_y,
+                        end_x,
+                        end_y,
+                        color_stops: g_stops,
+                        ..Default::default()
+                    },
+                )),
+                opacity: last_paint.opacity,
+                ..Default::default()
+            }
         }
     } else if let figma_schema::PaintData::GradientAngular { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
@@ -963,16 +979,20 @@ fn compute_background(
                 g_stops.push(g);
             }
 
-            Background::new_with_background(background::Background_type::AngularGradient(
-                background::AngularGradient {
-                    center_x,
-                    center_y,
-                    angle,
-                    scale,
-                    color_stops: g_stops,
-                    ..Default::default()
-                },
-            ))
+            Background {
+                background_type: Some(background::Background_type::AngularGradient(
+                    background::AngularGradient {
+                        center_x,
+                        center_y,
+                        angle,
+                        scale,
+                        color_stops: g_stops,
+                        ..Default::default()
+                    },
+                )),
+                opacity: last_paint.opacity,
+                ..Default::default()
+            }
         }
     } else if let figma_schema::PaintData::GradientRadial { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
@@ -1011,17 +1031,21 @@ fn compute_background(
                 g_stops.push(g);
             }
 
-            Background::new_with_background(background::Background_type::RadialGradient(
-                background::RadialGradient {
-                    center_x,
-                    center_y,
-                    angle,
-                    radius_x: radius.0,
-                    radius_y: radius.1,
-                    color_stops: g_stops,
-                    ..Default::default()
-                },
-            ))
+            Background {
+                background_type: Some(background::Background_type::RadialGradient(
+                    background::RadialGradient {
+                        center_x,
+                        center_y,
+                        angle,
+                        radius_x: radius.0,
+                        radius_y: radius.1,
+                        color_stops: g_stops,
+                        ..Default::default()
+                    },
+                )),
+                opacity: last_paint.opacity,
+                ..Default::default()
+            }
         }
     } else if let figma_schema::PaintData::GradientDiamond { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
@@ -1059,17 +1083,21 @@ fn compute_background(
                 g_stops.push(g);
             }
 
-            Background::new_with_background(background::Background_type::RadialGradient(
-                background::RadialGradient {
-                    center_x,
-                    center_y,
-                    angle,
-                    radius_x: radius.0,
-                    radius_y: radius.1,
-                    color_stops: g_stops,
-                    ..Default::default()
-                },
-            ))
+            Background {
+                background_type: Some(background::Background_type::RadialGradient(
+                    background::RadialGradient {
+                        center_x,
+                        center_y,
+                        angle,
+                        radius_x: radius.0,
+                        radius_y: radius.1,
+                        color_stops: g_stops,
+                        ..Default::default()
+                    },
+                )),
+                opacity: last_paint.opacity,
+                ..Default::default()
+            }
         }
     } else {
         Background::new_none()
@@ -2363,6 +2391,50 @@ mod tests {
         assert_eq!(
             view.style.unwrap().node_style.unwrap().flex_wrap,
             FlexWrap::FLEX_WRAP_WRAP.into()
+        );
+    }
+
+    #[test]
+    fn test_layout_baseline() {
+        let json = r#"{
+            "id": "1",
+            "name": "test",
+            "type": "FRAME",
+            "layoutMode": "HORIZONTAL",
+            "counterAxisAlignItems": "BASELINE",
+            "constraints": {
+                "vertical": "TOP",
+                "horizontal": "LEFT"
+            },
+            "absoluteBoundingBox": {
+                "x": 0, "y": 0, "width": 100, "height": 100
+            }
+        }"#;
+
+        let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+
+        let mut key_to_global_id_map = HashMap::new();
+        let mut component_context = ComponentContext::new(&vec![]);
+        let mut image_context = ImageContext::new(
+            HashMap::new(),
+            HashMap::new(),
+            &crate::proxy_config::ProxyConfig::None,
+        );
+
+        let view = create_component_flexbox(
+            &node,
+            &HashMap::new(),
+            &HashMap::new(),
+            &mut component_context,
+            &mut image_context,
+            crate::document::HiddenNodePolicy::Keep,
+            &mut key_to_global_id_map,
+        )
+        .unwrap();
+
+        assert_eq!(
+            view.style.unwrap().layout_style.unwrap().align_items,
+            AlignItems::ALIGN_ITEMS_BASELINE.into()
         );
     }
 

@@ -35,4 +35,6 @@ pub enum Error {
     DocumentLoadError(String),
     #[error("Error with DC Bundle: {0}")]
     DCBundleError(#[from] dc_bundle::Error),
+    #[error("HTTP Client Error: {0}")]
+    HttpClientError(String),
 }

@@ -36,7 +36,6 @@ use dc_bundle::view::view_data::View_data_type::Text;
 use dc_bundle::view::View;
 use dc_layout::LayoutManager;
 use protobuf::Enum;
-use std::collections::HashMap;
 
 fn measure_func(
     layout_id: i32,
@@ -69,12 +68,10 @@ fn add_view_to_layout(
     id: &mut i32,
     parent_layout_id: i32,
     child_index: i32,
-    replacements: &HashMap<String, String>,
-    views: &HashMap<NodeQuery, View>,
 ) {
     //println!("add_view_to_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
-    let my_id: i32 = id.clone();
-    *id = *id + 1;
+    let my_id: i32 = *id;
+    *id += 1;
     let data: &View_data_type = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
 
     if let Text { .. } = data {
@@ -137,10 +134,8 @@ fn add_view_to_layout(
                 None,
             )
             .unwrap();
-        let mut index = 0;
-        for child in children {
-            add_view_to_layout(child, manager, id, my_id, index, replacements, views);
-            index = index + 1;
+        for (index, child) in children.iter().enumerate() {
+            add_view_to_layout(child, manager, id, my_id, index as i32);
         }
     }
 
@@ -160,15 +155,7 @@ fn load_view(node_name: &str, doc: &DesignComposeDefinition) -> LayoutManager {
     let view = view_result.unwrap();
     let mut id = 0;
     let mut manager = LayoutManager::new(measure_func);
-    add_view_to_layout(
-        &view,
-        &mut manager,
-        &mut id,
-        -1,
-        -1,
-        &HashMap::new(),
-        &doc.views().unwrap(),
-    );
+    add_view_to_layout(view, &mut manager, &mut id, -1, -1);
     manager
 }
 

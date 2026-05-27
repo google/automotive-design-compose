@@ -16,7 +16,6 @@
 use clap::Parser;
 use dc_figma_import::tools::fetch_layout::fetch_layout;
 use dc_figma_import::tools::fetch_layout::Args;
-use std::process;
 
 fn main() {
     let args = Args::parse();

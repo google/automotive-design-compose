@@ -523,6 +523,7 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
 
         try {
             val response = fetchDocument(figmaApiKey, params, previousDoc, id, proxyConfig)
+            DesignSettings.isDocumentLive.value = true
 
             // A successful call to fetchDocument (no exception) means we have a valid key.
             // If this is the first success for this key, start the timer.
@@ -604,6 +605,7 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                 }
             }
         } catch (exception: Exception) {
+            DesignSettings.isDocumentLive.value = false
             val msg =
                 when (exception) {
                     is AccessDeniedException -> "Invalid Token"

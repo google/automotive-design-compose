@@ -282,7 +282,9 @@ fun SquooshRoot(
 
     if (doc == null) {
         Log.d(TAG, "No doc! $docName / $incomingDocId")
-        designSwitcher()
+        Box(modifier) {
+            designSwitcher()
+        }
         return
     }
 

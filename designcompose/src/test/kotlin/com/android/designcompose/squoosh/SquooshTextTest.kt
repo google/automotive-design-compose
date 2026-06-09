@@ -21,6 +21,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.createFontFamilyResolver
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.test.core.app.ApplicationProvider
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignSettings
@@ -35,8 +37,6 @@ import com.android.designcompose.definition.element.fontWeight
 import com.android.designcompose.definition.element.lineHeight
 import com.android.designcompose.definition.element.numOrVar
 import com.android.designcompose.definition.view.View
-import androidx.compose.ui.unit.em
-import androidx.compose.ui.unit.sp
 import com.android.designcompose.definition.view.ViewDataKt.text
 import com.android.designcompose.definition.view.nodeStyle
 import com.android.designcompose.definition.view.view
@@ -176,9 +176,7 @@ class SquooshTextTest {
                 nodeStyle = nodeStyle {
                     fontFamily = "FigmaFont"
                     fontSize = numOrVar { num = 12f }
-                    fontWeight = fontWeight {
-                        weight = numOrVar { num = 400f }
-                    }
+                    fontWeight = fontWeight { weight = numOrVar { num = 400f } }
                     if (percentValue != null) {
                         lineHeight = lineHeight { percent = percentValue }
                     } else if (pixelsValue != null) {
@@ -186,11 +184,7 @@ class SquooshTextTest {
                     }
                 }
             }
-            data = viewData {
-                text = text {
-                    content = "Hello"
-                }
-            }
+            data = viewData { text = text { content = "Hello" } }
         }
     }
 
@@ -200,19 +194,20 @@ class SquooshTextTest {
         val customizations = CustomizationContext()
         val variableState = VariableState()
 
-        val result = squooshComputeTextInfo(
-            v = view,
-            overrideViewData = null,
-            layoutId = 1,
-            density = Density(1f),
-            document = docContent,
-            customizations = customizations,
-            fontResolver = fontResolver,
-            variableState = variableState,
-            appContext = context,
-            textMeasureCache = textMeasureCache,
-            textHash = textHash
-        )
+        val result =
+            squooshComputeTextInfo(
+                v = view,
+                overrideViewData = null,
+                layoutId = 1,
+                density = Density(1f),
+                document = docContent,
+                customizations = customizations,
+                fontResolver = fontResolver,
+                variableState = variableState,
+                appContext = context,
+                textMeasureCache = textMeasureCache,
+                textHash = textHash,
+            )
 
         assertThat(result).isNotNull()
         val (_, textStyle) = result!!
@@ -225,19 +220,20 @@ class SquooshTextTest {
         val customizations = CustomizationContext()
         val variableState = VariableState()
 
-        val result = squooshComputeTextInfo(
-            v = view,
-            overrideViewData = null,
-            layoutId = 1,
-            density = Density(1f),
-            document = docContent,
-            customizations = customizations,
-            fontResolver = fontResolver,
-            variableState = variableState,
-            appContext = context,
-            textMeasureCache = textMeasureCache,
-            textHash = textHash
-        )
+        val result =
+            squooshComputeTextInfo(
+                v = view,
+                overrideViewData = null,
+                layoutId = 1,
+                density = Density(1f),
+                document = docContent,
+                customizations = customizations,
+                fontResolver = fontResolver,
+                variableState = variableState,
+                appContext = context,
+                textMeasureCache = textMeasureCache,
+                textHash = textHash,
+            )
 
         assertThat(result).isNotNull()
         val (_, textStyle) = result!!

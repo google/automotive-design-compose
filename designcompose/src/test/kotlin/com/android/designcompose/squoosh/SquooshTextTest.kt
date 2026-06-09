@@ -32,8 +32,11 @@ import com.android.designcompose.common.VariantPropertyMap
 import com.android.designcompose.definition.DesignComposeDefinition
 import com.android.designcompose.definition.DesignComposeDefinitionHeader
 import com.android.designcompose.definition.element.fontWeight
+import com.android.designcompose.definition.element.lineHeight
 import com.android.designcompose.definition.element.numOrVar
 import com.android.designcompose.definition.view.View
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.android.designcompose.definition.view.ViewDataKt.text
 import com.android.designcompose.definition.view.nodeStyle
 import com.android.designcompose.definition.view.view
@@ -164,5 +167,80 @@ class SquooshTextTest {
         assertThat(result).isNotNull()
         val (_, textStyle) = result!!
         assertThat(textStyle.fontFamily).isEqualTo(FontFamily.Serif)
+    }
+
+    private fun createTextViewWithLineHeight(percentValue: Float?, pixelsValue: Float?): View {
+        return view {
+            name = "text-node"
+            style = viewStyle {
+                nodeStyle = nodeStyle {
+                    fontFamily = "FigmaFont"
+                    fontSize = numOrVar { num = 12f }
+                    fontWeight = fontWeight {
+                        weight = numOrVar { num = 400f }
+                    }
+                    if (percentValue != null) {
+                        lineHeight = lineHeight { percent = percentValue }
+                    } else if (pixelsValue != null) {
+                        lineHeight = lineHeight { pixels = pixelsValue }
+                    }
+                }
+            }
+            data = viewData {
+                text = text {
+                    content = "Hello"
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testPercentLineHeight() {
+        val view = createTextViewWithLineHeight(percentValue = 1.2f, pixelsValue = null)
+        val customizations = CustomizationContext()
+        val variableState = VariableState()
+
+        val result = squooshComputeTextInfo(
+            v = view,
+            overrideViewData = null,
+            layoutId = 1,
+            density = Density(1f),
+            document = docContent,
+            customizations = customizations,
+            fontResolver = fontResolver,
+            variableState = variableState,
+            appContext = context,
+            textMeasureCache = textMeasureCache,
+            textHash = textHash
+        )
+
+        assertThat(result).isNotNull()
+        val (_, textStyle) = result!!
+        assertThat(textStyle.lineHeight).isEqualTo(1.2.em)
+    }
+
+    @Test
+    fun testPixelLineHeight() {
+        val view = createTextViewWithLineHeight(percentValue = null, pixelsValue = 16f)
+        val customizations = CustomizationContext()
+        val variableState = VariableState()
+
+        val result = squooshComputeTextInfo(
+            v = view,
+            overrideViewData = null,
+            layoutId = 1,
+            density = Density(1f),
+            document = docContent,
+            customizations = customizations,
+            fontResolver = fontResolver,
+            variableState = variableState,
+            appContext = context,
+            textMeasureCache = textMeasureCache,
+            textHash = textHash
+        )
+
+        assertThat(result).isNotNull()
+        val (_, textStyle) = result!!
+        assertThat(textStyle.lineHeight).isEqualTo(16.sp)
     }
 }

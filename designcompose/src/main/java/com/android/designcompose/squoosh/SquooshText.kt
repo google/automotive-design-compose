@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignSettings
@@ -261,6 +262,7 @@ internal fun squooshComputeTextInfo(
         customTextStyle?.lineHeight
             ?: when (v.style.nodeStyle.lineHeight.lineHeightTypeCase) {
                 LineHeightTypeCase.PIXELS -> v.style.nodeStyle.lineHeight.pixels.sp
+                LineHeightTypeCase.PERCENT -> v.style.nodeStyle.lineHeight.percent.em
                 else -> TextUnit.Unspecified
             }
     val fontWeight =

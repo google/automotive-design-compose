@@ -95,7 +95,8 @@ internal fun Modifier.progressBarSlider(
             val pbNode = node.findProgressBarChild()
             val pbMeterData = pbNode?.style?.getProgressBarData()
             pbMeterData?.let {
-                val progressChanged = customizations.getOnProgressChangedCallback(pbNode.view.name)
+                val progressChanged =
+                    customizations.getOnProgressChangedCallback(pbNode.unresolvedName)
                 val progress: Float
                 if (it.vertical) {
                     val startY = it.startY * density
@@ -110,13 +111,14 @@ internal fun Modifier.progressBarSlider(
                 }
                 progressChanged?.onProgressChanged(progress)
                 meterState.value = progress
-                customizations.setMeterState(pbNode.view.name, meterState)
+                customizations.setMeterState(pbNode.unresolvedName, meterState)
             }
 
             val pmNode = node.findProgressMarkerDescendant()
             val pmMeterData = pmNode?.style?.getProgressMarkerData()
             pmMeterData?.let {
-                val progressChanged = customizations.getOnProgressChangedCallback(pmNode.view.name)
+                val progressChanged =
+                    customizations.getOnProgressChangedCallback(pmNode.unresolvedName)
                 val progress: Float
                 if (it.vertical) {
                     val startY = it.startY * density
@@ -131,7 +133,7 @@ internal fun Modifier.progressBarSlider(
                 }
                 progressChanged?.onProgressChanged(progress)
                 meterState.value = progress
-                customizations.setMeterState(pmNode.view.name, meterState)
+                customizations.setMeterState(pmNode.unresolvedName, meterState)
             }
         }
 
@@ -279,7 +281,8 @@ internal fun Modifier.squooshInteraction(
         androidx.compose.runtime.rememberUpdatedState(childComposable.node.view.reactionsList)
     val latestTapCallback by
         androidx.compose.runtime.rememberUpdatedState(
-            customizations.getTapCallback(childComposable.node.view)
+            customizations.getTapCallback(childComposable.node.unresolvedName)
+                ?: customizations.getTapCallback(childComposable.node.view)
         )
     val latestParentComponents by
         androidx.compose.runtime.rememberUpdatedState(childComposable.parentComponents)

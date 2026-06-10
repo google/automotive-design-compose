@@ -20,6 +20,8 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.createFontFamilyResolver
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.test.core.app.ApplicationProvider
 import com.android.designcompose.*
 import com.android.designcompose.common.DesignDocId
@@ -322,5 +324,90 @@ class SquooshTreeBuilderTest {
             composableList3.childComposables.find { it.node.unresolvedName == iconSlotInstanceName }
         assertThat(child3).isNotNull()
         assertThat(child3!!.component).isEqualTo(replacementComponent)
+    }
+
+    @Test
+    fun testModifierCustomizationCreatesSubtree() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val density = Density(1f)
+        val fontResolver = createFontFamilyResolver(context)
+
+        // 1. Create a parent component and a child node
+        val parentComponentName = "Parent"
+        val childNodeName = "#child-node"
+
+        val parentView = view {
+            uniqueId = 1
+            id = "parent-id"
+            name = "Parent"
+            data = viewData {
+                container = container {
+                    children.add(
+                        view {
+                            uniqueId = 2
+                            id = "child-id"
+                            name = childNodeName
+                        }
+                    )
+                }
+            }
+        }
+
+        val docContent = createDocContent(rootView = parentView)
+
+        // 2. Setup Customizations with a modifier on the child
+        val customizations = CustomizationContext()
+        val dummyModifier = Modifier.testTag("test-tag")
+        customizations.setModifier(childNodeName, dummyModifier)
+
+        val variantTransition = SquooshVariantTransition()
+        val interactionState = InteractionState()
+        val keyTracker = KeyEventTracker()
+        val layoutIdAllocator = SquooshLayoutIdAllocator()
+        val composableList = ComposableList()
+
+        // 3. Resolve Squoosh tree
+        val resolvedNode =
+            resolveVariantsRecursively(
+                viewFromTree = parentView,
+                document = docContent,
+                customizations = customizations,
+                variantTransition = variantTransition,
+                interactionState = interactionState,
+                keyTracker = keyTracker,
+                parentComponents = null,
+                density = density,
+                fontResolver = fontResolver,
+                composableList = composableList,
+                layoutIdAllocator = layoutIdAllocator,
+                isRoot = true,
+                variableState = VariableState(),
+                appContext = context,
+                customVariantTransition = null,
+                textMeasureCache = TextMeasureCache(),
+                textHash = HashSet(),
+            )
+
+        assertThat(resolvedNode).isNotNull()
+
+        // 4. Verify that the child node created a subtree for modifier wrapping
+        // The child SquooshResolvedNode itself should be in the tree
+        val childResolvedNode = resolvedNode!!.firstChild
+        assertThat(childResolvedNode).isNotNull()
+        assertThat(childResolvedNode!!.view.name).isEqualTo(childNodeName)
+
+        // It should have needsChildRender = true
+        assertThat(childResolvedNode.needsChildRender).isTrue()
+
+        // A SquooshChildComposable should be added for it in the composableList
+        val childComposable =
+            composableList.childComposables.find { it.node.unresolvedName == childNodeName }
+        assertThat(childComposable).isNotNull()
+
+        // It should have renderSubtree = true
+        assertThat(childComposable!!.renderSubtree).isTrue()
+
+        // It should have the custom modifier
+        assertThat(childComposable.customModifier).isEqualTo(dummyModifier)
     }
 }

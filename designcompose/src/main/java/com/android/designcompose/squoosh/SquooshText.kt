@@ -131,7 +131,9 @@ internal fun squooshComputeTextInfo(
     val customTextStyle = customizations.getTextStyle(v.name)
     val fontFamily =
         customTextStyle?.fontFamily
-            ?: DesignSettings.fontFamily(v.style.nodeStyle.takeIf { it.hasFontFamily() }?.fontFamily)
+            ?: DesignSettings.fontFamily(
+                v.style.nodeStyle.takeIf { it.hasFontFamily() }?.fontFamily
+            )
 
     // Compose only supports a single outset shadow on text; we must use a canvas and perform
     // manual text layout (and editing, and accessibility) to do fancier text.

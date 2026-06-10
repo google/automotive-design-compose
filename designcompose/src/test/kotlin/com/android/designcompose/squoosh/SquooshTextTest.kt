@@ -97,16 +97,10 @@ class SquooshTextTest {
                 nodeStyle = nodeStyle {
                     fontFamily = fontFamilyName
                     fontSize = numOrVar { num = 12f }
-                    fontWeight = fontWeight {
-                        weight = numOrVar { num = 400f }
-                    }
+                    fontWeight = fontWeight { weight = numOrVar { num = 400f } }
                 }
             }
-            data = viewData {
-                text = text {
-                    content = "Hello"
-                }
-            }
+            data = viewData { text = text { content = "Hello" } }
         }
     }
 
@@ -119,19 +113,20 @@ class SquooshTextTest {
         // Register FigmaFont in DesignSettings
         DesignSettings.addFontFamily("FigmaFont", FontFamily.SansSerif)
 
-        val result = squooshComputeTextInfo(
-            v = view,
-            overrideViewData = null,
-            layoutId = 1,
-            density = Density(1f),
-            document = docContent,
-            customizations = customizations,
-            fontResolver = fontResolver,
-            variableState = variableState,
-            appContext = context,
-            textMeasureCache = textMeasureCache,
-            textHash = textHash
-        )
+        val result =
+            squooshComputeTextInfo(
+                v = view,
+                overrideViewData = null,
+                layoutId = 1,
+                density = Density(1f),
+                document = docContent,
+                customizations = customizations,
+                fontResolver = fontResolver,
+                variableState = variableState,
+                appContext = context,
+                textMeasureCache = textMeasureCache,
+                textHash = textHash,
+            )
 
         assertThat(result).isNotNull()
         val (_, textStyle) = result!!
@@ -151,19 +146,20 @@ class SquooshTextTest {
         val customStyle = TextStyle(fontFamily = FontFamily.Serif)
         customizations.setTextStyle("text-node", customStyle)
 
-        val result = squooshComputeTextInfo(
-            v = view,
-            overrideViewData = null,
-            layoutId = 1,
-            density = Density(1f),
-            document = docContent,
-            customizations = customizations,
-            fontResolver = fontResolver,
-            variableState = variableState,
-            appContext = context,
-            textMeasureCache = textMeasureCache,
-            textHash = textHash
-        )
+        val result =
+            squooshComputeTextInfo(
+                v = view,
+                overrideViewData = null,
+                layoutId = 1,
+                density = Density(1f),
+                document = docContent,
+                customizations = customizations,
+                fontResolver = fontResolver,
+                variableState = variableState,
+                appContext = context,
+                textMeasureCache = textMeasureCache,
+                textHash = textHash,
+            )
 
         assertThat(result).isNotNull()
         val (_, textStyle) = result!!

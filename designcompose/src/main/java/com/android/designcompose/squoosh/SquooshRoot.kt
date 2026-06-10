@@ -282,12 +282,12 @@ fun SquooshRoot(
 
     if (doc == null) {
         Log.d(TAG, "No doc! $docName / $incomingDocId")
-        val cleanModifier = modifier.foldIn<Modifier>(Modifier) { acc, element ->
-            if (element is androidx.compose.ui.semantics.SemanticsModifier) acc else acc.then(element)
-        }
-        Box(cleanModifier) {
-            designSwitcher()
-        }
+        val cleanModifier =
+            modifier.foldIn<Modifier>(Modifier) { acc, element ->
+                if (element is androidx.compose.ui.semantics.SemanticsModifier) acc
+                else acc.then(element)
+            }
+        Box(cleanModifier) { designSwitcher() }
         return
     }
 

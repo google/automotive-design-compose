@@ -125,10 +125,12 @@ internal fun squooshComputeTextInfo(
     appContext: Context,
     textMeasureCache: TextMeasureCache,
     textHash: HashSet<String>,
+    customizedNodeName: String = v.name,
 ): Pair<TextMeasureData?, TextStyle>? {
     val customizedText =
-        customizations.getText(v.name) ?: customizations.getTextState(v.name)?.value
-    val customTextStyle = customizations.getTextStyle(v.name)
+        customizations.getText(customizedNodeName)
+            ?: customizations.getTextState(customizedNodeName)?.value
+    val customTextStyle = customizations.getTextStyle(customizedNodeName)
     val fontFamily =
         customTextStyle?.fontFamily
             ?: DesignSettings.fontFamily(
@@ -154,7 +156,7 @@ internal fun squooshComputeTextInfo(
 
     // Evaluate the custom brush BEFORE the cache check so that
     // brush function changes (e.g., from State updates) invalidate the cache.
-    val customBrush = customizations.getBrush(v.name)
+    val customBrush = customizations.getBrush(customizedNodeName)
 
     val cachedText = textMeasureCache.get(layoutId)
     if (

@@ -37,6 +37,7 @@ internal class SquooshResolvedNode(
     val textInfo: TextMeasureData?,
     // The node id before we resolved variants; used for interactions
     val unresolvedNodeId: String,
+    val unresolvedName: String = view.name,
     // The node we look at for layout info, if we're in a tree that was derived
     // from other trees (i.e.: the tree that combines the base and transition
     // trees).

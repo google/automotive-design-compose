@@ -340,6 +340,7 @@ internal fun resolveVariantsRecursively(
             appContext,
             textMeasureCache,
             textHash,
+            customizedNodeName = viewFromTree.name,
         )
     val textInfo = textData?.first
     val textStyle = textData?.second
@@ -368,7 +369,8 @@ internal fun resolveVariantsRecursively(
             }
         }
     }
-    val tapCallback = customizations.getTapCallback(view)
+    var tapCallback = customizations.getTapCallback(viewFromTree.name)
+    if (tapCallback == null) tapCallback = customizations.getTapCallback(view)
     if (tapCallback != null) hasSupportedInteraction = true
     if (textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) hasSupportedInteraction = true
     val progressChildTouch = view.getProgressChildWithTouch(customizations)
@@ -378,13 +380,21 @@ internal fun resolveVariantsRecursively(
 
     // If this node has a content customization, then we make a special record of it so that we can
     // zip through all of them after layout and render them in the right location.
-    val replacementContent = customizations.getContent(view.name)
-    val replacementComponent = customizations.getComponent(view.name)
-    val listWidgetContent = customizations.getListContent(view.name)
+    val replacementContent = customizations.getContent(viewFromTree.name)
+    val replacementComponent = customizations.getComponent(viewFromTree.name)
+    val listWidgetContent = customizations.getListContent(viewFromTree.name)
 
     // If this is a text node being replaced, don't store textInfo into resolvedView
     val resolvedTextInfo = if (replacementComponent != null) null else textInfo
-    val resolvedView = SquooshResolvedNode(view, style, layoutId, resolvedTextInfo, viewFromTree.id)
+    val resolvedView =
+        SquooshResolvedNode(
+            view = view,
+            style = style,
+            layoutId = layoutId,
+            textInfo = resolvedTextInfo,
+            unresolvedNodeId = viewFromTree.id,
+            unresolvedName = viewFromTree.name,
+        )
 
     var skipChildren = false // Set to true for customizations that replace children
     var skipComposableList =

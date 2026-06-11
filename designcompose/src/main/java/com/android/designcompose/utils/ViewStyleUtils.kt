@@ -44,6 +44,104 @@ import com.android.designcompose.definition.view.nodeSizeOrNull
 import com.android.designcompose.definition.view.strokeOrNull
 import com.android.designcompose.definition.view.viewStyle
 
+// Merge styles, but restore target variant layout style properties if they were not explicitly
+// overridden on the component instance.
+internal fun mergeStylesWithVariant(
+    base: ViewStyle,
+    override: ViewStyle,
+    instanceStyle: ViewStyle,
+    defaultVariantStyle: ViewStyle,
+): ViewStyle {
+    val merged = mergeStyles(base, override)
+
+    return merged.copy {
+        val originalLayoutStyle = defaultVariantStyle.layoutStyle
+        val instLayoutStyle = instanceStyle.layoutStyle
+
+        val isWidthOverridden = instLayoutStyle.width != originalLayoutStyle.width
+        val isHeightOverridden = instLayoutStyle.height != originalLayoutStyle.height
+        val isMinWidthOverridden = instLayoutStyle.minWidth != originalLayoutStyle.minWidth
+        val isMinHeightOverridden = instLayoutStyle.minHeight != originalLayoutStyle.minHeight
+        val isMaxWidthOverridden = instLayoutStyle.maxWidth != originalLayoutStyle.maxWidth
+        val isMaxHeightOverridden = instLayoutStyle.maxHeight != originalLayoutStyle.maxHeight
+        val isPositionTypeOverridden =
+            instLayoutStyle.positionType != originalLayoutStyle.positionType
+        val isAlignSelfOverridden = instLayoutStyle.alignSelf != originalLayoutStyle.alignSelf
+        val isFlexGrowOverridden = instLayoutStyle.flexGrow != originalLayoutStyle.flexGrow
+        val isFlexShrinkOverridden = instLayoutStyle.flexShrink != originalLayoutStyle.flexShrink
+        val isFlexBasisOverridden = instLayoutStyle.flexBasis != originalLayoutStyle.flexBasis
+        val isMarginOverridden = instLayoutStyle.margin != originalLayoutStyle.margin
+        val isPaddingOverridden = instLayoutStyle.padding != originalLayoutStyle.padding
+
+        if (
+            !isWidthOverridden ||
+                !isHeightOverridden ||
+                !isMinWidthOverridden ||
+                !isMinHeightOverridden ||
+                !isMaxWidthOverridden ||
+                !isMaxHeightOverridden ||
+                !isPositionTypeOverridden ||
+                !isAlignSelfOverridden ||
+                !isFlexGrowOverridden ||
+                !isFlexShrinkOverridden ||
+                !isFlexBasisOverridden ||
+                !isMarginOverridden ||
+                !isPaddingOverridden
+        ) {
+            layoutStyle =
+                layoutStyle.copy {
+                    if (!isWidthOverridden) {
+                        width = base.layoutStyle.width
+                    }
+                    if (!isHeightOverridden) {
+                        height = base.layoutStyle.height
+                    }
+                    val newW =
+                        if (isWidthOverridden) boundingBox.width
+                        else base.layoutStyle.boundingBox.width
+                    val newH =
+                        if (isHeightOverridden) boundingBox.height
+                        else base.layoutStyle.boundingBox.height
+                    boundingBox =
+                        com.android.designcompose.definition.element.size {
+                            width = newW
+                            height = newH
+                        }
+                    if (!isMinWidthOverridden) minWidth = base.layoutStyle.minWidth
+                    if (!isMinHeightOverridden) minHeight = base.layoutStyle.minHeight
+                    if (!isMaxWidthOverridden) maxWidth = base.layoutStyle.maxWidth
+                    if (!isMaxHeightOverridden) maxHeight = base.layoutStyle.maxHeight
+                    if (!isPositionTypeOverridden) positionType = base.layoutStyle.positionType
+                    if (!isAlignSelfOverridden) alignSelf = base.layoutStyle.alignSelf
+                    if (!isFlexGrowOverridden) flexGrow = base.layoutStyle.flexGrow
+                    if (!isFlexShrinkOverridden) flexShrink = base.layoutStyle.flexShrink
+                    if (!isFlexBasisOverridden) flexBasis = base.layoutStyle.flexBasis
+                    if (!isMarginOverridden) margin = base.layoutStyle.margin
+                    if (!isPaddingOverridden) padding = base.layoutStyle.padding
+                }
+        }
+
+        val originalNodeStyle = defaultVariantStyle.nodeStyle
+        val instNodeStyle = instanceStyle.nodeStyle
+
+        val isHorizontalSizingOverridden =
+            instNodeStyle.horizontalSizing != originalNodeStyle.horizontalSizing
+        val isVerticalSizingOverridden =
+            instNodeStyle.verticalSizing != originalNodeStyle.verticalSizing
+        val isNodeSizeOverridden = instNodeStyle.nodeSize != originalNodeStyle.nodeSize
+
+        if (!isHorizontalSizingOverridden || !isVerticalSizingOverridden || !isNodeSizeOverridden) {
+            nodeStyle =
+                nodeStyle.copy {
+                    if (!isHorizontalSizingOverridden)
+                        horizontalSizing = base.nodeStyle.horizontalSizing
+                    if (!isVerticalSizingOverridden) verticalSizing = base.nodeStyle.verticalSizing
+                    if (!isNodeSizeOverridden) nodeSize = base.nodeStyle.nodeSize
+                }
+        }
+    }
+}
+
 // Merge styles; any non-default properties of the override style are copied over the base style.
 // TODO: look into if we can use proto's own merge functionalities.
 internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {

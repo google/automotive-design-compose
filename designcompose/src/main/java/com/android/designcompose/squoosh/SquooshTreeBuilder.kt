@@ -94,6 +94,7 @@ import com.android.designcompose.utils.getProgressChildWithTouch
 import com.android.designcompose.utils.hasScrolling
 import com.android.designcompose.utils.isSupportedInteraction
 import com.android.designcompose.utils.mergeStyles
+import com.android.designcompose.utils.mergeStylesWithVariant
 
 // Helper class to hold the list of child composables and overlays that need to be composed
 // separately.
@@ -213,6 +214,8 @@ internal fun resolveVariantsRecursively(
     var overrideViewData: ViewData? = null
     var view = viewFromTree
 
+    var defaultVariantView: View? = null
+
     // If we have a component then we might need to get an override style, and we definitely
     // need to get a different layout id.
     if (viewFromTree.hasComponentInfo()) {
@@ -227,6 +230,17 @@ internal fun resolveVariantsRecursively(
             viewFromTree.componentInfo.overridesTableMap[
                     viewFromTree.componentInfo.componentSetName]
                 ?.viewDataOrNull
+
+        defaultVariantView =
+            interactionState.squooshRootNode(
+                NodeQuery.NodeVariant(
+                    viewFromTree.componentInfo.name,
+                    viewFromTree.componentInfo.componentSetName,
+                ),
+                document,
+                isRoot,
+                customizations,
+            )
 
         // Ensure that the children of this component get unique layout ids, even though there
         // may be multiple instances of the same component in one tree.
@@ -293,6 +307,13 @@ internal fun resolveVariantsRecursively(
     val style =
         if (overrideStyle == null) {
             view.style
+        } else if (defaultVariantView != null) {
+            mergeStylesWithVariant(
+                view.style,
+                overrideStyle,
+                viewFromTree.style,
+                defaultVariantView.style,
+            )
         } else {
             // XXX-PERF: This is not needed by Battleship, and takes over 50% of the runtime of
             //           resolveVariants (not including computeTextInfo).

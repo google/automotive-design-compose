@@ -96,7 +96,9 @@ internal fun Modifier.progressBarSlider(
             val pbMeterData = pbNode?.style?.getProgressBarData()
             pbMeterData?.let {
                 val progressChanged =
-                    customizations.getOnProgressChangedCallback(pbNode.unresolvedName)
+                    customizations.getOnProgressChangedCallback(
+                        pbNode.customizationName ?: pbNode.unresolvedName
+                    )
                 val progress: Float
                 if (it.vertical) {
                     val startY = it.startY * density
@@ -111,14 +113,19 @@ internal fun Modifier.progressBarSlider(
                 }
                 progressChanged?.onProgressChanged(progress)
                 meterState.value = progress
-                customizations.setMeterState(pbNode.unresolvedName, meterState)
+                customizations.setMeterState(
+                    pbNode.customizationName ?: pbNode.unresolvedName,
+                    meterState,
+                )
             }
 
             val pmNode = node.findProgressMarkerDescendant()
             val pmMeterData = pmNode?.style?.getProgressMarkerData()
             pmMeterData?.let {
                 val progressChanged =
-                    customizations.getOnProgressChangedCallback(pmNode.unresolvedName)
+                    customizations.getOnProgressChangedCallback(
+                        pmNode.customizationName ?: pmNode.unresolvedName
+                    )
                 val progress: Float
                 if (it.vertical) {
                     val startY = it.startY * density
@@ -133,7 +140,10 @@ internal fun Modifier.progressBarSlider(
                 }
                 progressChanged?.onProgressChanged(progress)
                 meterState.value = progress
-                customizations.setMeterState(pmNode.unresolvedName, meterState)
+                customizations.setMeterState(
+                    pmNode.customizationName ?: pmNode.unresolvedName,
+                    meterState,
+                )
             }
         }
 

@@ -83,6 +83,7 @@ import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
 import com.android.designcompose.getListContent
+import com.android.designcompose.getLongPressCallback
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
@@ -372,6 +373,9 @@ internal fun resolveVariantsRecursively(
     var tapCallback = customizations.getTapCallback(viewFromTree.name)
     if (tapCallback == null) tapCallback = customizations.getTapCallback(view)
     if (tapCallback != null) hasSupportedInteraction = true
+    var longPressCallback = customizations.getLongPressCallback(viewFromTree.name)
+    if (longPressCallback == null) longPressCallback = customizations.getLongPressCallback(view)
+    if (longPressCallback != null) hasSupportedInteraction = true
     if (textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) hasSupportedInteraction = true
     val progressChildTouch = view.getProgressChildWithTouch(customizations)
     if (progressChildTouch != null) hasSupportedInteraction = true

@@ -88,6 +88,14 @@ class CustomizationContextTest {
     }
 
     @Test
+    fun testSetAndGetLongPressCallback() {
+        val context = CustomizationContext()
+        val callback = {}
+        context.setLongPressCallback("node1", callback)
+        assertThat(context.getLongPressCallback("node1")).isEqualTo(callback)
+    }
+
+    @Test
     fun testSetAndGetOnProgressChangedCallback() {
         val context = CustomizationContext()
         val callback =

@@ -872,10 +872,12 @@ fun SquooshRoot(
                             customizationContext.getContent(it) != null
                         } ?: false
                     // Use the key() function to avoid recomposition when list items are reordered.
-                    // However, don't call key() for component replacements to avoid recomposition.
-                    // This is due to a bug where recomposition a component replacement that uses
-                    // AndroidView can cause a crash. See bug
-                    // https://github.com/google/automotive-design-compose/issues/1605
+                    // For component replacements (non-list items), we also use key() with the
+                    // stable
+                    // unresolvedNodeId to prevent Compose from destroying and recreating child
+                    // composables
+                    // (and their inner AndroidViews) during variant changes.
+                    // See bug: https://github.com/google/automotive-design-compose/issues/1605
                     if (isListItem)
                         key(child.node.layoutId) {
                             SquooshChildLayout(
@@ -885,11 +887,13 @@ fun SquooshRoot(
                             )
                         }
                     else
-                        SquooshChildLayout(
-                            modifier = composableChildModifier,
-                            child = child,
-                            scrollOffset,
-                        )
+                        key(child.node.unresolvedNodeId) {
+                            SquooshChildLayout(
+                                modifier = composableChildModifier,
+                                child = child,
+                                scrollOffset,
+                            )
+                        }
                 }
             },
         )

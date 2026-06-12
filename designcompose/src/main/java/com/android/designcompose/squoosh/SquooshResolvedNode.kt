@@ -58,6 +58,8 @@ internal class SquooshResolvedNode(
     // check were not here.
     var skipLayoutScroll: Boolean = false,
 ) {
+    var customizationName: String? = null
+
     fun offsetFromAncestor(ancestor: SquooshResolvedNode? = null): PointF {
         var n: SquooshResolvedNode? = this
         var x = 0f

@@ -27,9 +27,14 @@ import com.android.designcompose.common.GenericDocContent
 import com.android.designcompose.common.VariantPropertyMap
 import com.android.designcompose.definition.DesignComposeDefinition
 import com.android.designcompose.definition.DesignComposeDefinitionHeader
+import com.android.designcompose.definition.plugin.MeterData
+import com.android.designcompose.definition.plugin.ProgressBarMeterData
+import com.android.designcompose.definition.view.NodeStyle
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewDataKt.container
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.componentInfo
+import com.android.designcompose.definition.view.nodeStyle
 import com.android.designcompose.definition.view.view
 import com.android.designcompose.definition.view.viewData
 import com.google.common.truth.Truth.assertThat
@@ -322,5 +327,76 @@ class SquooshTreeBuilderTest {
             composableList3.childComposables.find { it.node.unresolvedName == iconSlotInstanceName }
         assertThat(child3).isNotNull()
         assertThat(child3!!.component).isEqualTo(replacementComponent)
+    }
+
+    @Test
+    fun testProgressBarDataTransferToIndicator() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val density = Density(1f)
+        val fontResolver = createFontFamilyResolver(context)
+
+        // 1. Create progress bar parent view style with progress bar meter data
+        val pbMeterData = ProgressBarMeterData.newBuilder().setEnabled(true).build()
+        val meterData = MeterData.newBuilder().setProgressBarData(pbMeterData).build()
+        val parentNodeStyle = NodeStyle.newBuilder().setMeterData(meterData).build()
+        val parentStyle = ViewStyle.newBuilder().setNodeStyle(parentNodeStyle).build()
+
+        // 2. Create indicator child view
+        val childView = view {
+            uniqueId = 2
+            id = "indicator-id"
+            name = "#indicator"
+        }
+
+        // 3. Create parent view "#progress" with the indicator child
+        val parentView = view {
+            uniqueId = 1
+            id = "progress-id"
+            name = "#progress"
+            style = parentStyle
+            data = viewData { container = container { children.add(childView) } }
+        }
+
+        val docContent = createDocContent(rootView = parentView)
+        val customizations = CustomizationContext()
+        val variantTransition = SquooshVariantTransition()
+        val interactionState = InteractionState()
+        val keyTracker = KeyEventTracker()
+        val layoutIdAllocator = SquooshLayoutIdAllocator()
+
+        val resolvedNode =
+            resolveVariantsRecursively(
+                viewFromTree = parentView,
+                document = docContent,
+                customizations = customizations,
+                variantTransition = variantTransition,
+                interactionState = interactionState,
+                keyTracker = keyTracker,
+                parentComponents = null,
+                density = density,
+                fontResolver = fontResolver,
+                composableList = null,
+                layoutIdAllocator = layoutIdAllocator,
+                isRoot = true,
+                variableState = VariableState(),
+                appContext = context,
+                customVariantTransition = null,
+                textMeasureCache = TextMeasureCache(),
+                textHash = HashSet(),
+            )
+
+        assertThat(resolvedNode).isNotNull()
+        // Parent "#progress" should NOT have progress bar data anymore
+        assertThat(resolvedNode!!.style.nodeStyle.hasMeterData()).isFalse()
+
+        // Child "#indicator" should have progress bar data transferred
+        val indicatorNode = resolvedNode.firstChild
+        assertThat(indicatorNode).isNotNull()
+        assertThat(indicatorNode!!.unresolvedName).isEqualTo("#indicator")
+        assertThat(indicatorNode.style.nodeStyle.hasMeterData()).isTrue()
+        assertThat(indicatorNode.style.nodeStyle.meterData.hasProgressBarData()).isTrue()
+
+        // Child customizationName should be set to parent's unresolved name "#progress"
+        assertThat(indicatorNode.customizationName).isEqualTo("#progress")
     }
 }

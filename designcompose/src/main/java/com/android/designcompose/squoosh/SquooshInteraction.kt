@@ -44,6 +44,7 @@ import com.android.designcompose.definition.interaction.Action
 import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.dispatch
 import com.android.designcompose.getKey
+import com.android.designcompose.getLongPressCallback
 import com.android.designcompose.getOnProgressChangedCallback
 import com.android.designcompose.getPressedReactionList
 import com.android.designcompose.getPressedTapCallback
@@ -96,7 +97,9 @@ internal fun Modifier.progressBarSlider(
             val pbMeterData = pbNode?.style?.getProgressBarData()
             pbMeterData?.let {
                 val progressChanged =
-                    customizations.getOnProgressChangedCallback(pbNode.unresolvedName)
+                    customizations.getOnProgressChangedCallback(
+                        pbNode.customizationName ?: pbNode.unresolvedName
+                    )
                 val progress: Float
                 if (it.vertical) {
                     val startY = it.startY * density
@@ -111,14 +114,19 @@ internal fun Modifier.progressBarSlider(
                 }
                 progressChanged?.onProgressChanged(progress)
                 meterState.value = progress
-                customizations.setMeterState(pbNode.unresolvedName, meterState)
+                customizations.setMeterState(
+                    pbNode.customizationName ?: pbNode.unresolvedName,
+                    meterState,
+                )
             }
 
             val pmNode = node.findProgressMarkerDescendant()
             val pmMeterData = pmNode?.style?.getProgressMarkerData()
             pmMeterData?.let {
                 val progressChanged =
-                    customizations.getOnProgressChangedCallback(pmNode.unresolvedName)
+                    customizations.getOnProgressChangedCallback(
+                        pmNode.customizationName ?: pmNode.unresolvedName
+                    )
                 val progress: Float
                 if (it.vertical) {
                     val startY = it.startY * density
@@ -133,7 +141,10 @@ internal fun Modifier.progressBarSlider(
                 }
                 progressChanged?.onProgressChanged(progress)
                 meterState.value = progress
-                customizations.setMeterState(pmNode.unresolvedName, meterState)
+                customizations.setMeterState(
+                    pmNode.customizationName ?: pmNode.unresolvedName,
+                    meterState,
+                )
             }
         }
 
@@ -284,6 +295,11 @@ internal fun Modifier.squooshInteraction(
             customizations.getTapCallback(childComposable.node.unresolvedName)
                 ?: customizations.getTapCallback(childComposable.node.view)
         )
+    val latestLongPressCallback by
+        androidx.compose.runtime.rememberUpdatedState(
+            customizations.getLongPressCallback(childComposable.node.unresolvedName)
+                ?: customizations.getLongPressCallback(childComposable.node.view)
+        )
     val latestParentComponents by
         androidx.compose.runtime.rememberUpdatedState(childComposable.parentComponents)
 
@@ -292,6 +308,7 @@ internal fun Modifier.squooshInteraction(
             val node = childComposable.node
             val viewName = node.view.name
             detectTapGestures(
+                onLongPress = { latestLongPressCallback?.invoke() },
                 onPress = {
                     var pressInteraction: PressInteraction.Press? = null
                     var success = false
@@ -386,7 +403,7 @@ internal fun Modifier.squooshInteraction(
                         isPressed.value = false
                         interactionState.removePressed(node.unresolvedNodeId)
                     }
-                }
+                },
             )
         }
     )

@@ -289,7 +289,11 @@ private fun addGridContent(
             val density = LocalDensity.current.density
             val lazyGridState = rememberLazyGridState()
             val setScrollableStateCallback =
-                customizations.getScrollCallbacks(resolvedView.unresolvedName)?.setScrollableState
+                customizations
+                    .getScrollCallbacks(
+                        resolvedView.customizationName ?: resolvedView.unresolvedName
+                    )
+                    ?.setScrollableState
             LaunchedEffect(lazyGridState, setScrollableStateCallback) {
                 setScrollableStateCallback?.invoke(lazyGridState)
             }

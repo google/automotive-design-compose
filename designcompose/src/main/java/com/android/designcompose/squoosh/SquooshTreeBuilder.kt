@@ -73,7 +73,9 @@ import com.android.designcompose.definition.view.ViewDataKt.container
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.containerOrNull
 import com.android.designcompose.definition.view.frameExtrasOrNull
+import com.android.designcompose.definition.view.meterDataOrNull
 import com.android.designcompose.definition.view.nodeStyle
+import com.android.designcompose.definition.view.nodeStyleOrNull
 import com.android.designcompose.definition.view.styleOrNull
 import com.android.designcompose.definition.view.view
 import com.android.designcompose.definition.view.viewData
@@ -83,6 +85,7 @@ import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
 import com.android.designcompose.getListContent
+import com.android.designcompose.getLongPressCallback
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
@@ -372,6 +375,9 @@ internal fun resolveVariantsRecursively(
     var tapCallback = customizations.getTapCallback(viewFromTree.name)
     if (tapCallback == null) tapCallback = customizations.getTapCallback(view)
     if (tapCallback != null) hasSupportedInteraction = true
+    var longPressCallback = customizations.getLongPressCallback(viewFromTree.name)
+    if (longPressCallback == null) longPressCallback = customizations.getLongPressCallback(view)
+    if (longPressCallback != null) hasSupportedInteraction = true
     if (textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) hasSupportedInteraction = true
     val progressChildTouch = view.getProgressChildWithTouch(customizations)
     if (progressChildTouch != null) hasSupportedInteraction = true
@@ -509,6 +515,43 @@ internal fun resolveVariantsRecursively(
                 if (previousChild != null) previousChild.nextSibling = childResolvedNode
 
                 previousChild = childResolvedNode
+            }
+
+            // Transfer progress bar data from parent container to child "#indicator" or "indicator"
+            // if present. This allows the indicator bar inside the track container to resize/move,
+            // rather than resizing the entire progress bar background/track.
+            if (resolvedView.style.nodeStyleOrNull?.meterDataOrNull?.hasProgressBarData() == true) {
+                var child = resolvedView.firstChild
+                var indicatorChild: SquooshResolvedNode? = null
+                while (child != null) {
+                    if (child.view.name == "#indicator" || child.view.name == "indicator") {
+                        indicatorChild = child
+                        break
+                    }
+                    child = child.nextSibling
+                }
+                if (indicatorChild != null) {
+                    val meterData = resolvedView.style.nodeStyle.meterData
+
+                    val childNodeStyleBuilder = indicatorChild.style.nodeStyle.toBuilder()
+                    childNodeStyleBuilder.setMeterData(meterData)
+
+                    indicatorChild.style =
+                        indicatorChild.style
+                            .toBuilder()
+                            .setNodeStyle(childNodeStyleBuilder.build())
+                            .build()
+
+                    indicatorChild.customizationName = resolvedView.unresolvedName
+
+                    val parentNodeStyleBuilder = resolvedView.style.nodeStyle.toBuilder()
+                    parentNodeStyleBuilder.clearMeterData()
+                    resolvedView.style =
+                        resolvedView.style
+                            .toBuilder()
+                            .setNodeStyle(parentNodeStyleBuilder.build())
+                            .build()
+                }
             }
         }
     }

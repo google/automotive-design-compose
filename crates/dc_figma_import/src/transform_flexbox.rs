@@ -2851,7 +2851,8 @@ fn test_opacity_serialization() {
 
     let mut key_to_global_id_map = HashMap::new();
     let mut component_context = ComponentContext::new(&vec![]);
-    let mut image_context = ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
 
     let mut convert_node = |json: &str| -> dc_bundle::view::View {
         let node: figma_schema::Node = serde_json::from_str(json).unwrap();
@@ -2863,7 +2864,8 @@ fn test_opacity_serialization() {
             &mut image_context,
             crate::document::HiddenNodePolicy::Keep,
             &mut key_to_global_id_map,
-        ).unwrap()
+        )
+        .unwrap()
     };
 
     let view_omitted = convert_node(json_omitted);
@@ -2881,4 +2883,3 @@ fn test_opacity_serialization() {
     let node_style_half = view_half.style.as_ref().unwrap().node_style.as_ref().unwrap();
     assert_eq!(node_style_half.opacity, Some(0.5));
 }
-

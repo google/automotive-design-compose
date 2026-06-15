@@ -125,8 +125,11 @@ internal fun Modifier.squooshRender(
                     node.parent?.let {
                         // Don't scroll for custom list content since it scrolled in layout
                         val customContent =
-                            customizations.getContent(it.unresolvedName) != null ||
-                                customizations.getListContent(it.unresolvedName) != null
+                            customizations.getContent(it.customizationName ?: it.unresolvedName) !=
+                                null ||
+                                customizations.getListContent(
+                                    it.customizationName ?: it.unresolvedName
+                                ) != null
                         scroll = !customContent && it.view == parentNode
                     }
                     if (scroll) {
@@ -199,7 +202,10 @@ internal fun Modifier.squooshRender(
                             shaderBrushCache,
                             appContext,
                         ) {
-                            val shapeInsets = customizations.getWindowInsets(node.unresolvedName)
+                            val shapeInsets =
+                                customizations.getWindowInsets(
+                                    node.customizationName ?: node.unresolvedName
+                                )
                             val topInset = shapeInsets?.getTop(this) ?: 0
                             val leftInset = shapeInsets?.getLeft(this, layoutDirection) ?: 0
 

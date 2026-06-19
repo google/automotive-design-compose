@@ -73,6 +73,8 @@ data class ReplacementContent(
 
 typealias TapCallback = () -> Unit
 
+typealias LongPressCallback = () -> Unit
+
 typealias MeterState = MutableState<Float?>
 
 typealias Meter = Float
@@ -123,6 +125,8 @@ data class Customization(
     var modifier: Optional<Modifier> = Optional.empty(),
     // Tap callback customization
     var tapCallback: Optional<TapCallback> = Optional.empty(),
+    // Long press callback customization
+    var longPressCallback: Optional<LongPressCallback> = Optional.empty(),
     // On progress changed callback customization
     var onProgressChangedCallback: Optional<OnProgressChangedCallback> = Optional.empty(),
     // Child content customization V2
@@ -282,6 +286,13 @@ fun CustomizationContext.setTapCallback(nodeName: String, tapCallback: TapCallba
     customize(nodeName) { c -> c.tapCallback = Optional.ofNullable(tapCallback) }
 }
 
+fun CustomizationContext.setLongPressCallback(
+    nodeName: String,
+    longPressCallback: LongPressCallback,
+) {
+    customize(nodeName) { c -> c.longPressCallback = Optional.ofNullable(longPressCallback) }
+}
+
 fun CustomizationContext.setOnProgressChangedCallback(
     nodeName: String,
     callback: OnProgressChangedCallback,
@@ -419,6 +430,10 @@ fun CustomizationContext.getTapCallback(nodeName: String): TapCallback? {
     return cs[nodeName]?.tapCallback?.getOrNull()
 }
 
+fun CustomizationContext.getLongPressCallback(nodeName: String): LongPressCallback? {
+    return cs[nodeName]?.longPressCallback?.getOrNull()
+}
+
 fun CustomizationContext.getOnProgressChangedCallback(
     nodeName: String
 ): OnProgressChangedCallback? {
@@ -434,6 +449,15 @@ fun CustomizationContext.getTapCallback(view: View): TapCallback? {
         tapCallback = getTapCallback(componentSetName)
     }
     return tapCallback
+}
+
+fun CustomizationContext.getLongPressCallback(view: View): LongPressCallback? {
+    var longPressCallback = getLongPressCallback(view.name)
+    val componentSetName = view.componentInfoOrNull?.componentSetName
+    if (longPressCallback == null && !componentSetName.isNullOrBlank()) {
+        longPressCallback = getLongPressCallback(componentSetName)
+    }
+    return longPressCallback
 }
 
 fun CustomizationContext.getContent(nodeName: String): ReplacementContent? {

@@ -82,6 +82,7 @@ import com.android.designcompose.KeyEventTracker
 import com.android.designcompose.KeyInjectManager
 import com.android.designcompose.LayoutManager
 import com.android.designcompose.LiveUpdateMode
+import com.android.designcompose.LocalCustomizationContext
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.LocalVariableState
 import com.android.designcompose.ShaderBrushCache
@@ -289,7 +290,12 @@ fun SquooshRoot(
 
     if (doc == null) {
         Log.d(TAG, "No doc! $docName / $incomingDocId")
-        designSwitcher()
+        val cleanModifier =
+            modifier.foldIn<Modifier>(Modifier) { acc, element ->
+                if (element is androidx.compose.ui.semantics.SemanticsModifier) acc
+                else acc.then(element)
+            }
+        Box(cleanModifier) { designSwitcher() }
         return
     }
 
@@ -703,7 +709,10 @@ fun SquooshRoot(
     //
     // This is covered in the interaction test document's "Combos" screen; the purple button has no
     // interactions in its ON_PRESS variant.
-    CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
+    CompositionLocalProvider(
+        LocalSquooshIsRootContext provides SquooshIsRoot(false),
+        LocalCustomizationContext provides customizationContext,
+    ) {
         androidx.compose.ui.layout.Layout(
             modifier =
                 modifier
@@ -869,8 +878,18 @@ fun SquooshRoot(
                             val pmChild = child.node.findProgressMarkerDescendant()
                             val interactionSource = remember { MutableInteractionSource() }
                             val meter = remember { mutableStateOf<Float?>(null) }
-                            pbChild?.let { customizationContext.setMeterState(it.view.name, meter) }
-                            pmChild?.let { customizationContext.setMeterState(it.view.name, meter) }
+                            pbChild?.let {
+                                customizationContext.setMeterState(
+                                    it.customizationName ?: it.view.name,
+                                    meter,
+                                )
+                            }
+                            pmChild?.let {
+                                customizationContext.setMeterState(
+                                    it.customizationName ?: it.view.name,
+                                    meter,
+                                )
+                            }
                             // Give this node a Modifier that tracks tap/drag
                             composableChildModifier =
                                 composableChildModifier.progressBarSlider(
@@ -896,10 +915,12 @@ fun SquooshRoot(
                             customizationContext.getContent(it) != null
                         } ?: false
                     // Use the key() function to avoid recomposition when list items are reordered.
-                    // However, don't call key() for component replacements to avoid recomposition.
-                    // This is due to a bug where recomposition a component replacement that uses
-                    // AndroidView can cause a crash. See bug
-                    // https://github.com/google/automotive-design-compose/issues/1605
+                    // For component replacements (non-list items), we also use key() with the
+                    // stable
+                    // unresolvedNodeId to prevent Compose from destroying and recreating child
+                    // composables
+                    // (and their inner AndroidViews) during variant changes.
+                    // See bug: https://github.com/google/automotive-design-compose/issues/1605
                     if (isListItem)
                         key(child.node.layoutId) {
                             SquooshChildLayout(
@@ -909,11 +930,13 @@ fun SquooshRoot(
                             )
                         }
                     else
-                        SquooshChildLayout(
-                            modifier = composableChildModifier,
-                            child = child,
-                            scrollOffset,
-                        )
+                        key(child.node.unresolvedNodeId) {
+                            SquooshChildLayout(
+                                modifier = composableChildModifier,
+                                child = child,
+                                scrollOffset,
+                            )
+                        }
                 }
             },
         )

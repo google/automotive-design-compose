@@ -18,6 +18,7 @@ package com.android.designcompose
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
@@ -77,6 +78,61 @@ class CustomizationContextTest {
         val modifier = Modifier
         context.setModifier("node1", modifier)
         assertThat(context.getModifier("node1")).isEqualTo(modifier)
+    }
+
+    // The Squoosh renderer resolves a node's custom Modifier by node *name* via
+    // `customizations.getModifier(view.name)` (see SquooshTreeBuilder.resolveVariantsRecursively).
+    // These tests pin that name->Modifier mapping so a regression in modifier propagation to
+    // nested components (PR #2466) is caught at the unit level, in addition to the rendered
+    // snapshot in NestedComponentModifierValidation.
+    @Test
+    fun testModifierResolvedByNodeName() {
+        val context = CustomizationContext()
+        val modifier = Modifier.rotate(45f)
+        context.setModifier("CompTest", modifier)
+
+        // Resolved only for the node it was registered against.
+        assertThat(context.getModifier("CompTest")).isEqualTo(modifier)
+        // Nodes without a registered Modifier resolve to null (renderer falls back to no wrap).
+        assertThat(context.getModifier("#Main")).isNull()
+    }
+
+    @Test
+    fun testModifierIsolatedPerNode() {
+        val context = CustomizationContext()
+        val rootModifier = Modifier.rotate(10f)
+        val nestedModifier = Modifier.rotate(45f)
+        context.setModifier("#Main", rootModifier)
+        context.setModifier("CompTest", nestedModifier)
+
+        // Each node keeps its own Modifier; they don't leak into one another.
+        assertThat(context.getModifier("#Main")).isEqualTo(rootModifier)
+        assertThat(context.getModifier("CompTest")).isEqualTo(nestedModifier)
+    }
+
+    @Test
+    fun testModifierPropagatesThroughMergeFrom() {
+        // A nested @DesignComponent merges the surrounding CustomizationContext via
+        // `mergeFrom(LocalCustomizationContext.current)`, which is how a Modifier registered on
+        // a nested node reaches the renderer. Verify the Modifier survives that merge.
+        val nestedModifier = Modifier.rotate(45f)
+        val source = CustomizationContext()
+        source.setModifier("CompTest", nestedModifier)
+
+        val merged = CustomizationContext()
+        merged.mergeFrom(source)
+
+        assertThat(merged.getModifier("CompTest")).isEqualTo(nestedModifier)
+    }
+
+    @Test
+    fun testSetModifierNullClearsResolution() {
+        val context = CustomizationContext()
+        context.setModifier("CompTest", Modifier.rotate(45f))
+        assertThat(context.getModifier("CompTest")).isNotNull()
+
+        context.setModifier("CompTest", null)
+        assertThat(context.getModifier("CompTest")).isNull()
     }
 
     @Test

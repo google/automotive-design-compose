@@ -47,6 +47,12 @@ interface ComponentTapCallback {
         @DesignVariant(property = "prnd") state: DrivingState,
         @Design(node = "CompTest") onPress: TapCallback,
     )
+
+    // Renders "#Main" and registers a Modifier on the nested "CompTest" component via
+    // CustomizationContext.setModifier("CompTest", nestedModifier). Used by
+    // NestedComponentModifierTest to exercise modifier propagation to nested components.
+    @DesignComponent(node = "#Main")
+    fun mainFrameWithNestedModifier(@Design(node = "CompTest") nestedModifier: Modifier)
 }
 
 @Composable

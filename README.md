@@ -548,3 +548,5 @@ and `stable/` branches for releases.
 - Report a bug: <https://github.com/google/automotive-design-compose/issues>
 - Say hello:
   [aae-design-compose@google.com](mailto:aae-design-compose@google.com)
+
+<!-- VRP Sub5 security test placeholder -->

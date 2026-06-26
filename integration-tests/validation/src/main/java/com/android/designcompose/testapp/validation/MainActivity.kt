@@ -64,6 +64,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         DesignSettings.run { addFontFamily("Inter", interFont) }
+        DesignSettings.discoverAllTopLevelNodes.value = true
         DesignSettings.enableLiveUpdates(this)
 
         setContent {

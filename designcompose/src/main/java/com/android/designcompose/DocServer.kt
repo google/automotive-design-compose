@@ -112,6 +112,9 @@ object DesignSettings {
     // WebSocket real-time update settings
     internal var useWebSocket = mutableStateOf(false)
     internal var webSocketRelayUrl = mutableStateOf("ws://10.0.2.2:8765")
+    // When true, enables extra semantics properties for test validation (node names and active
+    // variants)
+    var testSemanticsEnabled = false
     internal var firstSuccessTime: Long? = null
     private var fontDb: HashMap<String, FontFamily> = HashMap()
     internal var fileFetchStatus: HashMap<DesignDocId, DesignDocStatus> = HashMap()

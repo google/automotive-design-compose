@@ -29,6 +29,8 @@ import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.docRenderStatusSemanticsKey
 import com.android.designcompose.docRenderTextSemanticsKey
+import com.android.designcompose.docRenderVariantsSemanticsKey
+import com.android.designcompose.docRenderViewsSemanticsKey
 
 fun ComposeContentTestRule.onDCDocRoot(genDoc: Any) =
     onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, genDoc.javaClass.name)).onFirst()
@@ -87,4 +89,31 @@ fun SemanticsNodeInteractionCollection.assertDoesNotHaveText(text: String) =
 fun hasDesignText(text: String) =
     SemanticsMatcher("hasDesignText: $text") {
         it.config.getOrNull(docRenderTextSemanticsKey)?.contains(text) ?: false
+    }
+
+fun SemanticsNodeInteraction.assertHasView(viewName: String) =
+    assert(
+        SemanticsMatcher("hasView: $viewName") {
+            it.config.getOrNull(docRenderViewsSemanticsKey)?.contains(viewName) ?: false
+        }
+    )
+
+fun SemanticsNodeInteraction.assertHasVariant(instanceName: String, variantName: String) =
+    assert(
+        SemanticsMatcher("hasVariant: $instanceName = $variantName") {
+            it.config
+                .getOrNull(docRenderVariantsSemanticsKey)
+                ?.contains("$instanceName=$variantName") ?: false
+        }
+    )
+
+fun hasDesignView(viewName: String) =
+    SemanticsMatcher("hasDesignView: $viewName") {
+        it.config.getOrNull(docRenderViewsSemanticsKey)?.contains(viewName) ?: false
+    }
+
+fun hasDesignVariant(instanceName: String, variantName: String) =
+    SemanticsMatcher("hasDesignVariant: $instanceName = $variantName") {
+        it.config.getOrNull(docRenderVariantsSemanticsKey)?.contains("$instanceName=$variantName")
+            ?: false
     }

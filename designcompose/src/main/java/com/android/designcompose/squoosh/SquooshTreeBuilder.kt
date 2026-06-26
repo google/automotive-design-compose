@@ -308,19 +308,19 @@ internal fun resolveVariantsRecursively(
     // Calculate the style we're going to use. If we have an override style then we have to apply
     // that on top of the view (or variant) style.
     val style =
-        if (overrideStyle == null) {
-            view.style
-        } else if (defaultVariantView != null) {
+        if (defaultVariantView != null) {
             mergeStylesWithVariant(
                 view.style,
-                overrideStyle,
+                overrideStyle ?: ViewStyle.getDefaultInstance(),
                 viewFromTree.style,
                 defaultVariantView.style,
             )
-        } else {
+        } else if (overrideStyle != null) {
             // XXX-PERF: This is not needed by Battleship, and takes over 50% of the runtime of
             //           resolveVariants (not including computeTextInfo).
             mergeStyles(view.style, overrideStyle)
+        } else {
+            view.style
         }
 
     // Now we know the view we want to render, the style we want to use, etc. We can create

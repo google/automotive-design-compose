@@ -1474,7 +1474,7 @@ fn visit_node(
     // Blend mode is common to all elements.
     style.node_style_mut().blend_mode = convert_blend_mode(node.blend_mode).into();
 
-    style.node_style_mut().opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
+    style.node_style_mut().opacity = Some(node.opacity);
 
     style.node_style_mut().stroke.as_mut().map(|stroke| {
         for visible_stroke in node.strokes.iter().filter(|paint| paint.visible) {
@@ -1639,7 +1639,7 @@ fn visit_node(
             })
             .into(),
         };
-        style.node_style_mut().opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
+        style.node_style_mut().opacity = Some(node.opacity);
         let convert_opentype_flags = |flags: &HashMap<String, u32>| -> Vec<FontFeature> {
             let mut font_features = Vec::new();
             for (flag, value) in flags {
@@ -2816,4 +2816,70 @@ fn test_absolute_position_in_autolayout_import() {
             _ => None,
         });
     assert_eq!(top_margin, Some(&100.0), "Top margin should be 100 (child_y - parent_y)");
+}
+
+#[test]
+fn test_opacity_serialization() {
+    // Test case 1: Opacity omitted (defaults to 1.0)
+    let json_omitted = r#"{
+        "id": "1",
+        "name": "omitted",
+        "type": "FRAME",
+        "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 100, "height": 100 }
+    }"#;
+
+    // Test case 2: Opacity explicitly 0.0
+    let json_zero = r#"{
+        "id": "2",
+        "name": "zero",
+        "type": "FRAME",
+        "opacity": 0.0,
+        "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 100, "height": 100 }
+    }"#;
+
+    // Test case 3: Opacity explicitly 0.5
+    let json_half = r#"{
+        "id": "3",
+        "name": "half",
+        "type": "FRAME",
+        "opacity": 0.5,
+        "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 100, "height": 100 }
+    }"#;
+
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+
+    let mut convert_node = |json: &str| -> dc_bundle::view::View {
+        let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+        create_component_flexbox(
+            &node,
+            &HashMap::new(),
+            &HashMap::new(),
+            &mut component_context,
+            &mut image_context,
+            crate::document::HiddenNodePolicy::Keep,
+            &mut key_to_global_id_map,
+        )
+        .unwrap()
+    };
+
+    let view_omitted = convert_node(json_omitted);
+    assert!(view_omitted.style.is_some());
+    let style_omitted = view_omitted.style.as_ref().unwrap();
+    assert!(style_omitted.node_style.is_some());
+    let node_style_omitted = style_omitted.node_style.as_ref().unwrap();
+    assert_eq!(node_style_omitted.opacity, Some(1.0));
+
+    let view_zero = convert_node(json_zero);
+    let node_style_zero = view_zero.style.as_ref().unwrap().node_style.as_ref().unwrap();
+    assert_eq!(node_style_zero.opacity, Some(0.0));
+
+    let view_half = convert_node(json_half);
+    let node_style_half = view_half.style.as_ref().unwrap().node_style.as_ref().unwrap();
+    assert_eq!(node_style_half.opacity, Some(0.5));
 }

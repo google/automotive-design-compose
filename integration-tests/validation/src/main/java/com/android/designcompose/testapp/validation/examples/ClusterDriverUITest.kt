@@ -17,6 +17,7 @@
 package com.android.designcompose.testapp.validation.examples
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -34,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
@@ -84,7 +86,7 @@ object ClusterVariant {
 }
 
 @DesignDoc(id = "CuF1b1eAIukB6YszX6B5OZ")
-interface Cluster {
+interface ClusterDriverUI {
     @DesignComponent(node = "#android-stage")
     fun androidMain(
         @DesignVariant(property = "#panel1") panel1Component: ClusterVariant.ComponentType,
@@ -155,7 +157,7 @@ fun PanelButtons(
 }
 
 @Composable
-fun ClusterTest() {
+fun ClusterDriverUITest() {
     val panel1Component = remember { mutableStateOf(ClusterVariant.ComponentType.Media) }
     val panel2Component = remember { mutableStateOf(ClusterVariant.ComponentType.NoMedia) }
     val panel3Component = remember { mutableStateOf(ClusterVariant.ComponentType.Navigation) }
@@ -163,26 +165,23 @@ fun ClusterTest() {
     val phoneState = remember { mutableStateOf(ClusterVariant.PhoneCallState.nocall) }
 
     Log.d(
-        "ClusterTest",
-        "Recomposing ClusterTest: panel1=${panel1Component.value}, panel2=${panel2Component.value}, panel3=${panel3Component.value}, media=${mediaPlayerState.value}, phone=${phoneState.value}",
+        "ClusterDriverUITest",
+        "Recomposing ClusterDriverUITest: panel1=${panel1Component.value}, panel2=${panel2Component.value}, panel3=${panel3Component.value}, media=${mediaPlayerState.value}, phone=${phoneState.value}",
     )
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(
-            modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 90.dp),
-            contentAlignment = Alignment.TopCenter,
-        ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             val scale = maxWidth.value / 1920f
             Box(
                 modifier = Modifier.requiredSize(maxWidth, 720.dp * scale),
-                contentAlignment = Alignment.TopCenter,
+                contentAlignment = Alignment.Center,
             ) {
-                ClusterDoc.androidMain(
+                ClusterDriverUIDoc.androidMain(
                     modifier =
                         Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
                             scaleX = scale
                             scaleY = scale
-                            transformOrigin = TransformOrigin(0.5f, 0f)
+                            transformOrigin = TransformOrigin(0.5f, 0.5f)
                         },
                     panel1Component = panel1Component.value,
                     panel2Component = panel2Component.value,
@@ -193,7 +192,13 @@ fun ClusterTest() {
                 )
             }
         }
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier =
+                Modifier.align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(Color.White.copy(alpha = 0.8f))
+                    .padding(16.dp)
+        ) {
             PanelButtons("Panel 1", panel1Component, mediaPlayerState, phoneState)
             PanelButtons("Panel 2", panel2Component, mediaPlayerState, phoneState)
             PanelButtons("Panel 3", panel3Component, mediaPlayerState, phoneState)

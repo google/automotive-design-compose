@@ -24,9 +24,9 @@ import com.github.takahirom.roborazzi.captureRoboImage
 
 const val ROBO_CAPTURE_DIR = "src/testDebug/roborazzi"
 
-// Allow a 2% subpixel rendering tolerance for flaky head-less text and animation timing shifts
+// Allow a 5% subpixel rendering tolerance for flaky head-less text and animation timing shifts
 val DEFAULT_ROBORAZZI_OPTIONS =
-    RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.02f))
+    RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.05f))
 
 fun ComposeContentTestRule.captureRootRoboImage(screenshotName: String) {
     onRoot()

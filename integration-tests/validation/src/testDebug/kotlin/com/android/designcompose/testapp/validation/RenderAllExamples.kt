@@ -25,7 +25,9 @@ import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.BrushFromShaderPluginTestDoc
 import com.android.designcompose.testapp.validation.examples.CustomBrushTestDoc
+import com.android.designcompose.testapp.validation.examples.DialsGaugesTestDoc
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
+import com.android.designcompose.testapp.validation.examples.SmartAnimateTestDoc
 import com.android.designcompose.testapp.validation.examples.StateCustomizationsDoc
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
@@ -80,6 +82,9 @@ class RenderAllExamples(private val config: TestConfig) {
                 /** See [ShaderTest]. */
                 CustomBrushTestDoc.javaClass.name,
                 BrushFromShaderPluginTestDoc.javaClass.name,
+                /** See [DialsGauges] and [AnimationMidpoints] where these are already tested. */
+                DialsGaugesTestDoc.javaClass.name,
+                SmartAnimateTestDoc.javaClass.name,
             )
 
         @JvmStatic

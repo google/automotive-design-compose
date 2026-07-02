@@ -50,6 +50,7 @@ class RenderAllExamples(private val config: TestConfig) {
     fun setUp() {
         System.setProperty("robolectric.pixelCopyRenderMode", "hardware")
     }
+
     @get:Rule val interFontRule = InterFontTestRule()
     @get:Rule val liveUpdateTestRule = TestUtils.LiveUpdateTestRule()
 

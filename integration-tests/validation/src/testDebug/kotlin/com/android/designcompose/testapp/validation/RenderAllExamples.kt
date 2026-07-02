@@ -45,6 +45,11 @@ class RenderAllExamples(private val config: TestConfig) {
     @get:Rule val clearStateTestRule = TestUtils.ClearStateTestRule()
     @get:Rule val composeTestRule = createComposeRule()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
+
+    @org.junit.Before
+    fun setUp() {
+        System.setProperty("robolectric.pixelCopyRenderMode", "hardware")
+    }
     @get:Rule val interFontRule = InterFontTestRule()
     @get:Rule val liveUpdateTestRule = TestUtils.LiveUpdateTestRule()
 

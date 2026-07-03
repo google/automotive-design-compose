@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.android.designcompose.ComponentReplacementContext
+import com.android.designcompose.DesignVariableModeValues
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.Meter
 import com.android.designcompose.annotation.Design
@@ -182,147 +183,157 @@ fun RenderHarStage(
 
 @Composable
 fun ClusterHARTest() {
-    Column(
-        modifier =
-            Modifier.fillMaxSize().background(Color.Black).padding(10.dp).semantics {
-                sDocClass = ClusterHARUIDoc.javaClass.name
-                sDocRenderStatus = DocRenderStatus.Rendered
-            },
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        val scale = 0.6f
+    val darkModes =
+        hashMapOf(
+            "material-theme" to "Dark",
+            "custom-theme" to "Dark",
+            "local-material-theme" to "Dark",
+            "local-custom-theme" to "Dark",
+        )
 
-        // 1. Retro Variant
-        Box(
-            modifier = Modifier.requiredSize(1152.dp, 432.dp),
-            contentAlignment = Alignment.Center,
+    DesignVariableModeValues(darkModes) {
+        Column(
+            modifier =
+                Modifier.fillMaxSize().background(Color.Black).padding(10.dp).semantics {
+                    sDocClass = ClusterHARUIDoc.javaClass.name
+                    sDocRenderStatus = DocRenderStatus.Rendered
+                },
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            RenderHarStage(
-                modifier =
-                    Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        transformOrigin = TransformOrigin(0.5f, 0.5f)
-                    },
-                harVariant = ClusterHARVariant.HarVariant.Retro,
-                wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
-                speed = "60",
-                speedGauge = 60f,
-                speedNeedle = 60f,
-                rpm = "31",
-                rpmGauge = 31f,
-                rpmNeedle = 31f,
-                speedLimit = "65",
-                speedLimitDisplayed = true,
-                temp = "64°F",
-                date = "Thursday, Feb 27",
-                remainingRange = "89 MI",
-                batteryLevel = "85",
-                // telltales:
-                seatbelt = true,
-                lowTirePressure = true,
-                airbag = false,
-                abs = true,
-                brake = true,
-                traction = false,
-                fogLights = false,
-                parkLights = false,
-                hibeam = false,
-                lowbeam = false,
-                turnSignalLeft = true,
-                turnSignalRight = true,
-                openDoors = false,
-                openTrunk = false,
-            )
-        }
+            val scale = 0.6f
 
-        // 2. Modern Camera Variant
-        Box(
-            modifier = Modifier.requiredSize(1152.dp, 432.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            RenderHarStage(
-                modifier =
-                    Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        transformOrigin = TransformOrigin(0.5f, 0.5f)
-                    },
-                harVariant = ClusterHARVariant.HarVariant.ModernCamera,
-                wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
-                speed = "84",
-                speedGauge = 84f,
-                speedNeedle = 84f,
-                rpm = "84",
-                rpmGauge = 84f,
-                rpmNeedle = 84f,
-                speedLimit = "55",
-                speedLimitDisplayed = true,
-                temp = "72°F",
-                date = "Friday, Feb 28",
-                remainingRange = "120 MI",
-                batteryLevel = "62",
-                // telltales:
-                seatbelt = true,
-                lowTirePressure = false,
-                airbag = true,
-                abs = false,
-                brake = true,
-                traction = false,
-                fogLights = true,
-                parkLights = false,
-                hibeam = true,
-                lowbeam = false,
-                turnSignalLeft = false,
-                turnSignalRight = true,
-                openDoors = false,
-                openTrunk = false,
-            )
-        }
+            // 1. Retro Variant
+            Box(
+                modifier = Modifier.requiredSize(1152.dp, 432.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                RenderHarStage(
+                    modifier =
+                        Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            transformOrigin = TransformOrigin(0.5f, 0.5f)
+                        },
+                    harVariant = ClusterHARVariant.HarVariant.Retro,
+                    wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
+                    speed = "60",
+                    speedGauge = 60f,
+                    speedNeedle = 60f,
+                    rpm = "31",
+                    rpmGauge = 31f,
+                    rpmNeedle = 31f,
+                    speedLimit = "65",
+                    speedLimitDisplayed = true,
+                    temp = "64°F",
+                    date = "Thursday, Feb 27",
+                    remainingRange = "89 MI",
+                    batteryLevel = "85",
+                    // telltales:
+                    seatbelt = true,
+                    lowTirePressure = true,
+                    airbag = false,
+                    abs = true,
+                    brake = true,
+                    traction = false,
+                    fogLights = false,
+                    parkLights = false,
+                    hibeam = false,
+                    lowbeam = false,
+                    turnSignalLeft = true,
+                    turnSignalRight = true,
+                    openDoors = false,
+                    openTrunk = false,
+                )
+            }
 
-        // 3. Compact Variant
-        Box(
-            modifier = Modifier.requiredSize(1152.dp, 432.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            RenderHarStage(
-                modifier =
-                    Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        transformOrigin = TransformOrigin(0.5f, 0.5f)
-                    },
-                harVariant = ClusterHARVariant.HarVariant.Compact,
-                wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
-                speed = "64",
-                speedGauge = 64f,
-                speedNeedle = 64f,
-                rpm = "0",
-                rpmGauge = 0f,
-                rpmNeedle = 0f,
-                speedLimit = "65",
-                speedLimitDisplayed = false,
-                temp = "68°F",
-                date = "Wednesday, Feb 26",
-                remainingRange = "250 MI",
-                batteryLevel = "90",
-                // telltales:
-                seatbelt = true,
-                lowTirePressure = true,
-                airbag = false,
-                abs = false,
-                brake = false,
-                traction = true,
-                fogLights = false,
-                parkLights = true,
-                hibeam = false,
-                lowbeam = true,
-                turnSignalLeft = true,
-                turnSignalRight = false,
-                openDoors = true,
-                openTrunk = false,
-            )
+            // 2. Modern Camera Variant
+            Box(
+                modifier = Modifier.requiredSize(1152.dp, 432.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                RenderHarStage(
+                    modifier =
+                        Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            transformOrigin = TransformOrigin(0.5f, 0.5f)
+                        },
+                    harVariant = ClusterHARVariant.HarVariant.ModernCamera,
+                    wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
+                    speed = "84",
+                    speedGauge = 84f,
+                    speedNeedle = 84f,
+                    rpm = "84",
+                    rpmGauge = 84f,
+                    rpmNeedle = 84f,
+                    speedLimit = "55",
+                    speedLimitDisplayed = true,
+                    temp = "72°F",
+                    date = "Friday, Feb 28",
+                    remainingRange = "120 MI",
+                    batteryLevel = "62",
+                    // telltales:
+                    seatbelt = true,
+                    lowTirePressure = false,
+                    airbag = true,
+                    abs = false,
+                    brake = true,
+                    traction = false,
+                    fogLights = true,
+                    parkLights = false,
+                    hibeam = true,
+                    lowbeam = false,
+                    turnSignalLeft = false,
+                    turnSignalRight = true,
+                    openDoors = false,
+                    openTrunk = false,
+                )
+            }
+
+            // 3. Compact Variant
+            Box(
+                modifier = Modifier.requiredSize(1152.dp, 432.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                RenderHarStage(
+                    modifier =
+                        Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            transformOrigin = TransformOrigin(0.5f, 0.5f)
+                        },
+                    harVariant = ClusterHARVariant.HarVariant.Compact,
+                    wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
+                    speed = "64",
+                    speedGauge = 64f,
+                    speedNeedle = 64f,
+                    rpm = "0",
+                    rpmGauge = 0f,
+                    rpmNeedle = 0f,
+                    speedLimit = "65",
+                    speedLimitDisplayed = false,
+                    temp = "68°F",
+                    date = "Wednesday, Feb 26",
+                    remainingRange = "250 MI",
+                    batteryLevel = "90",
+                    // telltales:
+                    seatbelt = true,
+                    lowTirePressure = true,
+                    airbag = false,
+                    abs = false,
+                    brake = false,
+                    traction = true,
+                    fogLights = false,
+                    parkLights = true,
+                    hibeam = false,
+                    lowbeam = true,
+                    turnSignalLeft = true,
+                    turnSignalRight = false,
+                    openDoors = true,
+                    openTrunk = false,
+                )
+            }
         }
     }
 }

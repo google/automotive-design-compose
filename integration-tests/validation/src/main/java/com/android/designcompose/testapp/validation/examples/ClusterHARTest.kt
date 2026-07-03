@@ -19,27 +19,26 @@ package com.android.designcompose.testapp.validation.examples
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.material.Button
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.android.designcompose.ComponentReplacementContext
+import com.android.designcompose.DocRenderStatus
+import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.annotation.DesignVariant
+import com.android.designcompose.sDocClass
+import com.android.designcompose.sDocRenderStatus
 
 object ClusterHARVariant {
     enum class HarVariant {
@@ -56,100 +55,137 @@ object ClusterHARVariant {
         Maps,
         MapsCamera,
     }
+
+    enum class WrapperVariant {
+        Full,
+        Thin,
+    }
 }
 
 @DesignDoc(id = "CuF1b1eAIukB6YszX6B5OZ")
 interface ClusterHARUI {
     @DesignComponent(node = "#HAR-stage")
-    fun harMain(@DesignVariant(property = "#har-variant") harVariant: ClusterHARVariant.HarVariant)
+    fun harMain(
+        @DesignVariant(property = "#har-variant") harVariant: ClusterHARVariant.HarVariant,
+        @Design(node = "#HAR-UI-Wrapper")
+        harUiWrapper: @Composable (ComponentReplacementContext) -> Unit,
+        @Design(node = "#telltale/no-seatbelt") seatbelt: Boolean,
+        @Design(node = "#telltale/low-tire-pressure") lowTirePressure: Boolean,
+        @Design(node = "#telltale/airbag") airbag: Boolean,
+        @Design(node = "#telltale/abs") abs: Boolean,
+        @Design(node = "#telltale/brake") brake: Boolean,
+        @Design(node = "#telltale/traction") traction: Boolean,
+        @Design(node = "#telltale/fog-lights") fogLights: Boolean,
+        @Design(node = "#telltale/park-lights") parkLights: Boolean,
+        @Design(node = "#telltale/hi-beam") hibeam: Boolean,
+        @Design(node = "#telltale/low-beam") lowbeam: Boolean,
+        @Design(node = "#telltale/left-blinker") turnSignalLeft: Boolean,
+        @Design(node = "#telltale/right-blinker") turnSignalRight: Boolean,
+        @Design(node = "#telltale/open-doors") openDoors: Boolean,
+        @Design(node = "#telltale/open-trunk") openTrunk: Boolean,
+    )
+
+    @DesignComponent(node = "#HAR-UI-Wrapper")
+    fun harUiWrapper(
+        @DesignVariant(property = "#wrapper-variant")
+        wrapperVariant: ClusterHARVariant.WrapperVariant
+    )
+}
+
+@Composable
+fun RenderHarStage(
+    modifier: Modifier,
+    harVariant: ClusterHARVariant.HarVariant,
+    wrapperVariant: ClusterHARVariant.WrapperVariant,
+) {
+    ClusterHARUIDoc.harMain(
+        modifier = modifier,
+        harVariant = harVariant,
+        harUiWrapper = { ctx ->
+            ClusterHARUIDoc.harUiWrapper(
+                modifier = ctx.layoutModifier,
+                wrapperVariant = wrapperVariant,
+            )
+        },
+        seatbelt = false,
+        lowTirePressure = false,
+        airbag = false,
+        abs = false,
+        brake = false,
+        traction = false,
+        fogLights = false,
+        parkLights = false,
+        hibeam = false,
+        lowbeam = false,
+        turnSignalLeft = false,
+        turnSignalRight = false,
+        openDoors = false,
+        openTrunk = false,
+    )
 }
 
 @Composable
 fun ClusterHARTest() {
-    val harVariant = remember { mutableStateOf(ClusterHARVariant.HarVariant.Modern) }
+    Column(
+        modifier =
+            Modifier.fillMaxSize().background(Color.Black).padding(10.dp).semantics {
+                sDocClass = ClusterHARUIDoc.javaClass.name
+                sDocRenderStatus = DocRenderStatus.Rendered
+            },
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        val scale = 0.6f
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            val scale = maxWidth.value / 1920f
-            Box(
-                modifier = Modifier.requiredSize(maxWidth, 720.dp * scale),
-                contentAlignment = Alignment.Center,
-            ) {
-                ClusterHARUIDoc.harMain(
-                    modifier =
-                        Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                            transformOrigin = TransformOrigin(0.5f, 0.5f)
-                        },
-                    harVariant = harVariant.value,
-                )
-            }
-        }
-        Column(
-            modifier =
-                Modifier.align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .background(Color.White.copy(alpha = 0.8f))
-                    .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        // 1. Modern Variant
+        Box(
+            modifier = Modifier.requiredSize(1152.dp, 432.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("Theme:")
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.Modern }) {
-                    Text("Modern")
-                }
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.ModernCamera }) {
-                    Text("Modern Cam")
-                }
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.Retro }) {
-                    Text("Retro")
-                }
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.RetroCamera }) {
-                    Text("Retro Cam")
-                }
-            }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("Size:")
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.Compact }) {
-                    Text("Compact")
-                }
-                Button(
-                    onClick = { harVariant.value = ClusterHARVariant.HarVariant.CompactCamera }
-                ) {
-                    Text("Compact Cam")
-                }
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.Thin }) {
-                    Text("Thin")
-                }
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.ThinCamera }) {
-                    Text("Thin Cam")
-                }
-            }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("Other:")
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.Medium }) {
-                    Text("Medium")
-                }
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.MediumCamera }) {
-                    Text("Medium Cam")
-                }
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.Maps }) {
-                    Text("Maps")
-                }
-                Button(onClick = { harVariant.value = ClusterHARVariant.HarVariant.MapsCamera }) {
-                    Text("Maps Cam")
-                }
-            }
+            RenderHarStage(
+                modifier =
+                    Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = TransformOrigin(0.5f, 0.5f)
+                    },
+                harVariant = ClusterHARVariant.HarVariant.Modern,
+                wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
+            )
+        }
+
+        // 2. Retro Variant
+        Box(
+            modifier = Modifier.requiredSize(1152.dp, 432.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            RenderHarStage(
+                modifier =
+                    Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = TransformOrigin(0.5f, 0.5f)
+                    },
+                harVariant = ClusterHARVariant.HarVariant.Retro,
+                wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
+            )
+        }
+
+        // 3. Retro Camera Variant
+        Box(
+            modifier = Modifier.requiredSize(1152.dp, 432.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            RenderHarStage(
+                modifier =
+                    Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = TransformOrigin(0.5f, 0.5f)
+                    },
+                harVariant = ClusterHARVariant.HarVariant.RetroCamera,
+                wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
+            )
         }
     }
 }

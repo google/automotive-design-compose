@@ -57,6 +57,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         // Dials gauges and progress vectors
         Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),
         Triple("Progress Vectors", { ProgressVectorTest() }, DialsGaugesTestDoc.javaClass.name),
+        Triple("ClusterDriverUI HAR", { ClusterHARTest() }, ClusterHARUIDoc.javaClass.name),
         Triple("Fancy Fills", { FancyFillTest() }, FancyFillTestDoc.javaClass.name),
         Triple(
             "Gradient Opacity",

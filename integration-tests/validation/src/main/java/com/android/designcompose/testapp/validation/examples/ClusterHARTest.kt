@@ -66,7 +66,7 @@ object ClusterHARVariant {
 interface ClusterHARUI {
     @DesignComponent(node = "#HAR-stage")
     fun harMain(
-        @DesignVariant(property = "#har-variant") harVariant: ClusterHARVariant.HarVariant,
+        @Design(node = "#HAR-UI") harUi: @Composable (ComponentReplacementContext) -> Unit,
         @Design(node = "#HAR-UI-Wrapper")
         harUiWrapper: @Composable (ComponentReplacementContext) -> Unit,
         @Design(node = "#telltale/no-seatbelt") seatbelt: Boolean,
@@ -85,6 +85,9 @@ interface ClusterHARUI {
         @Design(node = "#telltale/open-trunk") openTrunk: Boolean,
     )
 
+    @DesignComponent(node = "#HAR-UI")
+    fun harUi(@DesignVariant(property = "#har-variant") harVariant: ClusterHARVariant.HarVariant)
+
     @DesignComponent(node = "#HAR-UI-Wrapper")
     fun harUiWrapper(
         @DesignVariant(property = "#wrapper-variant")
@@ -100,7 +103,9 @@ fun RenderHarStage(
 ) {
     ClusterHARUIDoc.harMain(
         modifier = modifier,
-        harVariant = harVariant,
+        harUi = { ctx ->
+            ClusterHARUIDoc.harUi(modifier = ctx.layoutModifier, harVariant = harVariant)
+        },
         harUiWrapper = { ctx ->
             ClusterHARUIDoc.harUiWrapper(
                 modifier = ctx.layoutModifier,
@@ -137,24 +142,7 @@ fun ClusterHARTest() {
     ) {
         val scale = 0.6f
 
-        // 1. Modern Variant
-        Box(
-            modifier = Modifier.requiredSize(1152.dp, 432.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            RenderHarStage(
-                modifier =
-                    Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        transformOrigin = TransformOrigin(0.5f, 0.5f)
-                    },
-                harVariant = ClusterHARVariant.HarVariant.Modern,
-                wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
-            )
-        }
-
-        // 2. Retro Variant
+        // 1. Retro Variant
         Box(
             modifier = Modifier.requiredSize(1152.dp, 432.dp),
             contentAlignment = Alignment.Center,
@@ -171,7 +159,7 @@ fun ClusterHARTest() {
             )
         }
 
-        // 3. Retro Camera Variant
+        // 2. Modern Camera Variant
         Box(
             modifier = Modifier.requiredSize(1152.dp, 432.dp),
             contentAlignment = Alignment.Center,
@@ -183,7 +171,24 @@ fun ClusterHARTest() {
                         scaleY = scale
                         transformOrigin = TransformOrigin(0.5f, 0.5f)
                     },
-                harVariant = ClusterHARVariant.HarVariant.RetroCamera,
+                harVariant = ClusterHARVariant.HarVariant.ModernCamera,
+                wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
+            )
+        }
+
+        // 3. Compact Variant
+        Box(
+            modifier = Modifier.requiredSize(1152.dp, 432.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            RenderHarStage(
+                modifier =
+                    Modifier.requiredSize(1920.dp, 720.dp).graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = TransformOrigin(0.5f, 0.5f)
+                    },
+                harVariant = ClusterHARVariant.HarVariant.Compact,
                 wrapperVariant = ClusterHARVariant.WrapperVariant.Full,
             )
         }

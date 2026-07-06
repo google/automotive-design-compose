@@ -21,11 +21,13 @@ import android.util.SizeF
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -824,15 +826,17 @@ fun SquooshRoot(
                             val interactionSource = remember { MutableInteractionSource() }
                             val placeholderIsPressed = remember { mutableStateOf(false) }
                             composableChildModifier =
-                                composableChildModifier.squooshInteraction(
-                                    doc,
-                                    interactionState,
-                                    interactionScope,
-                                    customizationContext,
-                                    child,
-                                    placeholderIsPressed,
-                                    interactionSource,
-                                )
+                                composableChildModifier
+                                    .indication(interactionSource, LocalIndication.current)
+                                    .squooshInteraction(
+                                        doc,
+                                        interactionState,
+                                        interactionScope,
+                                        customizationContext,
+                                        child,
+                                        placeholderIsPressed,
+                                        interactionSource,
+                                    )
                         } else if (child.node.textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) {
                             composableChildModifier =
                                 composableChildModifier.hyperlinkHandler(

@@ -262,13 +262,54 @@ class MergeStylesTest {
                     }
             }
         }
-        val override = viewStyle {
+        val override = viewStyle {}
+        val instanceStyle = viewStyle {
             layoutStyle = layoutStyle {
                 width = dimensionProto { points = 100f }
                 boundingBox =
                     com.android.designcompose.definition.element.size {
                         width = 100f
                         height = 40f
+                    }
+            }
+        }
+        val defaultVariantStyle = viewStyle {
+            layoutStyle = layoutStyle {
+                width = dimensionProto { points = 100f }
+                boundingBox =
+                    com.android.designcompose.definition.element.size {
+                        width = 100f
+                        height = 40f
+                    }
+            }
+        }
+
+        val merged = mergeStylesWithVariant(base, override, instanceStyle, defaultVariantStyle)
+        // Width should be restored to base because it was not overridden on the instance (instance
+        // == defaultVariant) and no override is present
+        assertThat(merged.layoutStyle.width.points).isEqualTo(200f)
+        assertThat(merged.layoutStyle.boundingBox.width).isEqualTo(200f)
+    }
+
+    @Test
+    fun testMergeStylesWithVariantNotOverriddenButHasCodeOverride() {
+        val base = viewStyle {
+            layoutStyle = layoutStyle {
+                width = dimensionProto { points = 200f }
+                boundingBox =
+                    com.android.designcompose.definition.element.size {
+                        width = 200f
+                        height = 50f
+                    }
+            }
+        }
+        val override = viewStyle {
+            layoutStyle = layoutStyle {
+                width = dimensionProto { points = 150f }
+                boundingBox =
+                    com.android.designcompose.definition.element.size {
+                        width = 150f
+                        height = 45f
                     }
             }
         }
@@ -294,10 +335,10 @@ class MergeStylesTest {
         }
 
         val merged = mergeStylesWithVariant(base, override, instanceStyle, defaultVariantStyle)
-        // Width should be restored to base because it was not overridden on the instance (instance
-        // == defaultVariant)
-        assertThat(merged.layoutStyle.width.points).isEqualTo(200f)
-        assertThat(merged.layoutStyle.boundingBox.width).isEqualTo(200f)
+        // Width should be override because it was not overridden on the instance (instance
+        // == defaultVariant) but an override is present
+        assertThat(merged.layoutStyle.width.points).isEqualTo(150f)
+        assertThat(merged.layoutStyle.boundingBox.width).isEqualTo(150f)
     }
 
     @Test
@@ -348,5 +389,63 @@ class MergeStylesTest {
         // instance (instance != defaultVariant)
         assertThat(merged.layoutStyle.width.points).isEqualTo(120f)
         assertThat(merged.layoutStyle.boundingBox.width).isEqualTo(120f)
+    }
+
+    @Test
+    fun testMergeStylesWithVariantPositionOffsetsNotOverridden() {
+        val base = viewStyle {
+            layoutStyle = layoutStyle {
+                left = dimensionProto { points = 200f }
+                top = dimensionProto { points = 100f }
+            }
+        }
+        val override = defaultViewStyle()
+        val instanceStyle = viewStyle {
+            layoutStyle = layoutStyle {
+                left = dimensionProto { points = 50f }
+                top = dimensionProto { points = 50f }
+            }
+        }
+        val defaultVariantStyle = viewStyle {
+            layoutStyle = layoutStyle {
+                left = dimensionProto { points = 50f }
+                top = dimensionProto { points = 50f }
+            }
+        }
+
+        val merged = mergeStylesWithVariant(base, override, instanceStyle, defaultVariantStyle)
+        // Since left/top are NOT customized on the instance relative to the default variant,
+        // they should be restored to base (the resolved variant style).
+        assertThat(merged.layoutStyle.left.points).isEqualTo(200f)
+        assertThat(merged.layoutStyle.top.points).isEqualTo(100f)
+    }
+
+    @Test
+    fun testMergeStylesWithVariantPositionOffsetsOverridden() {
+        val base = viewStyle {
+            layoutStyle = layoutStyle {
+                left = dimensionProto { points = 200f }
+                top = dimensionProto { points = 100f }
+            }
+        }
+        val override = defaultViewStyle()
+        val instanceStyle = viewStyle {
+            layoutStyle = layoutStyle {
+                left = dimensionProto { points = 300f }
+                top = dimensionProto { points = 150f }
+            }
+        }
+        val defaultVariantStyle = viewStyle {
+            layoutStyle = layoutStyle {
+                left = dimensionProto { points = 50f }
+                top = dimensionProto { points = 50f }
+            }
+        }
+
+        val merged = mergeStylesWithVariant(base, override, instanceStyle, defaultVariantStyle)
+        // Since left/top ARE customized on the instance relative to the default variant,
+        // they should copy the customized values from instanceStyle.
+        assertThat(merged.layoutStyle.left.points).isEqualTo(300f)
+        assertThat(merged.layoutStyle.top.points).isEqualTo(150f)
     }
 }

@@ -23,6 +23,7 @@ import java.time.Clock
 
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
+        Triple("ClusterDriverUI", { ClusterDriverUITest() }, ClusterDriverUIDoc.javaClass.name),
         // First comes the "HelloWorld" examples.
         Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
         Triple("HelloBye", { HelloBye() }, HelloByeDoc.javaClass.name),

@@ -90,34 +90,52 @@ internal fun mergeStylesWithVariant(
         ) {
             layoutStyle =
                 layoutStyle.copy {
-                    if (!isWidthOverridden) {
-                        width = base.layoutStyle.width
-                    }
-                    if (!isHeightOverridden) {
-                        height = base.layoutStyle.height
-                    }
+                    width = if (isWidthOverridden) instLayoutStyle.width else base.layoutStyle.width
+                    height =
+                        if (isHeightOverridden) instLayoutStyle.height else base.layoutStyle.height
                     val newW =
-                        if (isWidthOverridden) boundingBox.width
+                        if (isWidthOverridden) instLayoutStyle.boundingBox.width
                         else base.layoutStyle.boundingBox.width
                     val newH =
-                        if (isHeightOverridden) boundingBox.height
+                        if (isHeightOverridden) instLayoutStyle.boundingBox.height
                         else base.layoutStyle.boundingBox.height
                     boundingBox =
                         com.android.designcompose.definition.element.size {
                             width = newW
                             height = newH
                         }
-                    if (!isMinWidthOverridden) minWidth = base.layoutStyle.minWidth
-                    if (!isMinHeightOverridden) minHeight = base.layoutStyle.minHeight
-                    if (!isMaxWidthOverridden) maxWidth = base.layoutStyle.maxWidth
-                    if (!isMaxHeightOverridden) maxHeight = base.layoutStyle.maxHeight
-                    if (!isPositionTypeOverridden) positionType = base.layoutStyle.positionType
-                    if (!isAlignSelfOverridden) alignSelf = base.layoutStyle.alignSelf
-                    if (!isFlexGrowOverridden) flexGrow = base.layoutStyle.flexGrow
-                    if (!isFlexShrinkOverridden) flexShrink = base.layoutStyle.flexShrink
-                    if (!isFlexBasisOverridden) flexBasis = base.layoutStyle.flexBasis
-                    if (!isMarginOverridden) margin = base.layoutStyle.margin
-                    if (!isPaddingOverridden) padding = base.layoutStyle.padding
+                    minWidth =
+                        if (isMinWidthOverridden) instLayoutStyle.minWidth
+                        else base.layoutStyle.minWidth
+                    minHeight =
+                        if (isMinHeightOverridden) instLayoutStyle.minHeight
+                        else base.layoutStyle.minHeight
+                    maxWidth =
+                        if (isMaxWidthOverridden) instLayoutStyle.maxWidth
+                        else base.layoutStyle.maxWidth
+                    maxHeight =
+                        if (isMaxHeightOverridden) instLayoutStyle.maxHeight
+                        else base.layoutStyle.maxHeight
+                    positionType =
+                        if (isPositionTypeOverridden) instLayoutStyle.positionType
+                        else base.layoutStyle.positionType
+                    alignSelf =
+                        if (isAlignSelfOverridden) instLayoutStyle.alignSelf
+                        else base.layoutStyle.alignSelf
+                    flexGrow =
+                        if (isFlexGrowOverridden) instLayoutStyle.flexGrow
+                        else base.layoutStyle.flexGrow
+                    flexShrink =
+                        if (isFlexShrinkOverridden) instLayoutStyle.flexShrink
+                        else base.layoutStyle.flexShrink
+                    flexBasis =
+                        if (isFlexBasisOverridden) instLayoutStyle.flexBasis
+                        else base.layoutStyle.flexBasis
+                    margin =
+                        if (isMarginOverridden) instLayoutStyle.margin else base.layoutStyle.margin
+                    padding =
+                        if (isPaddingOverridden) instLayoutStyle.padding
+                        else base.layoutStyle.padding
                 }
         }
 
@@ -133,10 +151,15 @@ internal fun mergeStylesWithVariant(
         if (!isHorizontalSizingOverridden || !isVerticalSizingOverridden || !isNodeSizeOverridden) {
             nodeStyle =
                 nodeStyle.copy {
-                    if (!isHorizontalSizingOverridden)
-                        horizontalSizing = base.nodeStyle.horizontalSizing
-                    if (!isVerticalSizingOverridden) verticalSizing = base.nodeStyle.verticalSizing
-                    if (!isNodeSizeOverridden) nodeSize = base.nodeStyle.nodeSize
+                    horizontalSizing =
+                        if (isHorizontalSizingOverridden) instNodeStyle.horizontalSizing
+                        else base.nodeStyle.horizontalSizing
+                    verticalSizing =
+                        if (isVerticalSizingOverridden) instNodeStyle.verticalSizing
+                        else base.nodeStyle.verticalSizing
+                    nodeSize =
+                        if (isNodeSizeOverridden) instNodeStyle.nodeSize
+                        else base.nodeStyle.nodeSize
                 }
         }
     }

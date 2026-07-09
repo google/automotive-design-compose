@@ -73,7 +73,9 @@ import com.android.designcompose.definition.view.ViewDataKt.container
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.containerOrNull
 import com.android.designcompose.definition.view.frameExtrasOrNull
+import com.android.designcompose.definition.view.meterDataOrNull
 import com.android.designcompose.definition.view.nodeStyle
+import com.android.designcompose.definition.view.nodeStyleOrNull
 import com.android.designcompose.definition.view.styleOrNull
 import com.android.designcompose.definition.view.view
 import com.android.designcompose.definition.view.viewData
@@ -83,6 +85,7 @@ import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
 import com.android.designcompose.getListContent
+import com.android.designcompose.getLongPressCallback
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
@@ -94,6 +97,7 @@ import com.android.designcompose.utils.getProgressChildWithTouch
 import com.android.designcompose.utils.hasScrolling
 import com.android.designcompose.utils.isSupportedInteraction
 import com.android.designcompose.utils.mergeStyles
+import com.android.designcompose.utils.mergeStylesWithVariant
 
 // Helper class to hold the list of child composables and overlays that need to be composed
 // separately.
@@ -213,6 +217,8 @@ internal fun resolveVariantsRecursively(
     var overrideViewData: ViewData? = null
     var view = viewFromTree
 
+    var defaultVariantView: View? = null
+
     // If we have a component then we might need to get an override style, and we definitely
     // need to get a different layout id.
     if (viewFromTree.hasComponentInfo()) {
@@ -227,6 +233,17 @@ internal fun resolveVariantsRecursively(
             viewFromTree.componentInfo.overridesTableMap[
                     viewFromTree.componentInfo.componentSetName]
                 ?.viewDataOrNull
+
+        defaultVariantView =
+            interactionState.squooshRootNode(
+                NodeQuery.NodeVariant(
+                    viewFromTree.componentInfo.name,
+                    viewFromTree.componentInfo.componentSetName,
+                ),
+                document,
+                isRoot,
+                customizations,
+            )
 
         // Ensure that the children of this component get unique layout ids, even though there
         // may be multiple instances of the same component in one tree.
@@ -291,12 +308,19 @@ internal fun resolveVariantsRecursively(
     // Calculate the style we're going to use. If we have an override style then we have to apply
     // that on top of the view (or variant) style.
     val style =
-        if (overrideStyle == null) {
-            view.style
-        } else {
+        if (defaultVariantView != null) {
+            mergeStylesWithVariant(
+                view.style,
+                overrideStyle ?: ViewStyle.getDefaultInstance(),
+                viewFromTree.style,
+                defaultVariantView.style,
+            )
+        } else if (overrideStyle != null) {
             // XXX-PERF: This is not needed by Battleship, and takes over 50% of the runtime of
             //           resolveVariants (not including computeTextInfo).
             mergeStyles(view.style, overrideStyle)
+        } else {
+            view.style
         }
 
     // Now we know the view we want to render, the style we want to use, etc. We can create
@@ -319,6 +343,7 @@ internal fun resolveVariantsRecursively(
             appContext,
             textMeasureCache,
             textHash,
+            customizedNodeName = viewFromTree.name,
         )
     val textInfo = textData?.first
     val textStyle = textData?.second
@@ -347,8 +372,12 @@ internal fun resolveVariantsRecursively(
             }
         }
     }
-    val tapCallback = customizations.getTapCallback(view)
+    var tapCallback = customizations.getTapCallback(viewFromTree.name)
+    if (tapCallback == null) tapCallback = customizations.getTapCallback(view)
     if (tapCallback != null) hasSupportedInteraction = true
+    var longPressCallback = customizations.getLongPressCallback(viewFromTree.name)
+    if (longPressCallback == null) longPressCallback = customizations.getLongPressCallback(view)
+    if (longPressCallback != null) hasSupportedInteraction = true
     if (textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) hasSupportedInteraction = true
     val progressChildTouch = view.getProgressChildWithTouch(customizations)
     if (progressChildTouch != null) hasSupportedInteraction = true
@@ -357,13 +386,21 @@ internal fun resolveVariantsRecursively(
 
     // If this node has a content customization, then we make a special record of it so that we can
     // zip through all of them after layout and render them in the right location.
-    val replacementContent = customizations.getContent(view.name)
-    val replacementComponent = customizations.getComponent(view.name)
-    val listWidgetContent = customizations.getListContent(view.name)
+    val replacementContent = customizations.getContent(viewFromTree.name)
+    val replacementComponent = customizations.getComponent(viewFromTree.name)
+    val listWidgetContent = customizations.getListContent(viewFromTree.name)
 
     // If this is a text node being replaced, don't store textInfo into resolvedView
     val resolvedTextInfo = if (replacementComponent != null) null else textInfo
-    val resolvedView = SquooshResolvedNode(view, style, layoutId, resolvedTextInfo, viewFromTree.id)
+    val resolvedView =
+        SquooshResolvedNode(
+            view = view,
+            style = style,
+            layoutId = layoutId,
+            textInfo = resolvedTextInfo,
+            unresolvedNodeId = viewFromTree.id,
+            unresolvedName = viewFromTree.name,
+        )
 
     var skipChildren = false // Set to true for customizations that replace children
     var skipComposableList =
@@ -478,6 +515,43 @@ internal fun resolveVariantsRecursively(
                 if (previousChild != null) previousChild.nextSibling = childResolvedNode
 
                 previousChild = childResolvedNode
+            }
+
+            // Transfer progress bar data from parent container to child "#indicator" or "indicator"
+            // if present. This allows the indicator bar inside the track container to resize/move,
+            // rather than resizing the entire progress bar background/track.
+            if (resolvedView.style.nodeStyleOrNull?.meterDataOrNull?.hasProgressBarData() == true) {
+                var child = resolvedView.firstChild
+                var indicatorChild: SquooshResolvedNode? = null
+                while (child != null) {
+                    if (child.view.name == "#indicator" || child.view.name == "indicator") {
+                        indicatorChild = child
+                        break
+                    }
+                    child = child.nextSibling
+                }
+                if (indicatorChild != null) {
+                    val meterData = resolvedView.style.nodeStyle.meterData
+
+                    val childNodeStyleBuilder = indicatorChild.style.nodeStyle.toBuilder()
+                    childNodeStyleBuilder.setMeterData(meterData)
+
+                    indicatorChild.style =
+                        indicatorChild.style
+                            .toBuilder()
+                            .setNodeStyle(childNodeStyleBuilder.build())
+                            .build()
+
+                    indicatorChild.customizationName = resolvedView.unresolvedName
+
+                    val parentNodeStyleBuilder = resolvedView.style.nodeStyle.toBuilder()
+                    parentNodeStyleBuilder.clearMeterData()
+                    resolvedView.style =
+                        resolvedView.style
+                            .toBuilder()
+                            .setNodeStyle(parentNodeStyleBuilder.build())
+                            .build()
+                }
             }
         }
     }

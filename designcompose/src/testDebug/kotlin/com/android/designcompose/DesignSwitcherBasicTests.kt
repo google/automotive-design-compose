@@ -116,4 +116,15 @@ class DesignSwitcherBasicTests {
             captureRootRoboImage("OptionsScreenAfterCheckingBox")
         }
     }
+
+    @Test
+    fun showOfflineState() {
+        DesignSettings.isDocumentLive.value = false
+        composeTestRule.setContent { DesignSwitcherTest(testName = testName) }
+
+        with(composeTestRule) {
+            onDCDoc(DesignSwitcherDoc).performClick()
+            captureRootRoboImage("ExpandedOfflineSwitcher")
+        }
+    }
 }

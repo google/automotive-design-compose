@@ -379,7 +379,7 @@ internal fun ContentDrawScope.squooshShapeRender(
     if (size.width <= 0F && size.height <= 0F) return
     val overrideLayoutSize = node.overrideLayoutSize
     val style = node.style
-    val name = node.view.name
+    val name = node.customizationName ?: node.view.name
 
     drawContext.canvas.save()
 

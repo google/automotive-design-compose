@@ -38,3 +38,9 @@ var SemanticsPropertyReceiver.sDocRenderStatus by docRenderStatusSemanticsKey
 
 val docRenderTextSemanticsKey = SemanticsPropertyKey<HashSet<String>>("DocRenderText")
 var SemanticsPropertyReceiver.sDocRenderText by docRenderTextSemanticsKey
+
+val docRenderViewsSemanticsKey = SemanticsPropertyKey<HashSet<String>>("DocRenderViews")
+var SemanticsPropertyReceiver.sDocRenderViews by docRenderViewsSemanticsKey
+
+val docRenderVariantsSemanticsKey = SemanticsPropertyKey<HashSet<String>>("DocRenderVariants")
+var SemanticsPropertyReceiver.sDocRenderVariants by docRenderVariantsSemanticsKey

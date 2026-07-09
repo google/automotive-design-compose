@@ -37,6 +37,7 @@ internal class SquooshResolvedNode(
     val textInfo: TextMeasureData?,
     // The node id before we resolved variants; used for interactions
     val unresolvedNodeId: String,
+    val unresolvedName: String = view.name,
     // The node we look at for layout info, if we're in a tree that was derived
     // from other trees (i.e.: the tree that combines the base and transition
     // trees).
@@ -57,6 +58,8 @@ internal class SquooshResolvedNode(
     // check were not here.
     var skipLayoutScroll: Boolean = false,
 ) {
+    var customizationName: String? = null
+
     fun offsetFromAncestor(ancestor: SquooshResolvedNode? = null): PointF {
         var n: SquooshResolvedNode? = this
         var x = 0f

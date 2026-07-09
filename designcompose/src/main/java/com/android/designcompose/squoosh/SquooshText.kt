@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignSettings
@@ -125,12 +126,17 @@ internal fun squooshComputeTextInfo(
     appContext: Context,
     textMeasureCache: TextMeasureCache,
     textHash: HashSet<String>,
+    customizedNodeName: String = v.name,
 ): Pair<TextMeasureData?, TextStyle>? {
     val customizedText =
-        customizations.getText(v.name) ?: customizations.getTextState(v.name)?.value
-    val customTextStyle = customizations.getTextStyle(v.name)
+        customizations.getText(customizedNodeName)
+            ?: customizations.getTextState(customizedNodeName)?.value
+    val customTextStyle = customizations.getTextStyle(customizedNodeName)
     val fontFamily =
-        DesignSettings.fontFamily(v.style.nodeStyle.takeIf { it.hasFontFamily() }?.fontFamily)
+        customTextStyle?.fontFamily
+            ?: DesignSettings.fontFamily(
+                v.style.nodeStyle.takeIf { it.hasFontFamily() }?.fontFamily
+            )
 
     // Compose only supports a single outset shadow on text; we must use a canvas and perform
     // manual text layout (and editing, and accessibility) to do fancier text.
@@ -151,7 +157,7 @@ internal fun squooshComputeTextInfo(
 
     // Evaluate the custom brush BEFORE the cache check so that
     // brush function changes (e.g., from State updates) invalidate the cache.
-    val customBrush = customizations.getBrush(v.name)
+    val customBrush = customizations.getBrush(customizedNodeName)
 
     val cachedText = textMeasureCache.get(layoutId)
     if (
@@ -256,6 +262,7 @@ internal fun squooshComputeTextInfo(
         customTextStyle?.lineHeight
             ?: when (v.style.nodeStyle.lineHeight.lineHeightTypeCase) {
                 LineHeightTypeCase.PIXELS -> v.style.nodeStyle.lineHeight.pixels.sp
+                LineHeightTypeCase.PERCENT -> v.style.nodeStyle.lineHeight.percent.em
                 else -> TextUnit.Unspecified
             }
     val fontWeight =

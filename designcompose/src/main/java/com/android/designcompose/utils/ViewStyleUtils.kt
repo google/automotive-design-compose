@@ -16,9 +16,11 @@
 
 package com.android.designcompose.utils
 
+import com.android.designcompose.definition.element.DimensionProto
 import com.android.designcompose.definition.element.DimensionRect
 import com.android.designcompose.definition.element.FontStyle
 import com.android.designcompose.definition.element.TextDecoration
+import com.android.designcompose.definition.element.dimensionRect
 import com.android.designcompose.definition.element.shaderDataOrNull
 import com.android.designcompose.definition.interaction.PointerEvents
 import com.android.designcompose.definition.layout.AlignContent
@@ -43,6 +45,171 @@ import com.android.designcompose.definition.view.fontStretchOrNull
 import com.android.designcompose.definition.view.nodeSizeOrNull
 import com.android.designcompose.definition.view.strokeOrNull
 import com.android.designcompose.definition.view.viewStyle
+
+// Merge styles, but restore target variant layout style properties if they were not explicitly
+// overridden on the component instance.
+internal fun mergeStylesWithVariant(
+    base: ViewStyle,
+    override: ViewStyle,
+    instanceStyle: ViewStyle,
+    defaultVariantStyle: ViewStyle,
+): ViewStyle {
+    val merged = mergeStyles(base, override)
+
+    return merged.copy {
+        val originalLayoutStyle = defaultVariantStyle.layoutStyle
+        val instLayoutStyle = instanceStyle.layoutStyle
+
+        val isPositionTypeOverridden =
+            instLayoutStyle.positionType != PositionType.POSITION_TYPE_UNSPECIFIED &&
+                instLayoutStyle.positionType != originalLayoutStyle.positionType
+        val isAlignSelfOverridden =
+            instLayoutStyle.alignSelf != AlignSelf.ALIGN_SELF_UNSPECIFIED &&
+                instLayoutStyle.alignSelf != originalLayoutStyle.alignSelf
+        val isFlexGrowOverridden = instLayoutStyle.flexGrow != originalLayoutStyle.flexGrow
+        val isFlexShrinkOverridden = instLayoutStyle.flexShrink != originalLayoutStyle.flexShrink
+
+        layoutStyle =
+            layoutStyle.copy {
+                width =
+                    mergeDimensionProto(
+                        instLayoutStyle.width,
+                        originalLayoutStyle.width,
+                        merged.layoutStyle.width,
+                    )
+                height =
+                    mergeDimensionProto(
+                        instLayoutStyle.height,
+                        originalLayoutStyle.height,
+                        merged.layoutStyle.height,
+                    )
+
+                val isWidthOverridden =
+                    instLayoutStyle.width.isSpecified() &&
+                        instLayoutStyle.width != originalLayoutStyle.width
+                val isHeightOverridden =
+                    instLayoutStyle.height.isSpecified() &&
+                        instLayoutStyle.height != originalLayoutStyle.height
+                val newW =
+                    if (isWidthOverridden) instLayoutStyle.boundingBox.width
+                    else merged.layoutStyle.boundingBox.width
+                val newH =
+                    if (isHeightOverridden) instLayoutStyle.boundingBox.height
+                    else merged.layoutStyle.boundingBox.height
+                boundingBox =
+                    com.android.designcompose.definition.element.size {
+                        width = newW
+                        height = newH
+                    }
+
+                minWidth =
+                    mergeDimensionProto(
+                        instLayoutStyle.minWidth,
+                        originalLayoutStyle.minWidth,
+                        merged.layoutStyle.minWidth,
+                    )
+                minHeight =
+                    mergeDimensionProto(
+                        instLayoutStyle.minHeight,
+                        originalLayoutStyle.minHeight,
+                        merged.layoutStyle.minHeight,
+                    )
+                maxWidth =
+                    mergeDimensionProto(
+                        instLayoutStyle.maxWidth,
+                        originalLayoutStyle.maxWidth,
+                        merged.layoutStyle.maxWidth,
+                    )
+                maxHeight =
+                    mergeDimensionProto(
+                        instLayoutStyle.maxHeight,
+                        originalLayoutStyle.maxHeight,
+                        merged.layoutStyle.maxHeight,
+                    )
+
+                positionType =
+                    if (isPositionTypeOverridden) instLayoutStyle.positionType
+                    else merged.layoutStyle.positionType
+                alignSelf =
+                    if (isAlignSelfOverridden) instLayoutStyle.alignSelf
+                    else merged.layoutStyle.alignSelf
+                flexGrow =
+                    if (isFlexGrowOverridden) instLayoutStyle.flexGrow
+                    else merged.layoutStyle.flexGrow
+                flexShrink =
+                    if (isFlexShrinkOverridden) instLayoutStyle.flexShrink
+                    else merged.layoutStyle.flexShrink
+                flexBasis =
+                    mergeDimensionProto(
+                        instLayoutStyle.flexBasis,
+                        originalLayoutStyle.flexBasis,
+                        merged.layoutStyle.flexBasis,
+                    )
+
+                margin =
+                    mergeDimensionRect(
+                        instLayoutStyle.margin,
+                        originalLayoutStyle.margin,
+                        merged.layoutStyle.margin,
+                    )
+                padding =
+                    mergeDimensionRect(
+                        instLayoutStyle.padding,
+                        originalLayoutStyle.padding,
+                        merged.layoutStyle.padding,
+                    )
+
+                left =
+                    mergeDimensionProto(
+                        instLayoutStyle.left,
+                        originalLayoutStyle.left,
+                        merged.layoutStyle.left,
+                    )
+                right =
+                    mergeDimensionProto(
+                        instLayoutStyle.right,
+                        originalLayoutStyle.right,
+                        merged.layoutStyle.right,
+                    )
+                top =
+                    mergeDimensionProto(
+                        instLayoutStyle.top,
+                        originalLayoutStyle.top,
+                        merged.layoutStyle.top,
+                    )
+                bottom =
+                    mergeDimensionProto(
+                        instLayoutStyle.bottom,
+                        originalLayoutStyle.bottom,
+                        merged.layoutStyle.bottom,
+                    )
+            }
+
+        val originalNodeStyle = defaultVariantStyle.nodeStyle
+        val instNodeStyle = instanceStyle.nodeStyle
+
+        val isHorizontalSizingOverridden =
+            instNodeStyle.horizontalSizing != originalNodeStyle.horizontalSizing
+        val isVerticalSizingOverridden =
+            instNodeStyle.verticalSizing != originalNodeStyle.verticalSizing
+        val isNodeSizeOverridden = instNodeStyle.nodeSize != originalNodeStyle.nodeSize
+
+        if (!isHorizontalSizingOverridden || !isVerticalSizingOverridden || !isNodeSizeOverridden) {
+            nodeStyle =
+                nodeStyle.copy {
+                    horizontalSizing =
+                        if (isHorizontalSizingOverridden) instNodeStyle.horizontalSizing
+                        else merged.nodeStyle.horizontalSizing
+                    verticalSizing =
+                        if (isVerticalSizingOverridden) instNodeStyle.verticalSizing
+                        else merged.nodeStyle.verticalSizing
+                    nodeSize =
+                        if (isNodeSizeOverridden) instNodeStyle.nodeSize
+                        else merged.nodeStyle.nodeSize
+                }
+        }
+    }
+}
 
 // Merge styles; any non-default properties of the override style are copied over the base style.
 // TODO: look into if we can use proto's own merge functionalities.
@@ -270,32 +437,47 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             )
                 justifyContent = override.layoutStyle.justifyContent
 
-            if (!override.layoutStyle.top.hasUndefined()) top = override.layoutStyle.top
+            if (override.layoutStyle.top.isSet()) top = override.layoutStyle.top
 
-            if (!override.layoutStyle.left.hasUndefined()) left = override.layoutStyle.left
+            if (override.layoutStyle.left.isSet()) left = override.layoutStyle.left
 
-            if (!override.layoutStyle.bottom.hasUndefined()) bottom = override.layoutStyle.bottom
+            if (override.layoutStyle.bottom.isSet()) bottom = override.layoutStyle.bottom
 
-            if (!override.layoutStyle.right.hasUndefined()) right = override.layoutStyle.right
+            if (override.layoutStyle.right.isSet()) right = override.layoutStyle.right
 
-            fun DimensionRect.isDefault(): Boolean {
-                return start.hasUndefined() &&
-                    end.hasUndefined() &&
-                    top.hasUndefined() &&
-                    bottom.hasUndefined()
+            if (override.layoutStyle.hasMargin()) {
+                val baseMargin = base.layoutStyle.margin
+                val overrideMargin = override.layoutStyle.margin
+                margin = dimensionRect {
+                    start =
+                        if (overrideMargin.start.isSet()) overrideMargin.start else baseMargin.start
+                    end = if (overrideMargin.end.isSet()) overrideMargin.end else baseMargin.end
+                    top = if (overrideMargin.top.isSet()) overrideMargin.top else baseMargin.top
+                    bottom =
+                        if (overrideMargin.bottom.isSet()) overrideMargin.bottom
+                        else baseMargin.bottom
+                }
             }
 
-            if (!override.layoutStyle.margin.isDefault()) margin = override.layoutStyle.margin
-
-            if (!override.layoutStyle.padding.isDefault()) padding = override.layoutStyle.padding
-
-            fun ItemSpacing.isDefault(): Boolean {
-                return itemSpacingTypeCase ==
-                    ItemSpacing.ItemSpacingTypeCase.ITEMSPACINGTYPE_NOT_SET ||
-                    itemSpacingTypeCase == ItemSpacing.ItemSpacingTypeCase.FIXED
+            if (override.layoutStyle.hasPadding()) {
+                val basePadding = base.layoutStyle.padding
+                val overridePadding = override.layoutStyle.padding
+                padding = dimensionRect {
+                    start =
+                        if (overridePadding.start.isSet()) overridePadding.start
+                        else basePadding.start
+                    end = if (overridePadding.end.isSet()) overridePadding.end else basePadding.end
+                    top = if (overridePadding.top.isSet()) overridePadding.top else basePadding.top
+                    bottom =
+                        if (overridePadding.bottom.isSet()) overridePadding.bottom
+                        else basePadding.bottom
+                }
             }
 
-            if (!override.layoutStyle.itemSpacing.isDefault())
+            if (
+                override.layoutStyle.itemSpacing.itemSpacingTypeCase !=
+                    ItemSpacing.ItemSpacingTypeCase.ITEMSPACINGTYPE_NOT_SET
+            )
                 itemSpacing = override.layoutStyle.itemSpacing
 
             if (override.layoutStyle.flexGrow != 0.0f) flexGrow = override.layoutStyle.flexGrow
@@ -303,8 +485,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             if (override.layoutStyle.flexShrink != 0.0f)
                 flexShrink = override.layoutStyle.flexShrink
 
-            if (!override.layoutStyle.flexBasis.hasUndefined())
-                flexBasis = override.layoutStyle.flexBasis
+            if (override.layoutStyle.flexBasis.isSet()) flexBasis = override.layoutStyle.flexBasis
 
             if (
                 override.layoutStyle.boundingBox.width != 0.0f ||
@@ -312,21 +493,17 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             )
                 boundingBox = override.layoutStyle.boundingBox
 
-            if (!override.layoutStyle.width.hasUndefined()) width = override.layoutStyle.width
+            if (override.layoutStyle.width.isSet()) width = override.layoutStyle.width
 
-            if (!override.layoutStyle.height.hasUndefined()) height = override.layoutStyle.height
+            if (override.layoutStyle.height.isSet()) height = override.layoutStyle.height
 
-            if (!override.layoutStyle.minWidth.hasUndefined())
-                minWidth = override.layoutStyle.minWidth
+            if (override.layoutStyle.minWidth.isSet()) minWidth = override.layoutStyle.minWidth
 
-            if (!override.layoutStyle.minHeight.hasUndefined())
-                minHeight = override.layoutStyle.minHeight
+            if (override.layoutStyle.minHeight.isSet()) minHeight = override.layoutStyle.minHeight
 
-            if (!override.layoutStyle.maxWidth.hasUndefined())
-                maxWidth = override.layoutStyle.maxWidth
+            if (override.layoutStyle.maxWidth.isSet()) maxWidth = override.layoutStyle.maxWidth
 
-            if (!override.layoutStyle.maxHeight.hasUndefined())
-                maxHeight = override.layoutStyle.maxHeight
+            if (override.layoutStyle.maxHeight.isSet()) maxHeight = override.layoutStyle.maxHeight
         }
 
     return viewStyle {
@@ -356,3 +533,33 @@ internal fun ViewStyle.isAutoWidthText() =
     layoutStyle.width.hasAuto() &&
         nodeStyle.horizontalSizing != LayoutSizing.LAYOUT_SIZING_FILL &&
         nodeStyle.horizontalSizing != LayoutSizing.LAYOUT_SIZING_UNSPECIFIED
+
+private fun DimensionProto.isSpecified(): Boolean {
+    return dimensionCase != DimensionProto.DimensionCase.DIMENSION_NOT_SET
+}
+
+private fun DimensionProto.isSet(): Boolean {
+    return dimensionCase != DimensionProto.DimensionCase.DIMENSION_NOT_SET &&
+        dimensionCase != DimensionProto.DimensionCase.UNDEFINED
+}
+
+private fun mergeDimensionProto(
+    inst: DimensionProto,
+    orig: DimensionProto,
+    merged: DimensionProto,
+): DimensionProto {
+    return if (inst.isSpecified() && inst != orig) inst else merged
+}
+
+private fun mergeDimensionRect(
+    inst: DimensionRect,
+    orig: DimensionRect,
+    merged: DimensionRect,
+): DimensionRect {
+    return dimensionRect {
+        start = mergeDimensionProto(inst.start, orig.start, merged.start)
+        end = mergeDimensionProto(inst.end, orig.end, merged.end)
+        top = mergeDimensionProto(inst.top, orig.top, merged.top)
+        bottom = mergeDimensionProto(inst.bottom, orig.bottom, merged.bottom)
+    }
+}

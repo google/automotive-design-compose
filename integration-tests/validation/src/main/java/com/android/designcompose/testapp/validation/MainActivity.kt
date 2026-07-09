@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -64,17 +65,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         DesignSettings.run { addFontFamily("Inter", interFont) }
+        DesignSettings.discoverAllTopLevelNodes.value = true
         DesignSettings.enableLiveUpdates(this)
 
         setContent {
             currentDisplay = remember { mutableStateOf(EXAMPLES[0]) }
-            Row(modifier = Modifier.systemBarsPadding()) {
-                Column(modifier = Modifier.width(110.dp)) { TestButtons() }
+            Row(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
+                Column(modifier = Modifier.fillMaxHeight().width(110.dp)) { TestButtons() }
                 VerticalDivider(
                     color = Color.Black,
                     modifier = Modifier.fillMaxHeight().width(1.dp),
                 )
-                TestContent { currentDisplay.value.second() }
+                TestContent(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    currentDisplay.value.second()
+                }
             }
         }
     }
@@ -115,7 +119,7 @@ class MainActivity : ComponentActivity() {
 
     // Draw the content for the current test
     @Composable
-    fun TestContent(content: @Composable () -> Unit) {
-        Box { content() }
+    fun TestContent(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+        Box(modifier) { content() }
     }
 }

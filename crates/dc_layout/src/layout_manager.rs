@@ -106,8 +106,10 @@ impl LayoutManager {
             Size { width: result.0, height: result.1 }
         };
 
+        let mut taffy = TaffyTree::new();
+        taffy.disable_rounding();
         LayoutManager {
-            taffy: TaffyTree::new(),
+            taffy,
             layouts: HashMap::new(),
             customizations: Customizations::new(),
             layout_state: 0,

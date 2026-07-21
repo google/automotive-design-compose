@@ -23,6 +23,8 @@ import { DataMapper } from "../services/DataMapper";
  * Settings for the animation configuration.
  */
 export interface AnimationSettings {
+  fromVariant: string;
+  animationName: string;
   initialDelay: number;
   duration: number;
   easing: string;
@@ -45,6 +47,8 @@ export class ControlPanel extends EventEmitter {
   private resetButton: HTMLButtonElement;
   private selectPreviewFrameButton: HTMLButtonElement;
   private keyframeSelect: HTMLSelectElement;
+  private fromVariantSelect: HTMLSelectElement;
+  private animationNameInput: HTMLInputElement;
   private initialDelayInput: HTMLInputElement;
   private durationInput: HTMLInputElement;
   private easingSelect: HTMLSelectElement;
@@ -54,6 +58,8 @@ export class ControlPanel extends EventEmitter {
   private variantNameDisplay: HTMLElement;
 
   private initialSettings: AnimationSettings = {
+    fromVariant: "*",
+    animationName: "Default",
     initialDelay: 0,
     duration: 0.3,
     easing: "Linear",
@@ -73,6 +79,8 @@ export class ControlPanel extends EventEmitter {
     this.resetButton = document.getElementById("reset-button") as HTMLButtonElement;
     this.selectPreviewFrameButton = document.getElementById("select-preview-frame-button") as HTMLButtonElement;
     this.keyframeSelect = document.getElementById("keyframe-select") as HTMLSelectElement;
+    this.fromVariantSelect = document.getElementById("from-variant") as HTMLSelectElement;
+    this.animationNameInput = document.getElementById("animation-name") as HTMLInputElement;
     this.initialDelayInput = document.getElementById("initial-delay") as HTMLInputElement;
     this.durationInput = document.getElementById("duration") as HTMLInputElement;
     this.easingSelect = document.getElementById("easing") as HTMLSelectElement;
@@ -123,6 +131,8 @@ export class ControlPanel extends EventEmitter {
     });
 
     const checkChange = () => this.checkPropertiesChanged();
+    this.fromVariantSelect.addEventListener("change", checkChange);
+    this.animationNameInput.addEventListener("input", checkChange);
     this.initialDelayInput.addEventListener("input", checkChange);
     this.durationInput.addEventListener("input", checkChange);
     this.easingSelect.addEventListener("change", checkChange);
@@ -154,11 +164,21 @@ export class ControlPanel extends EventEmitter {
    * Disables save/discard buttons initially.
    * @param variant The variant to display settings for.
    */
-  public setVariant(variant: Variant | undefined) {
+  public setVariant(variant: Variant | undefined, allVariants: Variant[] = []) {
     this.variantNameDisplay.textContent = variant ? variant.name : "N/A";
 
+    this.fromVariantSelect.innerHTML = '<option value="*">* (Any Origin)</option>';
+    allVariants.forEach(v => {
+        if (v.name !== (variant ? variant.name : "")) {
+            const option = document.createElement("option");
+            option.value = v.name;
+            option.textContent = v.name;
+            this.fromVariantSelect.appendChild(option);
+        }
+    });
+
     if (!variant || !variant.animation || !variant.animation.spec) {
-      this.initialSettings = { initialDelay: 0, duration: 0.3, easing: "Linear", interruptType: "None" };
+      this.initialSettings = { fromVariant: "*", animationName: "Default", initialDelay: 0, duration: 0.3, easing: "Linear", interruptType: "None" };
       this.updateInputs(this.initialSettings);
       this.saveButton.disabled = true;
       this.discardButton.disabled = true;
@@ -178,8 +198,14 @@ export class ControlPanel extends EventEmitter {
     }
     
     const interruptType = spec.interrupt_type || "None";
+    
+    // Default matrix schema values for now until we parse full matrix
+    let fromVariant = "*";
+    let animationName = "Default";
 
     this.initialSettings = {
+      fromVariant: fromVariant,
+      animationName: animationName,
       initialDelay: delay,
       duration: duration,
       easing: easing,
@@ -196,6 +222,8 @@ export class ControlPanel extends EventEmitter {
    * @param settings The animation settings to display.
    */
   public updateInputs(settings: AnimationSettings) {
+    this.fromVariantSelect.value = settings.fromVariant;
+    this.animationNameInput.value = settings.animationName;
     this.initialDelayInput.value = settings.initialDelay.toFixed(2);
     this.durationInput.value = settings.duration.toFixed(2);
     this.easingSelect.value = settings.easing;
@@ -208,6 +236,8 @@ export class ControlPanel extends EventEmitter {
    */
   public getCurrentSettings(): AnimationSettings {
     return {
+      fromVariant: this.fromVariantSelect.value,
+      animationName: this.animationNameInput.value,
       initialDelay: parseFloat(this.initialDelayInput.value),
       duration: parseFloat(this.durationInput.value),
       easing: this.easingSelect.value,
@@ -223,6 +253,8 @@ export class ControlPanel extends EventEmitter {
     const initial = this.initialSettings;
 
     const changed = 
+        current.fromVariant !== initial.fromVariant ||
+        current.animationName !== initial.animationName ||
         Math.abs(current.initialDelay - initial.initialDelay) > 0.0001 ||
         Math.abs(current.duration - initial.duration) > 0.0001 ||
         current.easing !== initial.easing ||

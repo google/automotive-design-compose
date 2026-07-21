@@ -17,11 +17,12 @@
 //! The protobuf structs are generated from `animations.proto`.
 
 use crate::animation_spec_schema::{
-    AnimationOverrideJson, AnimationSpec as AnimationSpecJson, Animations as AnimationsJson,
-    BezierCurve as BezierCurveJson, CustomKeyframe as CustomKeyframeJson,
-    CustomTimeline as CustomTimelineJson, Duration, Easing as EasingJson, KeyFrame as KeyFrameJson,
-    KeyFrameAnimation as KeyFrameAnimationJson, RepeatType as RepeatTypeJson,
-    SmoothAnimation as SmoothAnimationJson, StopType as StopTypeJson,
+    AnimationMatrixJson, AnimationOverrideJson, AnimationSpec as AnimationSpecJson,
+    Animations as AnimationsJson, BezierCurve as BezierCurveJson,
+    CustomKeyframe as CustomKeyframeJson, CustomTimeline as CustomTimelineJson, Duration,
+    Easing as EasingJson, KeyFrame as KeyFrameJson, KeyFrameAnimation as KeyFrameAnimationJson,
+    RepeatType as RepeatTypeJson, SmoothAnimation as SmoothAnimationJson, StopType as StopTypeJson,
+    TransitionSpecJson,
 };
 use dc_bundle::animationspec;
 use dc_bundle::animationspec::{
@@ -59,6 +60,12 @@ impl From<&AnimationOverrideJson> for AnimationOverride {
             AnimationOverrideJson::Custom(spec) => animationspec::AnimationOverride {
                 animation_override: Some(animation_override::Animation_override::Custom(
                     spec.clone().into(),
+                )),
+                ..Default::default()
+            },
+            AnimationOverrideJson::Matrix(matrix) => animationspec::AnimationOverride {
+                animation_override: Some(animation_override::Animation_override::Matrix(
+                    matrix.into(),
                 )),
                 ..Default::default()
             },
@@ -177,6 +184,35 @@ impl From<AnimationSpecJson> for AnimationSpec {
                 .into_iter()
                 .map(|(k, v)| (k, v.into()))
                 .collect(),
+            ..Default::default()
+        }
+    }
+}
+
+/// Converts from the JSON `TransitionSpecJson` to the protobuf `TransitionSpec`.
+impl From<TransitionSpecJson> for animationspec::TransitionSpec {
+    fn from(json: TransitionSpecJson) -> Self {
+        animationspec::TransitionSpec {
+            from_variant: json.from,
+            to_variant: json.to,
+            animation_name: json.name,
+            spec: json.spec.map(|s| s.into()).into(),
+            custom_keyframe_data: json
+                .timelines
+                .into_iter()
+                .map(|(k, v)| (k, v.into()))
+                .collect(),
+            ..Default::default()
+        }
+    }
+}
+
+/// Converts from the JSON `AnimationMatrixJson` to the protobuf `AnimationMatrix`.
+impl From<AnimationMatrixJson> for animationspec::AnimationMatrix {
+    fn from(json: AnimationMatrixJson) -> Self {
+        animationspec::AnimationMatrix {
+            default_spec: json.default_spec.map(|s| s.into()).into(),
+            transitions: json.transitions.into_iter().map(|t| t.into()).collect(),
             ..Default::default()
         }
     }

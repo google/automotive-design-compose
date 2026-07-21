@@ -98,7 +98,7 @@ class AnimationUI {
     this.controlPanel.on("frame-changed", (index: number) => {
         if (index !== this.currentFrameIndex) {
             this.currentFrameIndex = index;
-            this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex]);
+            this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex], this.currentVariants);
 
             const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(this.currentVariants);
             const selectedKeyframe = keyframeTimes.find((kf) => kf.index === index);
@@ -145,7 +145,7 @@ class AnimationUI {
 
         if (newFrameIndex !== -1 && newFrameIndex !== this.currentFrameIndex) {
           this.currentFrameIndex = newFrameIndex;
-          this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex]);
+          this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex], this.currentVariants);
           this.controlPanel.setSelectedFrame(this.currentFrameIndex);
         }
       }
@@ -153,7 +153,7 @@ class AnimationUI {
 
     this.playbackController.on("keyframe-changed", (index: number) => {
       this.currentFrameIndex = index;
-      this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex]);
+      this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex], this.currentVariants);
       this.controlPanel.setSelectedFrame(this.currentFrameIndex);
     });
 
@@ -172,9 +172,8 @@ class AnimationUI {
 
   private handleSave(settings: AnimationSettings) {
       const existingAnimation = this.currentVariants[this.currentFrameIndex].animation || {};
-      const newAnimationData = {
-        ...existingAnimation,
-        spec: {
+      
+      const newSpec = {
           initial_delay: { secs: Math.floor(settings.initialDelay), nanos: (settings.initialDelay % 1) * 1e9 },
           animation: {
             Smooth: {
@@ -187,8 +186,38 @@ class AnimationUI {
             },
           },
           interrupt_type: settings.interruptType,
-        },
       };
+
+      const newAnimationData = { ...existingAnimation };
+      
+      if (!newAnimationData.transitions) {
+          newAnimationData.transitions = [];
+      }
+
+      const toVariantName = this.currentVariants[this.currentFrameIndex].name;
+
+      if (settings.fromVariant === "*" && settings.animationName === "Default") {
+          newAnimationData.default_spec = newSpec;
+      } else {
+          const targetTransitionIndex = newAnimationData.transitions.findIndex(
+              (t: any) => t.from === settings.fromVariant && t.name === settings.animationName && t.to === toVariantName
+          );
+
+          if (targetTransitionIndex >= 0) {
+              newAnimationData.transitions[targetTransitionIndex].spec = newSpec;
+          } else {
+              newAnimationData.transitions.push({
+                  from: settings.fromVariant,
+                  to: toVariantName,
+                  name: settings.animationName,
+                  spec: newSpec,
+                  timelines: {} 
+              });
+          }
+      }
+
+      // Preserve legacy spec temporarily to prevent older UI code from crashing
+      newAnimationData.spec = newSpec;
 
       this.currentVariants[this.currentFrameIndex].animation = newAnimationData;
 
@@ -213,11 +242,11 @@ class AnimationUI {
 
       this.timelineManager.editor.setData(newAnimationDataObject);
 
-      this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex]); // Updates initial properties
+      this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex], this.currentVariants); // Updates initial properties
   }
 
   private handleDiscard() {
-      this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex]);
+      this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex], this.currentVariants);
   }
 
   private handleExport() {
@@ -322,7 +351,7 @@ class AnimationUI {
           this.currentFrameIndex = startIndex;
 
           this.controlPanel.updateKeyframeSelector(variants, startIndex);
-          this.controlPanel.setVariant(variants[startIndex]);
+          this.controlPanel.setVariant(variants[startIndex], variants);
 
           const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(this.currentVariants);
           const selectedKeyframe = keyframeTimes.find((kf) => kf.index === startIndex);

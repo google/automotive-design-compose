@@ -175,16 +175,54 @@ pub struct AnimationSpec {
     pub custom_keyframe_data: std::collections::HashMap<String, CustomTimeline>,
 }
 
+/// Represents a single transition specification between variant states (Option A).
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+pub struct TransitionSpecJson {
+    /// Origin variant state or wildcard ("*")
+    pub from: String,
+    /// Destination variant state
+    pub to: String,
+    /// Custom animation identifier (defaults to "Default")
+    #[serde(default = "default_animation_name")]
+    pub name: String,
+    /// Optional animation specification (delay, duration, easing, etc.)
+    pub spec: Option<AnimationSpec>,
+    /// Timelines for custom properties
+    #[serde(default)]
+    pub timelines: std::collections::HashMap<String, CustomTimeline>,
+}
+
+fn default_animation_name() -> String {
+    "Default".to_string()
+}
+
+/// Root animation matrix structure for Option A transition matrix storage.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+pub struct AnimationMatrixJson {
+    /// Default animation spec fallback across all transitions
+    pub default_spec: Option<AnimationSpec>,
+    /// Array of explicit transition specifications
+    #[serde(default)]
+    pub transitions: Vec<TransitionSpecJson>,
+}
+
 /// This is the top-level structure that the plugin saves to a Figma node.
-#[derive(Serialize, Clone, Debug, PartialEq, Default)]
+#[derive(Serialize, Clone, Debug, PartialEq)]
 pub enum AnimationOverrideJson {
     /// Use the default animation behavior.
-    #[default]
     Default,
     /// Use a custom animation specification.
     Custom(AnimationSpec),
+    /// Use a transition matrix specification (Option A).
+    Matrix(AnimationMatrixJson),
     /// Disable all animations.
     DisableAnimations,
+}
+
+impl Default for AnimationOverrideJson {
+    fn default() -> Self {
+        AnimationOverrideJson::Default
+    }
 }
 
 impl<'de> Deserialize<'de> for AnimationOverrideJson {
@@ -208,10 +246,18 @@ impl<'de> Deserialize<'de> for AnimationOverrideJson {
             spec: Option<AnimationSpec>,
             #[serde(rename = "customKeyframeData", default)]
             custom_keyframe_data_raw: std::collections::HashMap<String, CustomTimelineRaw>,
+            default_spec: Option<AnimationSpec>,
+            transitions: Option<Vec<TransitionSpecJson>>,
         }
 
         let tmp = Tmp::deserialize(deserializer)?;
-        if tmp.override_type == "Custom" || (tmp.override_type.is_empty() && tmp.spec.is_some()) {
+        if tmp.transitions.is_some() || tmp.default_spec.is_some() {
+            let matrix = AnimationMatrixJson {
+                default_spec: tmp.default_spec,
+                transitions: tmp.transitions.unwrap_or_default(),
+            };
+            Ok(AnimationOverrideJson::Matrix(matrix))
+        } else if tmp.override_type == "Custom" || (tmp.override_type.is_empty() && tmp.spec.is_some()) {
             if let Some(mut spec) = tmp.spec {
                 let mut custom_keyframe_data = std::collections::HashMap::new();
                 for (k, v) in tmp.custom_keyframe_data_raw {
@@ -366,5 +412,67 @@ mod tests {
         let anim = serde_json::from_str::<AnimationOverrideJson>(json_str);
         assert!(anim.is_ok(), "Failed to parse JSON: {:?}", anim.err());
         println!("Successfully parsed: {:?}", anim.unwrap());
+    }
+
+    #[test]
+    fn test_deserialize_animation_matrix() {
+        let json_str = r#"{
+            "default_spec": {
+                "initial_delay": { "secs": 0, "nanos": 0 },
+                "animation": {
+                    "Smooth": {
+                        "duration": { "secs": 0, "nanos": 300000000 },
+                        "repeat_type": "NoRepeat",
+                        "easing": "Linear"
+                    }
+                },
+                "interrupt_type": "None"
+            },
+            "transitions": [
+                {
+                    "from": "VariantA",
+                    "to": "VariantB",
+                    "name": "Default",
+                    "spec": {
+                        "initial_delay": { "secs": 0, "nanos": 0 },
+                        "animation": {
+                            "Smooth": {
+                                "duration": { "secs": 0, "nanos": 500000000 },
+                                "repeat_type": "NoRepeat",
+                                "easing": "EaseInOut"
+                            }
+                        },
+                        "interrupt_type": "None"
+                    },
+                    "timelines": {
+                        "PRNDState-x": {
+                            "target_easing": "Linear",
+                            "keyframes": [
+                                { "fraction": 0.5, "value_json": 100.0, "easing": "EaseIn" }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "from": "*",
+                    "to": "VariantB",
+                    "name": "AlertPop",
+                    "timelines": {}
+                }
+            ]
+        }"#;
+        let anim = serde_json::from_str::<AnimationOverrideJson>(json_str);
+        assert!(anim.is_ok(), "Failed to parse Option A matrix JSON: {:?}", anim.err());
+        if let AnimationOverrideJson::Matrix(matrix) = anim.unwrap() {
+            assert!(matrix.default_spec.is_some());
+            assert_eq!(matrix.transitions.len(), 2);
+            assert_eq!(matrix.transitions[0].from, "VariantA");
+            assert_eq!(matrix.transitions[0].to, "VariantB");
+            assert_eq!(matrix.transitions[0].name, "Default");
+            assert_eq!(matrix.transitions[1].from, "*");
+            assert_eq!(matrix.transitions[1].name, "AlertPop");
+        } else {
+            panic!("Expected AnimationOverrideJson::Matrix");
+        }
     }
 }

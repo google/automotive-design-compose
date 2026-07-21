@@ -160,8 +160,16 @@
         <h3>Animation Properties</h3>
         <p style="font-size: 0.8em; color: var(--figma-color-text-secondary); margin-top: -8px; margin-bottom: 16px;">Declares the animation settings to squoosh into this state. This means the duration and easing defined here apply to the transition *leading up to* this keyframe, not after it.</p>
         <div class="form-grid">
-            <label class="figma-label">Variant</label>
+            <label for="from-variant" class="figma-label">From State</label>
+            <select id="from-variant">
+                <option value="*">* (Any Origin)</option>
+            </select>
+
+            <label class="figma-label">To State</label>
             <span id="variant-name-display"></span>
+
+            <label for="animation-name" class="figma-label">Animation Name</label>
+            <input type="text" id="animation-name" value="Default" placeholder="Default">
 
             <label for="initial-delay" class="figma-label">Initial Delay (s)</label>
             <input type="number" id="initial-delay" step="0.1" value="0">

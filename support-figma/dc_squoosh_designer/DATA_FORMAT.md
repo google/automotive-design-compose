@@ -1,4 +1,4 @@
-# Data Format
+# Data Format (Option A Transition Matrix Schema)
 
 This document describes the data structures used by the DC Squoosh Designer plugin to store animation specifications within Figma.
 
@@ -6,57 +6,77 @@ This document describes the data structures used by the DC Squoosh Designer plug
 
 The plugin stores data in the `sharedPluginData` of Figma components (variants).
 *   **Namespace:** `designcompose`
-*   **Key:** `animations`
-*   **Value:** A stringified JSON object.
+*   **Key:** `squoosh`
+*   **Value:** A stringified JSON object conforming to the Option A Transition Matrix Schema.
 
-## JSON Structure
+## JSON Structure (Option A Transition Matrix)
 
-The root object contains the animation specification for transitioning *to* the variant where the data is stored.
+The root payload defines an explicit array of transition rules (`transitions`) and an optional default specification fallback (`default_spec`).
 
 ```json
 {
-  "spec": {
+  "default_spec": {
     "initial_delay": { "secs": 0, "nanos": 0 },
     "animation": {
       "Smooth": {
         "duration": { "secs": 0, "nanos": 300000000 },
+        "repeat_type": "NoRepeat",
         "easing": "Linear"
       }
     },
     "interrupt_type": "None"
   },
-  "customKeyframeData": {
-    "TIMELINE_ID": "{\"targetEasing\":\"Inherit\",\"keyframes\":[{\"fraction\":0.5,\"value\":{\"Scalar\":1},\"easing\":\"Linear\"}]}"
-    // This field stores stringified JSON data for custom (user-added) property timelines.
-    // Figma's API limits plugin data to strings, so the inner object is JSON-serialized again.
-    // System-generated timelines (e.g., for 'x', 'y' changes between variants)
-    // do not store their keyframe data here, but derive it from variant properties.
-  }
-}
-```
-
-To easily and safely persist complex keyframe sequences, `customKeyframeData` stores serialized property timelines as stringified JSON objects.
-
-### Structured Timeline Format (Decoded)
-
-When decoded, the JSON string mapped to `TIMELINE_ID` has the following structure, aligning with the Protobuf definitions:
-
-```json
-{
-  "targetEasing": "Inherit",
-  "keyframes": [
+  "transitions": [
     {
-      "fraction": 0.2,
-      "value": { "Scalar": 0.4 },
-      "easing": "Linear"
+      "from": "VariantA",
+      "to": "VariantB",
+      "name": "Default",
+      "spec": {
+        "initial_delay": { "secs": 0, "nanos": 0 },
+        "animation": {
+          "Smooth": {
+            "duration": { "secs": 0, "nanos": 500000000 },
+            "repeat_type": "NoRepeat",
+            "easing": "EaseInOut"
+          }
+        },
+        "interrupt_type": "None"
+      },
+      "timelines": {
+        "PRNDState-x": {
+          "targetEasing": "Inherit",
+          "keyframes": [
+            { "fraction": 0.5, "value": { "Scalar": 100.0 }, "easing": "EaseIn" }
+          ]
+        }
+      }
     },
     {
-      "fraction": 0.5,
-      "value": { "Scalar": 0.8 },
-      "easing": "EaseIn"
+      "from": "*",
+      "to": "VariantB",
+      "name": "AlertPop",
+      "spec": {
+        "initial_delay": { "secs": 0, "nanos": 0 },
+        "animation": {
+          "Smooth": {
+            "duration": { "secs": 0, "nanos": 300000000 },
+            "repeat_type": "NoRepeat",
+            "easing": "EaseOut"
+          }
+        },
+        "interrupt_type": "None"
+      },
+      "timelines": {}
     }
   ]
 }
 ```
 
-*Note: All custom timelines enforce this JSON structure within the stringified payload, yielding superior parsing performance and explicit typing for multi-scalar values (like color or gradient arrays).*
+### Transition Matrix Lookup Hierarchy
+
+At runtime (in HAR and DriverUI), transition animation resolution follows a deterministic multi-stage lookup:
+1. `"VariantA->VariantB:AlertPop"` (Exact custom animation name match)
+2. `"VariantA->VariantB:Default"` (Pair default match)
+3. `"*->VariantB:Default"` (Wildcard origin match)
+4. `"VariantB"` (Base target variant fallback)
+

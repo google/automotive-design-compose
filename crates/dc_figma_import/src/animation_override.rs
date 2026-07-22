@@ -65,7 +65,7 @@ impl From<&AnimationOverrideJson> for AnimationOverride {
             },
             AnimationOverrideJson::Matrix(matrix) => animationspec::AnimationOverride {
                 animation_override: Some(animation_override::Animation_override::Matrix(
-                    matrix.into(),
+                    matrix.clone().into(),
                 )),
                 ..Default::default()
             },
@@ -197,11 +197,7 @@ impl From<TransitionSpecJson> for animationspec::TransitionSpec {
             to_variant: json.to,
             animation_name: json.name,
             spec: json.spec.map(|s| s.into()).into(),
-            custom_keyframe_data: json
-                .timelines
-                .into_iter()
-                .map(|(k, v)| (k, v.into()))
-                .collect(),
+            custom_keyframe_data: json.timelines.into_iter().map(|(k, v)| (k, v.into())).collect(),
             ..Default::default()
         }
     }

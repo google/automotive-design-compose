@@ -60,7 +60,7 @@ impl fmt::Display for DesignComposeDefinitionHeader {
         write!(
             f,
             "DC Version: {}\nDoc ID: {}\nName: {}\nLast Modified: {}\nResponse Version: {}",
-            &self.dc_version, &self.id, &self.name, &self.last_modified, &self.response_version
+            self.dc_version, self.id, self.name, self.last_modified, self.response_version
         )
     }
 }

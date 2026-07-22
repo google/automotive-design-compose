@@ -257,7 +257,9 @@ impl<'de> Deserialize<'de> for AnimationOverrideJson {
                 transitions: tmp.transitions.unwrap_or_default(),
             };
             Ok(AnimationOverrideJson::Matrix(matrix))
-        } else if tmp.override_type == "Custom" || (tmp.override_type.is_empty() && tmp.spec.is_some()) {
+        } else if tmp.override_type == "Custom"
+            || (tmp.override_type.is_empty() && tmp.spec.is_some())
+        {
             if let Some(mut spec) = tmp.spec {
                 let mut custom_keyframe_data = std::collections::HashMap::new();
                 for (k, v) in tmp.custom_keyframe_data_raw {

@@ -674,8 +674,8 @@ mod tests {
     #[test]
     fn test_view_new_rect() {
         let view = View::new_rect(
-            &"rect1".to_string(),
-            &"Rect View".to_string(),
+            "rect1",
+            "Rect View",
             ViewShape::default(),
             ViewStyle::new_default(),
             None,
@@ -697,8 +697,8 @@ mod tests {
     #[test]
     fn test_view_new_text() {
         let view = View::new_text(
-            &"text1".to_string(),
-            &"Text View".to_string(),
+            "text1",
+            "Text View",
             ViewStyle::new_default(),
             None,
             None,
@@ -716,8 +716,8 @@ mod tests {
     #[test]
     fn test_view_add_child() {
         let mut parent = View::new_rect(
-            &"parent".to_string(),
-            &"Parent".to_string(),
+            "parent",
+            "Parent",
             ViewShape::default(),
             ViewStyle::new_default(),
             None,
@@ -729,8 +729,8 @@ mod tests {
             HashMap::new(),
         );
         let child = View::new_rect(
-            &"child".to_string(),
-            &"Child".to_string(),
+            "child",
+            "Child",
             ViewShape::default(),
             ViewStyle::new_default(),
             None,
@@ -755,8 +755,8 @@ mod tests {
     #[test]
     fn test_find_view_by_id() {
         let child = View::new_rect(
-            &"child".to_string(),
-            &"Child".to_string(),
+            "child",
+            "Child",
             ViewShape::default(),
             ViewStyle::new_default(),
             None,
@@ -768,8 +768,8 @@ mod tests {
             HashMap::new(),
         );
         let mut parent = View::new_rect(
-            &"parent".to_string(),
-            &"Parent".to_string(),
+            "parent",
+            "Parent",
             ViewShape::default(),
             ViewStyle::new_default(),
             None,
@@ -781,10 +781,10 @@ mod tests {
             HashMap::new(),
         );
         parent.add_child(child);
-        assert!(parent.find_view_by_id(&"child".to_string()).is_some());
-        assert!(parent.find_view_by_id(&"parent".to_string()).is_some());
-        assert!(parent.find_view_by_id(&"I1;child".to_string()).is_some());
-        assert!(parent.find_view_by_id(&"nonexistent".to_string()).is_none());
+        assert!(parent.find_view_by_id("child").is_some());
+        assert!(parent.find_view_by_id("parent").is_some());
+        assert!(parent.find_view_by_id("I1;child").is_some());
+        assert!(parent.find_view_by_id("nonexistent").is_none());
     }
 
     #[test]

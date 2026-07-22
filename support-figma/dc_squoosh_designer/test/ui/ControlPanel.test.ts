@@ -37,6 +37,8 @@ describe('ControlPanel', () => {
       'reset-button': document.createElement('button'),
       'select-preview-frame-button': document.createElement('button'),
       'keyframe-select': document.createElement('select'),
+      'from-variant': document.createElement('select'),
+      'animation-name': document.createElement('input'),
       'initial-delay': document.createElement('input'),
       'duration': document.createElement('input'),
       'easing': document.createElement('select'),
@@ -117,7 +119,9 @@ describe('ControlPanel', () => {
       initialDelay: 1.5,
       duration: 2.0,
       easing: 'EaseIn',
-      interruptType: 'Immediate'
+      interruptType: 'Immediate',
+      fromVariant: '',
+      animationName: ''
     });
   });
 

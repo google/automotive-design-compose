@@ -200,8 +200,8 @@ export class ControlPanel extends EventEmitter {
     const interruptType = spec.interrupt_type || "None";
     
     // Default matrix schema values for now until we parse full matrix
-    let fromVariant = "*";
-    let animationName = "Default";
+    const fromVariant = "*";
+    const animationName = "Default";
 
     this.initialSettings = {
       fromVariant: fromVariant,

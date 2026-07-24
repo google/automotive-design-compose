@@ -206,6 +206,36 @@ pub struct AnimationMatrixJson {
     pub transitions: Vec<TransitionSpecJson>,
 }
 
+impl TransitionSpecJson {
+    /// Validates the transition spec fields.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.from.is_empty() && self.to.is_empty() {
+            return Err("TransitionSpec 'from' and 'to' cannot both be empty".to_string());
+        }
+        for (prop_name, timeline) in &self.timelines {
+            for keyframe in &timeline.keyframes {
+                if !(0.0..=1.0).contains(&keyframe.fraction) {
+                    return Err(format!(
+                        "Keyframe fraction {} for property '{}' is out of range [0.0, 1.0]",
+                        keyframe.fraction, prop_name
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl AnimationMatrixJson {
+    /// Validates the animation matrix structure and all transition specs.
+    pub fn validate(&self) -> Result<(), String> {
+        for (idx, transition) in self.transitions.iter().enumerate() {
+            transition.validate().map_err(|e| format!("Transition [{}] invalid: {}", idx, e))?;
+        }
+        Ok(())
+    }
+}
+
 /// This is the top-level structure that the plugin saves to a Figma node.
 #[derive(Serialize, Clone, Debug, PartialEq)]
 pub enum AnimationOverrideJson {
@@ -222,6 +252,16 @@ pub enum AnimationOverrideJson {
 impl Default for AnimationOverrideJson {
     fn default() -> Self {
         AnimationOverrideJson::Default
+    }
+}
+
+impl AnimationOverrideJson {
+    /// Validates the animation override.
+    pub fn validate(&self) -> Result<(), String> {
+        match self {
+            AnimationOverrideJson::Matrix(matrix) => matrix.validate(),
+            _ => Ok(()),
+        }
     }
 }
 
@@ -465,7 +505,9 @@ mod tests {
         }"#;
         let anim = serde_json::from_str::<AnimationOverrideJson>(json_str);
         assert!(anim.is_ok(), "Failed to parse Option A matrix JSON: {:?}", anim.err());
-        if let AnimationOverrideJson::Matrix(matrix) = anim.unwrap() {
+        let anim_val = anim.unwrap();
+        assert!(anim_val.validate().is_ok(), "Validation failed: {:?}", anim_val.validate());
+        if let AnimationOverrideJson::Matrix(matrix) = anim_val {
             assert!(matrix.default_spec.is_some());
             assert_eq!(matrix.transitions.len(), 2);
             assert_eq!(matrix.transitions[0].from, "VariantA");
@@ -476,5 +518,17 @@ mod tests {
         } else {
             panic!("Expected AnimationOverrideJson::Matrix");
         }
+    }
+
+    #[test]
+    fn test_validate_invalid_transition() {
+        let invalid_transition = TransitionSpecJson {
+            from: "".to_string(),
+            to: "".to_string(),
+            name: "Invalid".to_string(),
+            spec: None,
+            timelines: std::collections::HashMap::new(),
+        };
+        assert!(invalid_transition.validate().is_err());
     }
 }

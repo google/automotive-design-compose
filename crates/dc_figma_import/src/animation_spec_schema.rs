@@ -530,5 +530,243 @@ mod tests {
             timelines: std::collections::HashMap::new(),
         };
         assert!(invalid_transition.validate().is_err());
+
+        let mut valid_transition = TransitionSpecJson {
+            from: "A".to_string(),
+            to: "B".to_string(),
+            name: "Valid".to_string(),
+            spec: None,
+            timelines: std::collections::HashMap::new(),
+        };
+        assert!(valid_transition.validate().is_ok());
+
+        let mut timeline = CustomTimeline {
+            target_easing: Easing::String("Linear".to_string()),
+            keyframes: vec![CustomKeyframe {
+                fraction: 1.5,
+                value_json: serde_json::Value::Null,
+                easing: Easing::String("Linear".to_string()),
+            }],
+        };
+        valid_transition.timelines.insert("Prop".to_string(), timeline);
+        assert!(valid_transition.validate().is_err());
+    }
+
+    #[test]
+    fn test_validate_animation_matrix() {
+        let matrix = AnimationMatrixJson {
+            default_spec: None,
+            transitions: vec![TransitionSpecJson {
+                from: "".to_string(),
+                to: "".to_string(),
+                name: "Invalid".to_string(),
+                spec: None,
+                timelines: std::collections::HashMap::new(),
+            }],
+        };
+        let err = matrix.validate().unwrap_err();
+        assert!(err.contains("Transition [0] invalid:"));
+    }
+
+    #[test]
+    fn test_validate_animation_override() {
+        let default_override = AnimationOverrideJson::Default;
+        assert!(default_override.validate().is_ok());
+
+        let custom_override = AnimationOverrideJson::Custom(AnimationSpec::default());
+        assert!(custom_override.validate().is_ok());
+
+        let disable_override = AnimationOverrideJson::DisableAnimations;
+        assert!(disable_override.validate().is_ok());
+
+        let invalid_matrix = AnimationOverrideJson::Matrix(AnimationMatrixJson {
+            default_spec: None,
+            transitions: vec![TransitionSpecJson {
+                from: "".to_string(),
+                to: "".to_string(),
+                name: "Invalid".to_string(),
+                spec: None,
+                timelines: std::collections::HashMap::new(),
+            }],
+        });
+        assert!(invalid_matrix.validate().is_err());
+    }
+
+    #[test]
+    fn test_validate_transition_invalid_keyframe_fraction() {
+        let mut timelines = std::collections::HashMap::new();
+        timelines.insert(
+            "Prop".to_string(),
+            CustomTimeline {
+                target_easing: Easing::String("Linear".to_string()),
+                keyframes: vec![CustomKeyframe {
+                    fraction: 1.5,
+                    value_json: serde_json::Value::Null,
+                    easing: Easing::String("Linear".to_string()),
+                }],
+            },
+        );
+        let invalid_transition = TransitionSpecJson {
+            from: "A".to_string(),
+            to: "B".to_string(),
+            name: "Test".to_string(),
+            spec: None,
+            timelines,
+        };
+        assert!(invalid_transition.validate().is_err());
+
+        let mut timelines_neg = std::collections::HashMap::new();
+        timelines_neg.insert(
+            "Prop".to_string(),
+            CustomTimeline {
+                target_easing: Easing::String("Linear".to_string()),
+                keyframes: vec![CustomKeyframe {
+                    fraction: -0.1,
+                    value_json: serde_json::Value::Null,
+                    easing: Easing::String("Linear".to_string()),
+                }],
+            },
+        );
+        let invalid_transition_neg = TransitionSpecJson {
+            from: "A".to_string(),
+            to: "B".to_string(),
+            name: "Test".to_string(),
+            spec: None,
+            timelines: timelines_neg,
+        };
+        assert!(invalid_transition_neg.validate().is_err());
+    }
+
+    #[test]
+    fn test_validate_transition_valid() {
+        let mut timelines = std::collections::HashMap::new();
+        timelines.insert(
+            "Prop".to_string(),
+            CustomTimeline {
+                target_easing: Easing::String("Linear".to_string()),
+                keyframes: vec![CustomKeyframe {
+                    fraction: 1.0,
+                    value_json: serde_json::Value::Null,
+                    easing: Easing::String("Linear".to_string()),
+                }],
+            },
+        );
+        let valid_transition = TransitionSpecJson {
+            from: "A".to_string(),
+            to: "B".to_string(),
+            name: "Test".to_string(),
+            spec: None,
+            timelines,
+        };
+        assert!(valid_transition.validate().is_ok());
+    }
+
+    #[test]
+    fn test_validate_matrix_invalid_transition() {
+        let matrix = AnimationMatrixJson {
+            default_spec: None,
+            transitions: vec![TransitionSpecJson {
+                from: "".to_string(),
+                to: "".to_string(),
+                name: "Invalid".to_string(),
+                spec: None,
+                timelines: std::collections::HashMap::new(),
+            }],
+        };
+        assert!(matrix.validate().is_err());
+    }
+
+    #[test]
+    fn test_validate_matrix_valid() {
+        let matrix = AnimationMatrixJson {
+            default_spec: None,
+            transitions: vec![TransitionSpecJson {
+                from: "A".to_string(),
+                to: "B".to_string(),
+                name: "Valid".to_string(),
+                spec: None,
+                timelines: std::collections::HashMap::new(),
+            }],
+        };
+        assert!(matrix.validate().is_ok());
+    }
+
+    #[test]
+    fn test_validate_animation_override_extended() {
+        let invalid_matrix = AnimationOverrideJson::Matrix(AnimationMatrixJson {
+            default_spec: None,
+            transitions: vec![TransitionSpecJson {
+                from: "".to_string(),
+                to: "".to_string(),
+                name: "Invalid".to_string(),
+                spec: None,
+                timelines: std::collections::HashMap::new(),
+            }],
+        });
+        assert!(invalid_matrix.validate().is_err());
+
+        let valid_matrix = AnimationOverrideJson::Matrix(AnimationMatrixJson {
+            default_spec: None,
+            transitions: vec![TransitionSpecJson {
+                from: "A".to_string(),
+                to: "B".to_string(),
+                name: "Valid".to_string(),
+                spec: None,
+                timelines: std::collections::HashMap::new(),
+            }],
+        });
+        assert!(valid_matrix.validate().is_ok());
+
+        assert!(AnimationOverrideJson::Default.validate().is_ok());
+        assert!(AnimationOverrideJson::DisableAnimations.validate().is_ok());
+        assert!(AnimationOverrideJson::Custom(AnimationSpec::default()).validate().is_ok());
+    }
+
+    #[test]
+    fn test_deserialize_matrix_default_animation_name() {
+        let json_str = r#"{
+            "transitions": [
+                {
+                    "from": "A",
+                    "to": "B"
+                }
+            ]
+        }"#;
+        let anim = serde_json::from_str::<AnimationOverrideJson>(json_str).unwrap();
+        if let AnimationOverrideJson::Matrix(matrix) = anim {
+            assert_eq!(matrix.transitions[0].name, "Default");
+        } else {
+            unreachable!("Expected Matrix");
+        }
+    }
+
+    #[test]
+    fn test_deserialize_matrix_missing_transitions_field() {
+        let json_str = r#"{
+            "default_spec": {
+                "initial_delay": { "secs": 0, "nanos": 0 },
+                "animation": {
+                    "Smooth": {
+                        "duration": { "secs": 0, "nanos": 300000000 },
+                        "repeat_type": "NoRepeat",
+                        "easing": "Linear"
+                    }
+                },
+                "interrupt_type": "None"
+            }
+        }"#;
+        let anim = serde_json::from_str::<AnimationOverrideJson>(json_str).unwrap();
+        if let AnimationOverrideJson::Matrix(matrix) = anim {
+            assert_eq!(matrix.transitions.len(), 0);
+            assert!(matrix.default_spec.is_some());
+        } else {
+            unreachable!("Expected Matrix");
+        }
+    }
+
+    #[test]
+    fn test_animation_override_json_default() {
+        let def = AnimationOverrideJson::default();
+        assert!(matches!(def, AnimationOverrideJson::Default));
     }
 }

@@ -123,10 +123,8 @@ fn test_animation_matrix_dcf_serialization() {
         load_design_def(&tmp_dcf_path).expect("Failed to reload saved .dcf");
     assert_eq!(loaded_header.id, header.id);
 
-    let reloaded_view = loaded_doc
-        .views
-        .get(&target_view_name)
-        .expect("Reloaded doc missing target view");
+    let reloaded_view =
+        loaded_doc.views.get(&target_view_name).expect("Reloaded doc missing target view");
 
     let reloaded_override = reloaded_view
         .style
@@ -139,6 +137,10 @@ fn test_animation_matrix_dcf_serialization() {
         .as_ref()
         .unwrap();
 
+    assert!(matches!(
+        reloaded_override.animation_override,
+        Some(animation_override::Animation_override::Matrix(_))
+    ));
     if let Some(animation_override::Animation_override::Matrix(matrix)) =
         &reloaded_override.animation_override
     {
@@ -152,8 +154,5 @@ fn test_animation_matrix_dcf_serialization() {
         let timeline = &transition.custom_keyframe_data["PropA"];
         assert_eq!(timeline.keyframes.len(), 1);
         assert_eq!(timeline.keyframes[0].fraction, 0.5);
-    } else {
-        panic!("Expected Animation_override::Matrix after reloading .dcf");
     }
 }
-

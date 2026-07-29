@@ -250,6 +250,7 @@ class AnimationUI {
   }
 
   private handleExport() {
+      console.info("Exporting DCF Animation Matrix with variants: ", this.currentVariants.map(v => v.name).join(", "));
       const dataToExport = {
         variants: this.currentVariants,
         serializedVariants: this.currentSerializedVariants,

@@ -27,9 +27,14 @@ import {
   AnimatedNodeProps,
   DecomposedTransform,
   AnimationNode,
-  AnimatedNode
+  AnimatedNode,
 } from "../timeline/types";
-import { rgbToHex, decomposeMatrix, invertMatrix, multiplyMatrix } from "../utils/common";
+import {
+  rgbToHex,
+  decomposeMatrix,
+  invertMatrix,
+  multiplyMatrix,
+} from "../utils/common";
 import { deserializeKeyframes } from "../timeline/serialization";
 import { getAnimationSegment } from "../timeline/utils";
 // Remove PlaybackController dependency
@@ -42,7 +47,6 @@ export class DataMapper {
   // Using a static instance or injecting the controller if needed for decomposition helper.
   // Alternatively, move decomposeMatrix to a static helper class.
 
-
   /**
    * Calculates the timeline positions for each variant based on animation specs.
    * @param variants The list of variants.
@@ -51,9 +55,9 @@ export class DataMapper {
   static calculateKeyframeData(variants: Variant[]) {
     let currentTime = 0;
     const keyframeTimes: KeyframeTime[] = [];
-    
+
     if (!variants || variants.length === 0) {
-        return { keyframeTimes: [], totalTime: 1 };
+      return { keyframeTimes: [], totalTime: 1 };
     }
 
     variants.forEach((variant, index) => {
@@ -64,29 +68,65 @@ export class DataMapper {
       });
 
       const animSourceVariant =
-        index < variants.length - 1
-          ? variants[index + 1]
-          : variants[0];
+        index < variants.length - 1 ? variants[index + 1] : variants[0];
 
       if (animSourceVariant && variants.length > 1) {
+        let delay = 0;
+        let duration = 0;
         const anim = animSourceVariant.animation;
-        if (anim && anim.spec) {
-          let delay = 0;
-          if (anim.spec.initial_delay) {
-            delay =
-              (anim.spec.initial_delay.secs || 0) +
-              (anim.spec.initial_delay.nanos || 0) / 1e9;
+        if (anim) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let spec = anim.spec;
+          if (!spec && anim.transitions && anim.transitions.length > 0) {
+            const matchingTrans =
+              anim.transitions.find(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (t: any) =>
+                  (t.to === animSourceVariant.name || t.to === "*" || !t.to) &&
+                  (t.from === variant.name || t.from === "*") &&
+                  t.spec,
+              ) ||
+              anim.transitions.find(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (t: any) => t.spec,
+              );
+            if (matchingTrans) {
+              spec = matchingTrans.spec;
+            }
           }
-          let duration = 0;
-          if (anim.spec.animation && anim.spec.animation.Smooth) {
-            const d = anim.spec.animation.Smooth.duration;
-            duration = (d.secs || 0) + (d.nanos || 0) / 1e9;
+          if (!spec && anim.default_spec) {
+            spec = anim.default_spec;
           }
-          currentTime += delay + duration;
+
+          if (spec) {
+            if (spec.initial_delay) {
+              delay =
+                (spec.initial_delay.secs || 0) +
+                (spec.initial_delay.nanos || 0) / 1e9;
+            }
+            if (spec.animation && spec.animation.Smooth) {
+              const d = spec.animation.Smooth.duration;
+              const val = (d.secs || 0) + (d.nanos || 0) / 1e9;
+              if (val > 0) {
+                duration = val;
+              }
+            }
+          }
         }
+        currentTime += delay + duration;
       }
     });
-    const totalTime = currentTime > 0 ? currentTime : 1;
+    let totalTime = currentTime > 0 ? currentTime : 1;
+    const allZero =
+      variants.length > 1 &&
+      keyframeTimes.every((kt) => kt.time === 0) &&
+      currentTime === 0;
+    if (allZero) {
+      keyframeTimes.forEach((kt, idx) => {
+        kt.time = idx * 0.3;
+      });
+      totalTime = variants.length * 0.3;
+    }
     // Always add a loop keyframe, even for single variants, so the timeline has a clear end point.
     // For single variants, this will simply create a loop back to the same (only) variant.
     keyframeTimes.push({
@@ -102,70 +142,70 @@ export class DataMapper {
    * Populates a timeline with locked keyframes derived from variant data.
    */
   private static populateVariantKeyframes(
-      timeline: Timeline,
-      keyframeTimes: KeyframeTime[],
-      values: (number | string | boolean | undefined)[],
-      totalTime: number,
-      nodePresence: boolean[],
-      propName: string,
-      nodeId: string
+    timeline: Timeline,
+    keyframeTimes: KeyframeTime[],
+    values: (number | string | boolean | undefined)[],
+    totalTime: number,
+    nodePresence: boolean[],
+    propName: string,
+    nodeId: string,
   ) {
-      keyframeTimes.forEach((kt: KeyframeTime) => {
-        const vIndex = kt.index;
-        let value = values[vIndex];
-        let isMissing = false;
+    keyframeTimes.forEach((kt: KeyframeTime) => {
+      const vIndex = kt.index;
+      let value = values[vIndex];
+      let isMissing = false;
 
-        if (!nodePresence[vIndex]) {
-            isMissing = true;
-            if (propName === "opacity") {
-                value = 0;
-            } else {
-                // Look ahead for next valid value
-                for (let i = vIndex + 1; i < values.length; i++) {
-                    if (values[i] !== undefined) {
-                        value = values[i];
-                        break;
-                    }
-                }
-                if (value === undefined) {
-                        // Look behind
-                        for (let i = vIndex - 1; i >= 0; i--) {
-                            if (values[i] !== undefined) {
-                                value = values[i];
-                                break;
-                            }
-                        }
-                }
-                if (value === undefined) value = 0; // Fallback
+      if (!nodePresence[vIndex]) {
+        isMissing = true;
+        if (propName === "opacity") {
+          value = 0;
+        } else {
+          // Look ahead for next valid value
+          for (let i = vIndex + 1; i < values.length; i++) {
+            if (values[i] !== undefined) {
+              value = values[i];
+              break;
             }
-        } else if (value === undefined) {
-            // Node present but property undefined (e.g. fill removed).
-            // Default to 0 for numeric properties to ensure continuity (e.g. fade out).
-            if (
-                propName.endsWith("opacity") ||
-                propName.endsWith("Radius") ||
-                propName.endsWith("Weight")
-            ) {
-                value = 0;
+          }
+          if (value === undefined) {
+            // Look behind
+            for (let i = vIndex - 1; i >= 0; i--) {
+              if (values[i] !== undefined) {
+                value = values[i];
+                break;
+              }
             }
+          }
+          if (value === undefined) value = 0; // Fallback
         }
-
-        if (value !== undefined) {
-            const keyframeId = kt.isLoop
-            ? `${nodeId}-${propName}-loop`
-            : `${nodeId}-${propName}-${vIndex}`;
-            const keyframe: Keyframe = {
-            id: keyframeId,
-            position: kt.time / totalTime,
-            value: value,
-            locked: true,
-            isMissing: isMissing,
-            easing: "Inherit",
-            };
-
-            timeline.keyframes.push(keyframe);
+      } else if (value === undefined) {
+        // Node present but property undefined (e.g. fill removed).
+        // Default to 0 for numeric properties to ensure continuity (e.g. fade out).
+        if (
+          propName.endsWith("opacity") ||
+          propName.endsWith("Radius") ||
+          propName.endsWith("Weight")
+        ) {
+          value = 0;
         }
-      });
+      }
+
+      if (value !== undefined) {
+        const keyframeId = kt.isLoop
+          ? `${nodeId}-${propName}-loop`
+          : `${nodeId}-${propName}-${vIndex}`;
+        const keyframe: Keyframe = {
+          id: keyframeId,
+          position: kt.time / totalTime,
+          value: value,
+          locked: true,
+          isMissing: isMissing,
+          easing: "Inherit",
+        };
+
+        timeline.keyframes.push(keyframe);
+      }
+    });
   }
 
   /**
@@ -181,7 +221,9 @@ export class DataMapper {
   ): AnimationData {
     console.log("transformDataToAnimationData inputs:", {
       variantsLength: variants ? variants.length : 0,
-      serializedVariantsLength: serializedVariants ? serializedVariants.length : 0,
+      serializedVariantsLength: serializedVariants
+        ? serializedVariants.length
+        : 0,
     });
 
     if (
@@ -190,7 +232,9 @@ export class DataMapper {
       !serializedVariants ||
       serializedVariants.length === 0
     ) {
-      console.warn("transformDataToAnimationData: variants or serializedVariants is empty.");
+      console.warn(
+        "transformDataToAnimationData: variants or serializedVariants is empty.",
+      );
       return { nodes: [], duration: 1 };
     }
 
@@ -199,47 +243,53 @@ export class DataMapper {
     // Build a superset tree of nodes from ALL variants
     const nodesMap = new Map<string, Node>();
 
-    const getOrCreateNode = (id: string, name: string, figmaId: string): Node => {
-        if (!nodesMap.has(id)) {
-            nodesMap.set(id, {
-                id,
-                figmaId,
-                name,
-                children: [],
-                timelines: [],
-            });
-        }
-        return nodesMap.get(id)!;
+    const getOrCreateNode = (
+      id: string,
+      name: string,
+      figmaId: string,
+    ): Node => {
+      if (!nodesMap.has(id)) {
+        nodesMap.set(id, {
+          id,
+          figmaId,
+          name,
+          children: [],
+          timelines: [],
+        });
+      }
+      return nodesMap.get(id)!;
     };
 
     serializedVariants.forEach((variantRoot) => {
-        const traverse = (node: SerializedNode, parentId: string | null) => {
-            let effectiveId = node.name;
-            if (parentId === null) effectiveId = "__ROOT__";
+      const traverse = (node: SerializedNode, parentId: string | null) => {
+        let effectiveId = node.name;
+        if (parentId === null) effectiveId = "__ROOT__";
 
-            const timelineNode = getOrCreateNode(effectiveId, node.name, node.id);
+        const timelineNode = getOrCreateNode(effectiveId, node.name, node.id);
 
-            if (parentId) {
-                const parentNode = nodesMap.get(parentId);
-                if (parentNode) {
-                    // Check if already added to children to avoid duplicates
-                    if (!parentNode.children.find((c) => c.id === effectiveId)) {
-                        parentNode.children.push(timelineNode);
-                    }
-                }
+        if (parentId) {
+          const parentNode = nodesMap.get(parentId);
+          if (parentNode) {
+            // Check if already added to children to avoid duplicates
+            if (!parentNode.children.find((c) => c.id === effectiveId)) {
+              parentNode.children.push(timelineNode);
             }
+          }
+        }
 
-            if (node.children) {
-                node.children.forEach((child) => traverse(child, effectiveId));
-            }
-        };
-        traverse(variantRoot, null);
+        if (node.children) {
+          node.children.forEach((child) => traverse(child, effectiveId));
+        }
+      };
+      traverse(variantRoot, null);
     });
 
     const figmaVariantRootNode = nodesMap.get("__ROOT__");
     if (!figmaVariantRootNode) {
-         console.warn("transformDataToAnimationData: __ROOT__ node not found in nodesMap.");
-         return { nodes: [], duration: 1 };
+      console.warn(
+        "transformDataToAnimationData: __ROOT__ node not found in nodesMap.",
+      );
+      return { nodes: [], duration: 1 };
     }
 
     const variantChangeTimeline: Timeline = {
@@ -290,7 +340,12 @@ export class DataMapper {
         const variantNodesMap = new Map();
         // SerializedNode is strictly not AnimationNode but structurally similar enough here.
         // We cast to avoid TS errors as we know the structure matches for what collectAnimationNodes needs.
-        this.collectAnimationNodes(variant as unknown as AnimationNode, null, true, variantNodesMap);
+        this.collectAnimationNodes(
+          variant as unknown as AnimationNode,
+          null,
+          true,
+          variantNodesMap,
+        );
         const figmaNode = variantNodesMap.get(node.id);
 
         if (figmaNode) {
@@ -307,11 +362,11 @@ export class DataMapper {
             "bottomLeftRadius",
             "bottomRightRadius",
             "arcData",
-            "strokeWeight"
+            "strokeWeight",
           ];
-          props.forEach(p => {
-              if (!properties[p]) properties[p] = [];
-              properties[p][vIndex] = this.getNodePropertyValue(figmaNode, p); // eslint-disable-line @typescript-eslint/no-explicit-any
+          props.forEach((p) => {
+            if (!properties[p]) properties[p] = [];
+            properties[p][vIndex] = this.getNodePropertyValue(figmaNode, p); // eslint-disable-line @typescript-eslint/no-explicit-any
           });
 
           if (figmaNode.fills && Array.isArray(figmaNode.fills)) {
@@ -319,44 +374,47 @@ export class DataMapper {
             (figmaNode.fills as any[]).forEach((fill: unknown, i: number) => {
               // We need to check all potential properties for fills
               const fillProps = [
-                  `fills.${i}.solid`,
-                  `fills.${i}.solid.opacity`,
-                  `fills.${i}.gradient.positions`,
-                  `fills.${i}.gradient.stops`,
-                  `fills.${i}.gradient.opacity`,
-                  `fills.${i}.opacity`,
-                  `fills.${i}.arc`
+                `fills.${i}.solid`,
+                `fills.${i}.solid.opacity`,
+                `fills.${i}.gradient.positions`,
+                `fills.${i}.gradient.stops`,
+                `fills.${i}.gradient.opacity`,
+                `fills.${i}.opacity`,
+                `fills.${i}.arc`,
               ];
-                            fillProps.forEach(p => {
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const val = this.getNodePropertyValue(figmaNode, p);
-                                if (val !== 0 && val !== undefined) { 
-                                    if (!properties[p]) properties[p] = [];
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    properties[p][vIndex] = val;
-                                }
-                            });            });
+              fillProps.forEach((p) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const val = this.getNodePropertyValue(figmaNode, p);
+                if (val !== 0 && val !== undefined) {
+                  if (!properties[p]) properties[p] = [];
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  properties[p][vIndex] = val;
+                }
+              });
+            });
           }
 
           if (figmaNode.strokes && Array.isArray(figmaNode.strokes)) {
-             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-             (figmaNode.strokes as any[]).forEach((stroke: unknown, i: number) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (figmaNode.strokes as any[]).forEach(
+              (stroke: unknown, i: number) => {
                 const strokeProps = [
-                    `strokes.${i}.solid`,
-                    `strokes.${i}.opacity`,
-                    `strokes.${i}.arc`
+                  `strokes.${i}.solid`,
+                  `strokes.${i}.opacity`,
+                  `strokes.${i}.arc`,
                 ];
-                 strokeProps.forEach(p => {
+                strokeProps.forEach((p) => {
                   const val = this.getNodePropertyValue(figmaNode, p);
                   if (val !== 0 && val !== undefined) {
-                      if (!properties[p]) properties[p] = [];
-                      properties[p][vIndex] = val; // eslint-disable-line @typescript-eslint/no-explicit-any
+                    if (!properties[p]) properties[p] = [];
+                    properties[p][vIndex] = val; // eslint-disable-line @typescript-eslint/no-explicit-any
                   }
-              });
-             });
+                });
+              },
+            );
           }
         } else {
-            nodePresence[vIndex] = false;
+          nodePresence[vIndex] = false;
         }
       });
 
@@ -369,7 +427,15 @@ export class DataMapper {
             keyframes: [],
           };
 
-          this.populateVariantKeyframes(timeline, keyframeTimes, values, totalTime, nodePresence, propName, node.id);
+          this.populateVariantKeyframes(
+            timeline,
+            keyframeTimes,
+            values,
+            totalTime,
+            nodePresence,
+            propName,
+            node.id,
+          );
           node.timelines.push(timeline);
         }
       }
@@ -386,12 +452,20 @@ export class DataMapper {
                   keyframes: [],
                   isCustom: true,
                 };
-                
+
                 const values = properties[propName];
                 if (values) {
-                    this.populateVariantKeyframes(timeline, keyframeTimes, values, totalTime, nodePresence, propName, node.id);
+                  this.populateVariantKeyframes(
+                    timeline,
+                    keyframeTimes,
+                    values,
+                    totalTime,
+                    nodePresence,
+                    propName,
+                    node.id,
+                  );
                 }
-                
+
                 node.timelines.push(timeline);
               }
             }
@@ -414,8 +488,7 @@ export class DataMapper {
           if (!segment) continue;
 
           const animSourceVariantIndex = keyframeTimes[i + 1].index;
-          const animSourceVariant =
-            variants[animSourceVariantIndex];
+          const animSourceVariant = variants[animSourceVariantIndex];
 
           if (
             animSourceVariant?.animation?.customKeyframeData &&
@@ -423,18 +496,19 @@ export class DataMapper {
           ) {
             const serializedCustomKeyframes =
               animSourceVariant.animation.customKeyframeData[timeline.id];
-            const { keyframes: customKeyframes, targetEasing } = deserializeKeyframes(
-              serializedCustomKeyframes,
-            );
+            const { keyframes: customKeyframes, targetEasing } =
+              deserializeKeyframes(serializedCustomKeyframes);
 
             if (targetEasing && targetEasing !== "Inherit") {
-               const endKeyframeTime = keyframeTimes[i + 1].time / totalTime;
-               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-               const endKeyframe = timeline.keyframes.find((kf) => Math.abs(kf.position - endKeyframeTime) < 0.0001);
-               if (endKeyframe) {
-                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                   endKeyframe.easing = targetEasing as any;
-               }
+              const endKeyframeTime = keyframeTimes[i + 1].time / totalTime;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const endKeyframe = timeline.keyframes.find(
+                (kf) => Math.abs(kf.position - endKeyframeTime) < 0.0001,
+              );
+              if (endKeyframe) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                endKeyframe.easing = targetEasing as any;
+              }
             }
 
             customKeyframes.forEach((customKf) => {
@@ -471,7 +545,7 @@ export class DataMapper {
   public static getNodePropertyValue(
     node: AnimationNode,
     propertyName: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): any {
     if (!node) return 0;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -538,23 +612,26 @@ export class DataMapper {
             } else if (fillProp === "gradient.positions") {
               return fill.gradientHandlePositions;
             } else if (fillProp === "gradient.stops") {
-              return (fill.gradientStops && Array.isArray(fill.gradientStops)) ? fill.gradientStops.map(
-                  (stop: {
-                    position: number;
-                    color: { r: number; g: number; b: number };
-                  }) => {
-                    if (stop.color) {
-                      return {
-                        position: stop.position,
-                        color: rgbToHex(
-                          Math.round(stop.color.r * 255),
-                          Math.round(stop.color.g * 255),
-                          Math.round(stop.color.b * 255),
-                        ),
-                      };
-                    }
-                    return stop;
-                  }) as unknown : undefined;
+              return fill.gradientStops && Array.isArray(fill.gradientStops)
+                ? (fill.gradientStops.map(
+                    (stop: {
+                      position: number;
+                      color: { r: number; g: number; b: number };
+                    }) => {
+                      if (stop.color) {
+                        return {
+                          position: stop.position,
+                          color: rgbToHex(
+                            Math.round(stop.color.r * 255),
+                            Math.round(stop.color.g * 255),
+                            Math.round(stop.color.b * 255),
+                          ),
+                        };
+                      }
+                      return stop;
+                    },
+                  ) as unknown)
+                : undefined;
             } else if (fillProp === "gradient.opacity") {
               return fill.opacity !== undefined ? fill.opacity : 1;
             } else if (fillProp === "arc") {
@@ -602,39 +679,48 @@ export class DataMapper {
   ) {
     if (node.visible === false) return;
 
-    const currentAbsTransform = node.absoluteTransform || [[1, 0, 0], [0, 1, 0]];
+    const currentAbsTransform = node.absoluteTransform || [
+      [1, 0, 0],
+      [0, 1, 0],
+    ];
     let relativeLeft = 0;
     let relativeTop = 0;
     let decomposedLocal: DecomposedTransform;
 
-    if (isRoot || !parentAbsTransform || !parentAbsTransform.absoluteTransform) {
-        const nodeAbsDecomposed = decomposeMatrix(currentAbsTransform);
-        if (isRoot) {
-            relativeLeft = 0;
-            relativeTop = 0;
-            decomposedLocal = nodeAbsDecomposed;
-        } else {
-            relativeLeft = nodeAbsDecomposed.translateX;
-            relativeTop = nodeAbsDecomposed.translateY;
-            decomposedLocal = nodeAbsDecomposed;
-        }
+    if (
+      isRoot ||
+      !parentAbsTransform ||
+      !parentAbsTransform.absoluteTransform
+    ) {
+      const nodeAbsDecomposed = decomposeMatrix(currentAbsTransform);
+      if (isRoot) {
+        relativeLeft = 0;
+        relativeTop = 0;
+        decomposedLocal = nodeAbsDecomposed;
+      } else {
+        relativeLeft = nodeAbsDecomposed.translateX;
+        relativeTop = nodeAbsDecomposed.translateY;
+        decomposedLocal = nodeAbsDecomposed;
+      }
     } else {
-        const parentAbs = parentAbsTransform.absoluteTransform;
-        const parentInv = invertMatrix(parentAbs);
-        
-        if (parentInv) {
-            const relMatrix = multiplyMatrix(parentInv, currentAbsTransform);
-            decomposedLocal = decomposeMatrix(relMatrix);
-            relativeLeft = decomposedLocal.translateX;
-            relativeTop = decomposedLocal.translateY;
-        } else {
-            // Fallback for non-invertible parent matrix
-            const nodeAbsDecomposed = decomposeMatrix(currentAbsTransform);
-            const parentAbsDecomposed = decomposeMatrix(parentAbs);
-            relativeLeft = nodeAbsDecomposed.translateX - parentAbsDecomposed.translateX;
-            relativeTop = nodeAbsDecomposed.translateY - parentAbsDecomposed.translateY;
-            decomposedLocal = nodeAbsDecomposed;
-        }
+      const parentAbs = parentAbsTransform.absoluteTransform;
+      const parentInv = invertMatrix(parentAbs);
+
+      if (parentInv) {
+        const relMatrix = multiplyMatrix(parentInv, currentAbsTransform);
+        decomposedLocal = decomposeMatrix(relMatrix);
+        relativeLeft = decomposedLocal.translateX;
+        relativeTop = decomposedLocal.translateY;
+      } else {
+        // Fallback for non-invertible parent matrix
+        const nodeAbsDecomposed = decomposeMatrix(currentAbsTransform);
+        const parentAbsDecomposed = decomposeMatrix(parentAbs);
+        relativeLeft =
+          nodeAbsDecomposed.translateX - parentAbsDecomposed.translateX;
+        relativeTop =
+          nodeAbsDecomposed.translateY - parentAbsDecomposed.translateY;
+        decomposedLocal = nodeAbsDecomposed;
+      }
     }
 
     map.set(isRoot ? "__ROOT__" : node.name, {
@@ -643,10 +729,15 @@ export class DataMapper {
       relativeTop,
       decomposedTransform: decomposedLocal,
     });
-    
+
     if (node.children)
       node.children.forEach((child: AnimationNode) =>
-        this.collectAnimationNodes(child, { ...node, absoluteTransform: currentAbsTransform }, false, map),
+        this.collectAnimationNodes(
+          child,
+          { ...node, absoluteTransform: currentAbsTransform },
+          false,
+          map,
+        ),
       );
   }
 
@@ -664,37 +755,46 @@ export class DataMapper {
     animatedNodes: AnimatedNode[],
   ) {
     // Similar logic to collectAnimationNodes for consistent preview
-    const currentAbsTransform = node.absoluteTransform || [[1, 0, 0], [0, 1, 0]];
+    const currentAbsTransform = node.absoluteTransform || [
+      [1, 0, 0],
+      [0, 1, 0],
+    ];
     let relativeLeft = 0;
     let relativeTop = 0;
     let decomposedLocal: DecomposedTransform;
 
-    if (isRoot || !parentAbsTransform || !parentAbsTransform.absoluteTransform) {
-       const nodeAbsDecomposed = decomposeMatrix(currentAbsTransform);
-       if (isRoot) {
-           relativeLeft = 0;
-           relativeTop = 0;
-           decomposedLocal = nodeAbsDecomposed;
-       } else {
-           relativeLeft = nodeAbsDecomposed.translateX;
-           relativeTop = nodeAbsDecomposed.translateY;
-           decomposedLocal = nodeAbsDecomposed;
-       }
+    if (
+      isRoot ||
+      !parentAbsTransform ||
+      !parentAbsTransform.absoluteTransform
+    ) {
+      const nodeAbsDecomposed = decomposeMatrix(currentAbsTransform);
+      if (isRoot) {
+        relativeLeft = 0;
+        relativeTop = 0;
+        decomposedLocal = nodeAbsDecomposed;
+      } else {
+        relativeLeft = nodeAbsDecomposed.translateX;
+        relativeTop = nodeAbsDecomposed.translateY;
+        decomposedLocal = nodeAbsDecomposed;
+      }
     } else {
-       const parentAbs = parentAbsTransform.absoluteTransform;
-       const parentInv = invertMatrix(parentAbs);
-       if (parentInv) {
-           const relMatrix = multiplyMatrix(parentInv, currentAbsTransform);
-           decomposedLocal = decomposeMatrix(relMatrix);
-           relativeLeft = decomposedLocal.translateX;
-           relativeTop = decomposedLocal.translateY;
-       } else {
-           const nodeAbsDecomposed = decomposeMatrix(currentAbsTransform);
-           const parentAbsDecomposed = decomposeMatrix(parentAbs);
-           relativeLeft = nodeAbsDecomposed.translateX - parentAbsDecomposed.translateX;
-           relativeTop = nodeAbsDecomposed.translateY - parentAbsDecomposed.translateY;
-           decomposedLocal = nodeAbsDecomposed;
-       }
+      const parentAbs = parentAbsTransform.absoluteTransform;
+      const parentInv = invertMatrix(parentAbs);
+      if (parentInv) {
+        const relMatrix = multiplyMatrix(parentInv, currentAbsTransform);
+        decomposedLocal = decomposeMatrix(relMatrix);
+        relativeLeft = decomposedLocal.translateX;
+        relativeTop = decomposedLocal.translateY;
+      } else {
+        const nodeAbsDecomposed = decomposeMatrix(currentAbsTransform);
+        const parentAbsDecomposed = decomposeMatrix(parentAbs);
+        relativeLeft =
+          nodeAbsDecomposed.translateX - parentAbsDecomposed.translateX;
+        relativeTop =
+          nodeAbsDecomposed.translateY - parentAbsDecomposed.translateY;
+        decomposedLocal = nodeAbsDecomposed;
+      }
     }
 
     const props: AnimatedNodeProps = {

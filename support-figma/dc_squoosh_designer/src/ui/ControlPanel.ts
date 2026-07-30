@@ -44,6 +44,8 @@ export class ControlPanel extends EventEmitter {
   private pingButton: HTMLButtonElement;
   private clearPreviewButton: HTMLButtonElement;
   private exportButton: HTMLButtonElement;
+  private importButton: HTMLButtonElement;
+  private importFileInput: HTMLInputElement;
   private resetButton: HTMLButtonElement;
   private selectPreviewFrameButton: HTMLButtonElement;
   private keyframeSelect: HTMLSelectElement;
@@ -55,6 +57,11 @@ export class ControlPanel extends EventEmitter {
   private interruptTypeSelect: HTMLSelectElement;
   private continueCheckbox: HTMLInputElement;
   private throttleUpdatesCheckbox: HTMLInputElement;
+  private transitionSelect?: HTMLSelectElement;
+  private deleteTransitionButton?: HTMLButtonElement;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private currentTransitions: any[] = [];
+  private selectedTransitionIndex: number = 0;
   private variantNameDisplay: HTMLElement;
 
   private initialSettings: AnimationSettings = {
@@ -70,31 +77,80 @@ export class ControlPanel extends EventEmitter {
     super();
     this.playbackController = playbackController;
 
-    this.playButton = document.getElementById("play-button") as HTMLButtonElement;
-    this.saveButton = document.getElementById("save-button") as HTMLButtonElement;
-    this.discardButton = document.getElementById("discard-button") as HTMLButtonElement;
-    this.pingButton = document.getElementById("ping-button") as HTMLButtonElement;
-    this.clearPreviewButton = document.getElementById("clear-preview-button") as HTMLButtonElement;
-    this.exportButton = document.getElementById("export-button") as HTMLButtonElement;
-    this.resetButton = document.getElementById("reset-button") as HTMLButtonElement;
-    this.selectPreviewFrameButton = document.getElementById("select-preview-frame-button") as HTMLButtonElement;
-    this.keyframeSelect = document.getElementById("keyframe-select") as HTMLSelectElement;
-    this.fromVariantSelect = document.getElementById("from-variant") as HTMLSelectElement;
-    this.animationNameInput = document.getElementById("animation-name") as HTMLInputElement;
-    this.initialDelayInput = document.getElementById("initial-delay") as HTMLInputElement;
-    this.durationInput = document.getElementById("duration") as HTMLInputElement;
+    this.playButton = document.getElementById(
+      "play-button",
+    ) as HTMLButtonElement;
+    this.saveButton = document.getElementById(
+      "save-button",
+    ) as HTMLButtonElement;
+    this.discardButton = document.getElementById(
+      "discard-button",
+    ) as HTMLButtonElement;
+    this.pingButton = document.getElementById(
+      "ping-button",
+    ) as HTMLButtonElement;
+    this.clearPreviewButton = document.getElementById(
+      "clear-preview-button",
+    ) as HTMLButtonElement;
+    this.exportButton = document.getElementById(
+      "export-button",
+    ) as HTMLButtonElement;
+    this.importButton = document.getElementById(
+      "import-button",
+    ) as HTMLButtonElement;
+    this.importFileInput = document.getElementById(
+      "import-file-input",
+    ) as HTMLInputElement;
+    this.resetButton = document.getElementById(
+      "reset-button",
+    ) as HTMLButtonElement;
+    this.selectPreviewFrameButton = document.getElementById(
+      "select-preview-frame-button",
+    ) as HTMLButtonElement;
+    this.keyframeSelect = document.getElementById(
+      "keyframe-select",
+    ) as HTMLSelectElement;
+    this.fromVariantSelect = document.getElementById(
+      "from-variant",
+    ) as HTMLSelectElement;
+    this.animationNameInput = document.getElementById(
+      "animation-name",
+    ) as HTMLInputElement;
+    this.initialDelayInput = document.getElementById(
+      "initial-delay",
+    ) as HTMLInputElement;
+    this.durationInput = document.getElementById(
+      "duration",
+    ) as HTMLInputElement;
     this.easingSelect = document.getElementById("easing") as HTMLSelectElement;
-    this.interruptTypeSelect = document.getElementById("interrupt-type") as HTMLSelectElement;
-    this.continueCheckbox = document.getElementById("continue-checkbox") as HTMLInputElement;
-    this.throttleUpdatesCheckbox = document.getElementById("throttle-updates-checkbox") as HTMLInputElement;
-    this.variantNameDisplay = document.getElementById("variant-name-display") as HTMLElement;
+    this.interruptTypeSelect = document.getElementById(
+      "interrupt-type",
+    ) as HTMLSelectElement;
+    this.continueCheckbox = document.getElementById(
+      "continue-checkbox",
+    ) as HTMLInputElement;
+    this.throttleUpdatesCheckbox = document.getElementById(
+      "throttle-updates-checkbox",
+    ) as HTMLInputElement;
+    this.variantNameDisplay = document.getElementById(
+      "variant-name-display",
+    ) as HTMLElement;
+    this.transitionSelect =
+      (document.getElementById("transition-select") as HTMLSelectElement) ||
+      undefined;
+    this.deleteTransitionButton =
+      (document.getElementById(
+        "delete-transition-button",
+      ) as HTMLButtonElement) || undefined;
 
     this.setupEventListeners();
     this.setupPlaybackListeners();
 
     // Initialize controller state
     this.playbackController.setContinue(this.continueCheckbox.checked);
-    this.playbackController.setThrottleUpdates(this.throttleUpdatesCheckbox.checked);
+    this.playbackController.setThrottleUpdates(
+      this.throttleUpdatesCheckbox.checked,
+    );
   }
 
   private setupEventListeners() {
@@ -106,24 +162,69 @@ export class ControlPanel extends EventEmitter {
       }
     };
 
+    window.addEventListener("keydown", (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.code === "Space" || e.key === " ") {
+        e.preventDefault();
+        if (this.playbackController.isPlaying) {
+          this.playbackController.pause();
+        } else {
+          this.playbackController.play();
+        }
+      }
+    });
+
     this.continueCheckbox.onchange = () => {
       this.playbackController.setContinue(this.continueCheckbox.checked);
     };
 
     this.throttleUpdatesCheckbox.onchange = () => {
-      this.playbackController.setThrottleUpdates(this.throttleUpdatesCheckbox.checked);
+      this.playbackController.setThrottleUpdates(
+        this.throttleUpdatesCheckbox.checked,
+      );
     };
 
-    this.saveButton.onclick = () => this.emit("save", this.getCurrentSettings());
+    this.saveButton.onclick = () =>
+      this.emit("save", this.getCurrentSettings());
     this.discardButton.onclick = () => this.emit("discard");
+    if (this.deleteTransitionButton) {
+      this.deleteTransitionButton.onclick = () =>
+        this.emit("delete-transition", this.selectedTransitionIndex);
+    }
     this.exportButton.onclick = () => this.emit("export");
+    this.importButton.onclick = () => {
+      this.importFileInput.click();
+    };
+    this.importFileInput.onchange = () => {
+      const files = this.importFileInput.files;
+      if (files && files[0]) {
+        this.emit("import", files[0]);
+        this.importFileInput.value = "";
+      }
+    };
     this.resetButton.onclick = () => this.emit("reset");
     this.pingButton.onclick = () => this.emit("ping");
     this.clearPreviewButton.onclick = () => this.emit("clear-preview");
-    
+
+    if (this.transitionSelect) {
+      this.transitionSelect.addEventListener("change", () =>
+        this.handleTransitionSelectChange(),
+      );
+    }
+
     this.selectPreviewFrameButton.onclick = () => {
-       const isSelecting = this.selectPreviewFrameButton.classList.contains("selecting");
-       this.emit("select-preview", isSelecting);
+      const isSelecting =
+        this.selectPreviewFrameButton.classList.contains("selecting");
+      this.emit("select-preview", isSelecting);
     };
 
     this.keyframeSelect.addEventListener("change", () => {
@@ -164,44 +265,141 @@ export class ControlPanel extends EventEmitter {
    * Disables save/discard buttons initially.
    * @param variant The variant to display settings for.
    */
-  public setVariant(variant: Variant | undefined, allVariants: Variant[] = []) {
+  public setVariant(
+    variant: Variant | undefined,
+    allVariants: Variant[] = [],
+    selectedTransitionIndex: number | string = 0,
+  ) {
     this.variantNameDisplay.textContent = variant ? variant.name : "N/A";
 
-    this.fromVariantSelect.innerHTML = '<option value="*">* (Any Origin)</option>';
-    allVariants.forEach(v => {
-        if (v.name !== (variant ? variant.name : "")) {
-            const option = document.createElement("option");
-            option.value = v.name;
-            option.textContent = v.name;
-            this.fromVariantSelect.appendChild(option);
-        }
+    this.fromVariantSelect.innerHTML =
+      '<option value="*">* (Any Origin)</option>';
+    allVariants.forEach((v) => {
+      if (v.name !== (variant ? variant.name : "")) {
+        const option = document.createElement("option");
+        option.value = v.name;
+        option.textContent = v.name;
+        this.fromVariantSelect.appendChild(option);
+      }
     });
 
-    if (!variant || !variant.animation || !variant.animation.spec) {
-      this.initialSettings = { fromVariant: "*", animationName: "Default", initialDelay: 0, duration: 0.3, easing: "Linear", interruptType: "None" };
+    if (
+      !variant ||
+      !variant.animation ||
+      (!variant.animation.spec &&
+        !variant.animation.default_spec &&
+        (!variant.animation.transitions ||
+          variant.animation.transitions.length === 0))
+    ) {
+      this.currentTransitions = [];
+      if (this.transitionSelect) {
+        this.transitionSelect.innerHTML = "";
+      }
+      if (this.deleteTransitionButton) {
+        this.deleteTransitionButton.disabled = true;
+      }
+      this.initialSettings = {
+        fromVariant: "*",
+        animationName: "Default",
+        initialDelay: 0,
+        duration: 0.3,
+        easing: "Linear",
+        interruptType: "None",
+      };
       this.updateInputs(this.initialSettings);
       this.saveButton.disabled = true;
       this.discardButton.disabled = true;
       return;
     }
 
-    const spec = variant.animation.spec;
-    const delay = (spec.initial_delay?.secs || 0) + (spec.initial_delay?.nanos || 0) / 1e9;
-    
+    if (
+      variant.animation.transitions &&
+      variant.animation.transitions.length > 0
+    ) {
+      this.currentTransitions = variant.animation.transitions;
+    } else {
+      this.currentTransitions = [
+        {
+          from: "*",
+          to: variant.name,
+          name: "Default",
+          spec: variant.animation.spec || variant.animation.default_spec,
+          timelines: {},
+        },
+      ];
+    }
+
+    const transitionSelect = this.transitionSelect;
+    if (transitionSelect) {
+      transitionSelect.innerHTML = "";
+      this.currentTransitions.forEach((t, idx) => {
+        const option = document.createElement("option");
+        option.value = String(idx);
+        const fromStr = t.from || "*";
+        const nameStr = t.name || "Default";
+        option.textContent = `${fromStr} → ${variant.name} : ${nameStr}`;
+        transitionSelect.appendChild(option);
+      });
+      const newOption = document.createElement("option");
+      newOption.value = "NEW";
+      newOption.textContent = "+ Create New Transition...";
+      transitionSelect.appendChild(newOption);
+
+      let targetIdx = 0;
+      if (typeof selectedTransitionIndex === "number") {
+        if (
+          selectedTransitionIndex >= 0 &&
+          selectedTransitionIndex < this.currentTransitions.length
+        ) {
+          targetIdx = selectedTransitionIndex;
+        }
+        this.selectedTransitionIndex = targetIdx;
+        transitionSelect.value = String(targetIdx);
+        this.loadTransitionAtIndex(targetIdx);
+      } else if (selectedTransitionIndex === "NEW") {
+        transitionSelect.value = "NEW";
+        this.handleTransitionSelectChange();
+      }
+    } else {
+      this.loadTransitionAtIndex(
+        typeof selectedTransitionIndex === "number" &&
+          selectedTransitionIndex >= 0 &&
+          selectedTransitionIndex < this.currentTransitions.length
+          ? selectedTransitionIndex
+          : 0,
+      );
+    }
+  }
+
+  private loadTransitionAtIndex(idx: number) {
+    const matchingTrans = this.currentTransitions[idx];
+    let fromVariant = "*";
+    let animationName = "Default";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let specToUse: any = undefined;
+
+    if (matchingTrans) {
+      fromVariant = matchingTrans.from || "*";
+      animationName = matchingTrans.name || "Default";
+      specToUse = matchingTrans.spec;
+    }
+
+    let delay = 0;
     let duration = 0;
     let easing = "Linear";
-    
-    if (spec.animation && spec.animation.Smooth) {
-        const d = spec.animation.Smooth.duration;
+    let interruptType = "None";
+
+    if (specToUse) {
+      delay =
+        (specToUse.initial_delay?.secs || 0) +
+        (specToUse.initial_delay?.nanos || 0) / 1e9;
+      if (specToUse.animation && specToUse.animation.Smooth) {
+        const d = specToUse.animation.Smooth.duration;
         duration = (d.secs || 0) + (d.nanos || 0) / 1e9;
-        easing = spec.animation.Smooth.easing;
+        easing = specToUse.animation.Smooth.easing;
+      }
+      interruptType = specToUse.interrupt_type || "None";
     }
-    
-    const interruptType = spec.interrupt_type || "None";
-    
-    // Default matrix schema values for now until we parse full matrix
-    const fromVariant = "*";
-    const animationName = "Default";
 
     this.initialSettings = {
       fromVariant: fromVariant,
@@ -209,12 +407,45 @@ export class ControlPanel extends EventEmitter {
       initialDelay: delay,
       duration: duration,
       easing: easing,
-      interruptType: interruptType
+      interruptType: interruptType,
     };
 
     this.updateInputs(this.initialSettings);
     this.saveButton.disabled = true;
     this.discardButton.disabled = true;
+    if (this.deleteTransitionButton) {
+      this.deleteTransitionButton.disabled =
+        this.currentTransitions.length <= 1;
+    }
+  }
+
+  private handleTransitionSelectChange() {
+    if (!this.transitionSelect) return;
+    if (this.transitionSelect.value === "NEW") {
+      this.selectedTransitionIndex = -1;
+      this.initialSettings = {
+        fromVariant: "*",
+        animationName: "NewTransition",
+        initialDelay: 0,
+        duration: 0.3,
+        easing: "Linear",
+        interruptType: "None",
+      };
+      this.updateInputs(this.initialSettings);
+      this.saveButton.disabled = false;
+      this.discardButton.disabled = false;
+      if (this.deleteTransitionButton) {
+        this.deleteTransitionButton.disabled = true;
+      }
+    } else {
+      const idx = parseInt(this.transitionSelect.value, 10);
+      this.selectedTransitionIndex = idx;
+      this.loadTransitionAtIndex(idx);
+    }
+  }
+
+  public getSelectedTransitionIndex(): number {
+    return this.selectedTransitionIndex;
   }
 
   /**
@@ -241,7 +472,7 @@ export class ControlPanel extends EventEmitter {
       initialDelay: parseFloat(this.initialDelayInput.value),
       duration: parseFloat(this.durationInput.value),
       easing: this.easingSelect.value,
-      interruptType: this.interruptTypeSelect.value
+      interruptType: this.interruptTypeSelect.value,
     };
   }
 
@@ -252,13 +483,13 @@ export class ControlPanel extends EventEmitter {
     const current = this.getCurrentSettings();
     const initial = this.initialSettings;
 
-    const changed = 
-        current.fromVariant !== initial.fromVariant ||
-        current.animationName !== initial.animationName ||
-        Math.abs(current.initialDelay - initial.initialDelay) > 0.0001 ||
-        Math.abs(current.duration - initial.duration) > 0.0001 ||
-        current.easing !== initial.easing ||
-        current.interruptType !== initial.interruptType;
+    const changed =
+      current.fromVariant !== initial.fromVariant ||
+      current.animationName !== initial.animationName ||
+      Math.abs(current.initialDelay - initial.initialDelay) > 0.0001 ||
+      Math.abs(current.duration - initial.duration) > 0.0001 ||
+      current.easing !== initial.easing ||
+      current.interruptType !== initial.interruptType;
 
     this.saveButton.disabled = !changed;
     this.discardButton.disabled = !changed;
@@ -288,26 +519,26 @@ export class ControlPanel extends EventEmitter {
    * @param name Optional name of the selected preview frame to display.
    */
   public setSelectingPreview(isSelecting: boolean, name?: string) {
-      if (isSelecting) {
-          this.selectPreviewFrameButton.classList.add("selecting");
-          this.selectPreviewFrameButton.textContent = "Selecting Preview Frame...";
+    if (isSelecting) {
+      this.selectPreviewFrameButton.classList.add("selecting");
+      this.selectPreviewFrameButton.textContent = "Selecting Preview Frame...";
+    } else {
+      this.selectPreviewFrameButton.classList.remove("selecting");
+      if (name) {
+        this.selectPreviewFrameButton.textContent = `Preview: ${name}`;
       } else {
-          this.selectPreviewFrameButton.classList.remove("selecting");
-          if (name) {
-            this.selectPreviewFrameButton.textContent = `Preview: ${name}`;
-          } else {
-             this.selectPreviewFrameButton.textContent = "Select Preview Frame";
-          }
+        this.selectPreviewFrameButton.textContent = "Select Preview Frame";
       }
+    }
   }
-  
+
   /**
    * Sets the state of the 'Continue' (loop) checkbox.
    * @param checked Whether playback should continue looping.
    */
   public setContinue(checked: boolean) {
-      this.continueCheckbox.checked = checked;
-      this.playbackController.setContinue(checked);
+    this.continueCheckbox.checked = checked;
+    this.playbackController.setContinue(checked);
   }
 
   /**
@@ -315,6 +546,6 @@ export class ControlPanel extends EventEmitter {
    * @param index The index of the frame to select.
    */
   public setSelectedFrame(index: number) {
-      this.keyframeSelect.value = String(index);
+    this.keyframeSelect.value = String(index);
   }
 }

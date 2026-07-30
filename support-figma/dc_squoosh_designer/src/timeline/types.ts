@@ -271,27 +271,41 @@ export interface SerializedNode {
   children?: SerializedNode[];
 }
 
+export interface VariantAnimationSpec {
+  initial_delay?: {
+    secs?: number;
+    nanos?: number;
+  };
+  animation?: {
+    Smooth?: {
+      duration: {
+        secs?: number;
+        nanos?: number;
+      };
+      easing: string;
+    };
+  };
+  interrupt_type?: string;
+}
+
+export interface TransitionSpec {
+  from: string;
+  to: string;
+  name: string;
+  spec?: VariantAnimationSpec;
+  timelines?: { [key: string]: unknown };
+}
+
 /**
  * Represents the animation data stored in a Figma variant's plugin data.
  */
 export interface VariantAnimation {
+  /** Global default animation spec fallback across all transitions. */
+  default_spec?: VariantAnimationSpec;
+  /** Array of explicit transition specifications. */
+  transitions?: TransitionSpec[];
   /** The specification for the animation, including delay, duration, and easing. */
-  spec?: {
-    initial_delay?: {
-      secs?: number;
-      nanos?: number;
-    };
-    animation?: {
-      Smooth?: {
-        duration: {
-          secs?: number;
-          nanos?: number;
-        };
-        easing: string;
-      };
-    };
-    interrupt_type?: string;
-  };
+  spec?: VariantAnimationSpec;
   /** A map of timeline IDs to serialized custom keyframe data. */
   customKeyframeData?: { [key: string]: string };
 }

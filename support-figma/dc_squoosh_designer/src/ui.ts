@@ -17,7 +17,10 @@
 import { Variant, SerializedNode } from "./timeline/types";
 import { PlaybackController } from "./timeline/PlaybackController";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { getAnimationSegment } from "./timeline/utils";
+import {
+  getAnimationSegment,
+  setGlobalActiveTransitions,
+} from "./timeline/utils";
 import { DataMapper } from "./services/DataMapper";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { ControlPanel, AnimationSettings } from "./ui/ControlPanel";
@@ -43,6 +46,7 @@ class AnimationUI {
   private isAnimationReady: boolean = false;
   private playAfterReady: boolean = false;
   private isSeekingFromDropdown: boolean = false;
+  private selectedTransitionsMap: { [variantName: string]: number } = {};
 
   constructor() {
     this.timelineContainer = document.getElementById("timeline-container")!;
@@ -93,6 +97,9 @@ class AnimationUI {
     this.controlPanel.on("discard", () => this.handleDiscard());
     this.controlPanel.on("delete-transition", (index: number) =>
       this.handleDeleteTransition(index),
+    );
+    this.controlPanel.on("transition-selected", (index: number) =>
+      this.handleTransitionSelected(index),
     );
     this.controlPanel.on("export", () => this.handleExport());
     this.controlPanel.on("import", (file: File) => this.handleImport(file));
@@ -200,15 +207,18 @@ class AnimationUI {
           newFrameIndex !== this.currentFrameIndex
         ) {
           this.currentFrameIndex = newFrameIndex;
+          const targetVariant = this.currentVariants[this.currentFrameIndex];
+          const savedIndex = targetVariant
+            ? (this.selectedTransitionsMap[targetVariant.name] ?? 0)
+            : 0;
           this.controlPanel.setVariant(
-            this.currentVariants[this.currentFrameIndex],
+            targetVariant,
             this.currentVariants,
+            savedIndex,
           );
           this.controlPanel.setSelectedFrame(this.currentFrameIndex);
-          if (this.currentVariants[this.currentFrameIndex]) {
-            this.timelineManager.updateRootNodeName(
-              this.currentVariants[this.currentFrameIndex].name,
-            );
+          if (targetVariant) {
+            this.timelineManager.updateRootNodeName(targetVariant.name);
           }
         }
       }
@@ -217,9 +227,14 @@ class AnimationUI {
     this.playbackController.on("keyframe-changed", (index: number) => {
       if (!this.isSeekingFromDropdown && index !== this.currentFrameIndex) {
         this.currentFrameIndex = index;
+        const targetVariant = this.currentVariants[this.currentFrameIndex];
+        const savedIndex = targetVariant
+          ? (this.selectedTransitionsMap[targetVariant.name] ?? 0)
+          : 0;
         this.controlPanel.setVariant(
-          this.currentVariants[this.currentFrameIndex],
+          targetVariant,
           this.currentVariants,
+          savedIndex,
         );
         this.controlPanel.setSelectedFrame(this.currentFrameIndex);
       }
@@ -312,9 +327,17 @@ class AnimationUI {
       "*",
     );
 
+    const savedIndex = Math.max(0, targetTransitionIndex || 0);
+    const targetVariant = this.currentVariants[this.currentFrameIndex];
+    if (targetVariant) {
+      this.selectedTransitionsMap[targetVariant.name] = savedIndex;
+    }
+    setGlobalActiveTransitions(this.selectedTransitionsMap);
+
     const newAnimationDataObject = DataMapper.transformDataToAnimationData(
       this.currentVariants,
       this.currentSerializedVariants,
+      this.selectedTransitionsMap,
     );
 
     this.playbackController.updateData({
@@ -325,7 +348,6 @@ class AnimationUI {
 
     this.timelineManager.editor.setData(newAnimationDataObject);
 
-    const savedIndex = Math.max(0, targetTransitionIndex || 0);
     this.controlPanel.setVariant(
       this.currentVariants[this.currentFrameIndex],
       this.currentVariants,
@@ -334,10 +356,14 @@ class AnimationUI {
   }
 
   private handleDiscard() {
+    const targetVariant = this.currentVariants[this.currentFrameIndex];
+    const savedIndex = targetVariant
+      ? (this.selectedTransitionsMap[targetVariant.name] ?? 0)
+      : 0;
     this.controlPanel.setVariant(
-      this.currentVariants[this.currentFrameIndex],
+      targetVariant,
       this.currentVariants,
-      this.controlPanel.getSelectedTransitionIndex(),
+      savedIndex,
     );
   }
 
@@ -367,9 +393,16 @@ class AnimationUI {
       "*",
     );
 
+    const targetVariant = this.currentVariants[this.currentFrameIndex];
+    if (targetVariant) {
+      this.selectedTransitionsMap[targetVariant.name] = 0;
+    }
+    setGlobalActiveTransitions(this.selectedTransitionsMap);
+
     const newAnimationDataObject = DataMapper.transformDataToAnimationData(
       this.currentVariants,
       this.currentSerializedVariants,
+      this.selectedTransitionsMap,
     );
 
     this.playbackController.updateData({
@@ -387,6 +420,36 @@ class AnimationUI {
     );
   }
 
+  private handleTransitionSelected(index: number) {
+    const currentVariant = this.currentVariants[this.currentFrameIndex];
+    if (currentVariant) {
+      this.selectedTransitionsMap[currentVariant.name] = Math.max(0, index);
+    }
+    setGlobalActiveTransitions(this.selectedTransitionsMap);
+
+    const newAnimationDataObject = DataMapper.transformDataToAnimationData(
+      this.currentVariants,
+      this.currentSerializedVariants,
+      this.selectedTransitionsMap,
+    );
+
+    this.playbackController.updateData({
+      animationData: newAnimationDataObject,
+      serializedVariants: this.currentSerializedVariants,
+      variants: this.currentVariants,
+    });
+
+    this.timelineManager.editor.setData(newAnimationDataObject);
+
+    if (currentVariant) {
+      this.controlPanel.setVariant(
+        currentVariant,
+        this.currentVariants,
+        Math.max(0, index),
+      );
+    }
+  }
+
   private handleExport() {
     const dataToExport = {
       variants: this.currentVariants,
@@ -394,6 +457,7 @@ class AnimationUI {
       animationData: DataMapper.transformDataToAnimationData(
         this.currentVariants,
         this.currentSerializedVariants,
+        this.selectedTransitionsMap,
       ),
     };
     const dataStr =
@@ -439,9 +503,11 @@ class AnimationUI {
           }
         });
 
+        setGlobalActiveTransitions(this.selectedTransitionsMap);
         const newAnimationData = DataMapper.transformDataToAnimationData(
           this.currentVariants,
           this.currentSerializedVariants,
+          this.selectedTransitionsMap,
         );
 
         this.playbackController.updateData({
@@ -455,18 +521,22 @@ class AnimationUI {
           this.currentVariants,
           this.currentFrameIndex,
         );
+        const targetVariant = this.currentVariants[this.currentFrameIndex];
+        const savedIndex = targetVariant
+          ? (this.selectedTransitionsMap[targetVariant.name] ?? 0)
+          : 0;
         this.controlPanel.setVariant(
-          this.currentVariants[this.currentFrameIndex],
+          targetVariant,
           this.currentVariants,
+          savedIndex,
         );
-        if (this.currentVariants[this.currentFrameIndex]) {
-          this.timelineManager.updateRootNodeName(
-            this.currentVariants[this.currentFrameIndex].name,
-          );
+        if (targetVariant) {
+          this.timelineManager.updateRootNodeName(targetVariant.name);
         }
 
         const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(
           this.currentVariants,
+          this.selectedTransitionsMap,
         );
         const selectedKeyframe = keyframeTimes.find(
           (kf) => kf.index === this.currentFrameIndex,
@@ -558,9 +628,11 @@ class AnimationUI {
         this.currentVariants = variants;
         this.propertiesPanel.setCurrentVariants(variants);
 
+        setGlobalActiveTransitions(this.selectedTransitionsMap);
         const animationData = DataMapper.transformDataToAnimationData(
           variants,
           serializedVariants,
+          this.selectedTransitionsMap,
         );
         this.timelineManager.editor.setData(animationData);
         this.playbackController.updateData({
@@ -579,13 +651,18 @@ class AnimationUI {
         this.currentFrameIndex = startIndex;
 
         this.controlPanel.updateKeyframeSelector(variants, startIndex);
-        this.controlPanel.setVariant(variants[startIndex], variants);
-        if (variants[startIndex]) {
-          this.timelineManager.updateRootNodeName(variants[startIndex].name);
+        const targetVariant = variants[startIndex];
+        const savedIndex = targetVariant
+          ? (this.selectedTransitionsMap[targetVariant.name] ?? 0)
+          : 0;
+        this.controlPanel.setVariant(targetVariant, variants, savedIndex);
+        if (targetVariant) {
+          this.timelineManager.updateRootNodeName(targetVariant.name);
         }
 
         const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(
           this.currentVariants,
+          this.selectedTransitionsMap,
         );
         const selectedKeyframe = keyframeTimes.find(
           (kf) => kf.index === startIndex,

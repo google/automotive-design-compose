@@ -36,7 +36,11 @@ import {
   multiplyMatrix,
 } from "../utils/common";
 import { deserializeKeyframes } from "../timeline/serialization";
-import { getAnimationSegment } from "../timeline/utils";
+import {
+  getAnimationSegment,
+  resolveVariantSpec,
+  resolveVariantCustomKeyframeData,
+} from "../timeline/utils";
 // Remove PlaybackController dependency
 
 /**
@@ -52,7 +56,12 @@ export class DataMapper {
    * @param variants The list of variants.
    * @returns An object containing the keyframe times and the total duration.
    */
-  static calculateKeyframeData(variants: Variant[]) {
+  static calculateKeyframeData(
+    variants: Variant[],
+    activeTransitionsMap?:
+      | { [variantName: string]: number }
+      | Map<string, number>,
+  ) {
     let currentTime = 0;
     const keyframeTimes: KeyframeTime[] = [];
 
@@ -75,28 +84,11 @@ export class DataMapper {
         let duration = 0;
         const anim = animSourceVariant.animation;
         if (anim) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          let spec = anim.spec;
-          if (!spec && anim.transitions && anim.transitions.length > 0) {
-            const matchingTrans =
-              anim.transitions.find(
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (t: any) =>
-                  (t.to === animSourceVariant.name || t.to === "*" || !t.to) &&
-                  (t.from === variant.name || t.from === "*") &&
-                  t.spec,
-              ) ||
-              anim.transitions.find(
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (t: any) => t.spec,
-              );
-            if (matchingTrans) {
-              spec = matchingTrans.spec;
-            }
-          }
-          if (!spec && anim.default_spec) {
-            spec = anim.default_spec;
-          }
+          const spec = resolveVariantSpec(
+            anim,
+            animSourceVariant.name,
+            activeTransitionsMap,
+          );
 
           if (spec) {
             if (spec.initial_delay) {
@@ -218,6 +210,9 @@ export class DataMapper {
   static transformDataToAnimationData(
     variants: Variant[],
     serializedVariants: SerializedNode[],
+    activeTransitionsMap?:
+      | { [variantName: string]: number }
+      | Map<string, number>,
   ): AnimationData {
     console.log("transformDataToAnimationData inputs:", {
       variantsLength: variants ? variants.length : 0,
@@ -238,7 +233,10 @@ export class DataMapper {
       return { nodes: [], duration: 1 };
     }
 
-    const { keyframeTimes, totalTime } = this.calculateKeyframeData(variants);
+    const { keyframeTimes, totalTime } = this.calculateKeyframeData(
+      variants,
+      activeTransitionsMap,
+    );
 
     // Build a superset tree of nodes from ALL variants
     const nodesMap = new Map<string, Node>();
@@ -441,8 +439,13 @@ export class DataMapper {
       }
 
       variants.forEach((variant) => {
-        if (variant.animation?.customKeyframeData) {
-          for (const timelineId in variant.animation.customKeyframeData) {
+        const kfData = resolveVariantCustomKeyframeData(
+          variant.animation,
+          variant.name,
+          activeTransitionsMap,
+        );
+        if (kfData) {
+          for (const timelineId in kfData) {
             if (timelineId.startsWith(`${node.id}-`)) {
               const propName = timelineId.substring(node.id.length + 1);
               if (!node.timelines.some((t) => t.property === propName)) {
@@ -490,12 +493,13 @@ export class DataMapper {
           const animSourceVariantIndex = keyframeTimes[i + 1].index;
           const animSourceVariant = variants[animSourceVariantIndex];
 
-          if (
-            animSourceVariant?.animation?.customKeyframeData &&
-            animSourceVariant.animation.customKeyframeData[timeline.id]
-          ) {
-            const serializedCustomKeyframes =
-              animSourceVariant.animation.customKeyframeData[timeline.id];
+          const kfData = resolveVariantCustomKeyframeData(
+            animSourceVariant?.animation,
+            animSourceVariant?.name,
+            activeTransitionsMap,
+          );
+          if (kfData && kfData[timeline.id]) {
+            const serializedCustomKeyframes = kfData[timeline.id];
             const { keyframes: customKeyframes, targetEasing } =
               deserializeKeyframes(serializedCustomKeyframes);
 

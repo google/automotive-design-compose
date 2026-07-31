@@ -26,6 +26,7 @@ import {
   AnimationNode,
 } from "./types";
 import { EventEmitter } from "./EventEmitter";
+import { resolveVariantSpec } from "./utils";
 import { InterpolationService } from "../utils/InterpolationService";
 import { DataMapper } from "../services/DataMapper";
 
@@ -328,10 +329,11 @@ export class PlaybackController extends EventEmitter {
         toIndex = endKeyframe.index;
         segmentStartTime = startKeyframe.time;
         const anim = this.variants[toIndex].animation;
-        if (anim && anim.spec && anim.spec.initial_delay) {
+        const spec = resolveVariantSpec(anim, this.variants[toIndex].name);
+        if (spec && spec.initial_delay) {
           segmentDelay =
-            (anim.spec.initial_delay.secs || 0) +
-            (anim.spec.initial_delay.nanos || 0) / 1e9;
+            (spec.initial_delay.secs || 0) +
+            (spec.initial_delay.nanos || 0) / 1e9;
         }
         segmentDuration = endKeyframe.time - startKeyframe.time - segmentDelay;
         break;
@@ -372,14 +374,10 @@ export class PlaybackController extends EventEmitter {
     value = Math.max(0, Math.min(1, value));
 
     const animData = this.variants[toIndex].animation;
+    const spec = resolveVariantSpec(animData, this.variants[toIndex].name);
     let nodeEasing: EasingFunction = Easing.easeInOutQuad;
-    if (
-      animData &&
-      animData.spec &&
-      animData.spec.animation &&
-      animData.spec.animation.Smooth
-    ) {
-      const easingStr = animData.spec.animation.Smooth.easing;
+    if (spec && spec.animation && spec.animation.Smooth) {
+      const easingStr = spec.animation.Smooth.easing;
       switch (easingStr) {
         case "Linear":
           nodeEasing = Easing.linear;

@@ -441,6 +441,7 @@ export class ControlPanel extends EventEmitter {
       const idx = parseInt(this.transitionSelect.value, 10);
       this.selectedTransitionIndex = idx;
       this.loadTransitionAtIndex(idx);
+      this.emit("transition-selected", idx);
     }
   }
 

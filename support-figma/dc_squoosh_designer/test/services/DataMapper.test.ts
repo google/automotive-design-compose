@@ -16,6 +16,7 @@
 
 import { DataMapper } from "../../src/services/DataMapper";
 import { Variant } from "../../src/timeline/types";
+import { resolveVariantCustomKeyframeData } from "../../src/timeline/utils";
 
 describe("DataMapper", () => {
   describe("calculateKeyframeData", () => {
@@ -99,6 +100,153 @@ describe("DataMapper", () => {
       expect(result.keyframeTimes[1].index).toBe(0);
       expect(result.keyframeTimes[1].isLoop).toBe(true);
       expect(result.totalTime).toBe(1); // Defaults to 1
+    });
+
+    it("should respect activeTransitionsMap when selecting custom transition spec", () => {
+      const variants: Variant[] = [
+        {
+          name: "State A",
+          animation: {
+            transitions: [
+              {
+                from: "*",
+                to: "State A",
+                name: "Default",
+                spec: {
+                  animation: {
+                    Smooth: {
+                      duration: { secs: 0, nanos: 300000000 },
+                      easing: "Linear",
+                    },
+                  },
+                },
+              },
+              {
+                from: "*",
+                to: "State A",
+                name: "SportMode",
+                spec: {
+                  animation: {
+                    Smooth: {
+                      duration: { secs: 1, nanos: 500000000 },
+                      easing: "EaseOut",
+                    },
+                  },
+                },
+              },
+            ],
+          } as any,
+        },
+        {
+          name: "State B",
+          animation: null,
+        },
+      ];
+
+      const defaultResult = DataMapper.calculateKeyframeData(variants, {
+        "State A": 0,
+      });
+      const customResult = DataMapper.calculateKeyframeData(variants, {
+        "State A": 1,
+      });
+
+      expect(defaultResult.totalTime).toBeCloseTo(0.3); // 0.3s default
+      expect(customResult.totalTime).toBeCloseTo(1.5); // 1.5s custom
+    });
+
+    it("should override anim.spec when anim.transitions is present and custom transition is selected", () => {
+      const variants: Variant[] = [
+        {
+          name: "State A",
+          animation: {
+            spec: {
+              animation: {
+                Smooth: {
+                  duration: { secs: 0, nanos: 300000000 },
+                  easing: "Linear",
+                },
+              },
+            },
+            transitions: [
+              {
+                from: "*",
+                to: "State A",
+                name: "Default",
+                spec: {
+                  animation: {
+                    Smooth: {
+                      duration: { secs: 0, nanos: 300000000 },
+                      easing: "Linear",
+                    },
+                  },
+                },
+              },
+              {
+                from: "*",
+                to: "State A",
+                name: "SportMode",
+                spec: {
+                  animation: {
+                    Smooth: {
+                      duration: { secs: 1, nanos: 500000000 },
+                      easing: "EaseOut",
+                    },
+                  },
+                },
+              },
+            ],
+          } as any,
+        },
+        {
+          name: "State B",
+          animation: null,
+        },
+      ];
+
+      const customResult = DataMapper.calculateKeyframeData(variants, {
+        "State A": 1,
+      });
+      expect(customResult.totalTime).toBeCloseTo(1.5);
+    });
+
+    it("should resolve per-transition customKeyframeData when specified on transition", () => {
+      const variants: Variant[] = [
+        {
+          name: "State A",
+          animation: {
+            customKeyframeData: { "node1-x": "0:0;1:100" },
+            transitions: [
+              {
+                from: "*",
+                to: "State A",
+                name: "Default",
+                customKeyframeData: { "node1-x": "0:0;1:100" },
+              },
+              {
+                from: "*",
+                to: "State A",
+                name: "SportMode",
+                customKeyframeData: { "node1-y": "0:50;1:200" },
+              },
+            ],
+          } as any,
+        },
+        { name: "State B", animation: null },
+      ];
+
+      const kfDefault = resolveVariantCustomKeyframeData(
+        variants[0].animation,
+        "State A",
+        { "State A": 0 },
+      );
+      const kfSport = resolveVariantCustomKeyframeData(
+        variants[0].animation,
+        "State A",
+        { "State A": 1 },
+      );
+
+      expect(kfDefault).toEqual({ "node1-x": "0:0;1:100" });
+      expect(kfSport).toEqual({ "node1-y": "0:50;1:200" });
     });
   });
 });

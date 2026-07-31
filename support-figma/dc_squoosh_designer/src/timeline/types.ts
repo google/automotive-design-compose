@@ -294,6 +294,7 @@ export interface TransitionSpec {
   name: string;
   spec?: VariantAnimationSpec;
   timelines?: { [key: string]: unknown };
+  customKeyframeData?: { [key: string]: string };
 }
 
 /**

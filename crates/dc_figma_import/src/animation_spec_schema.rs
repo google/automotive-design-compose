@@ -133,10 +133,12 @@ pub struct Animations {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum StopType {
     /// No specific interruption behavior.
+    #[serde(alias = "Cancel")]
     None,
     /// Resets the animation to its starting state.
     ResetToStart,
     /// Immediately jumps to the final state of the animation.
+    #[serde(alias = "JumpToEnd")]
     Complete,
     /// Stops the animation at its current state.
     Stop,
@@ -159,6 +161,44 @@ pub struct CustomTimeline {
     pub keyframes: Vec<CustomKeyframe>,
 }
 
+/// Represents a raw custom timeline from JSON which can be either a typed struct or stringified JSON.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(untagged)]
+pub enum CustomTimelineRaw {
+    Typed(CustomTimeline),
+    Stringified(String),
+}
+
+impl CustomTimelineRaw {
+    /// Decodes the raw timeline into a typed `CustomTimeline`.
+    pub fn into_timeline(self) -> Option<CustomTimeline> {
+        match self {
+            CustomTimelineRaw::Typed(ct) => Some(ct),
+            CustomTimelineRaw::Stringified(s) => serde_json::from_str::<CustomTimeline>(&s).ok(),
+        }
+    }
+}
+
+/// Helper function to deserialize a map of timelines from either typed structs or stringified JSON.
+pub fn deserialize_custom_timelines_map<'de, D>(
+    deserializer: D,
+) -> Result<std::collections::HashMap<String, CustomTimeline>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw_map =
+        std::collections::HashMap::<String, CustomTimelineRaw>::deserialize(deserializer)?;
+    let mut result = std::collections::HashMap::new();
+    for (key, val) in raw_map {
+        if let Some(timeline) = val.into_timeline() {
+            result.insert(key, timeline);
+        } else {
+            log::warn!("Failed to decode custom timeline JSON string for key: {}", key);
+        }
+    }
+    Ok(result)
+}
+
 /// The detailed specification for a custom animation, present when "Custom" is
 /// selected in the top-level "Animation" dropdown.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
@@ -172,7 +212,11 @@ pub struct AnimationSpec {
     pub interrupt_type: Option<StopType>,
     /// Optional dictionary containing Squoosh arbitrary layer property values to animate from
     /// strings directly written by the UI plugin format over into matching types in Compose
+    #[serde(rename = "customKeyframeData", default, deserialize_with = "deserialize_custom_timelines_map")]
     pub custom_keyframe_data: std::collections::HashMap<String, CustomTimeline>,
+    /// Timelines for custom properties
+    #[serde(default, deserialize_with = "deserialize_custom_timelines_map")]
+    pub timelines: std::collections::HashMap<String, CustomTimeline>,
 }
 
 /// Represents a single transition specification between variant states (Option A).
@@ -188,8 +232,11 @@ pub struct TransitionSpecJson {
     /// Optional animation specification (delay, duration, easing, etc.)
     pub spec: Option<AnimationSpec>,
     /// Timelines for custom properties
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_custom_timelines_map")]
     pub timelines: std::collections::HashMap<String, CustomTimeline>,
+    /// Legacy/plugin field for custom property keyframe timelines exported as stringified JSON
+    #[serde(rename = "customKeyframeData", default, deserialize_with = "deserialize_custom_timelines_map")]
+    pub custom_keyframe_data: std::collections::HashMap<String, CustomTimeline>,
 }
 
 fn default_animation_name() -> String {
@@ -204,6 +251,12 @@ pub struct AnimationMatrixJson {
     /// Array of explicit transition specifications
     #[serde(default)]
     pub transitions: Vec<TransitionSpecJson>,
+    /// Node timelines stored at the matrix root level
+    #[serde(default, deserialize_with = "deserialize_custom_timelines_map")]
+    pub timelines: std::collections::HashMap<String, CustomTimeline>,
+    /// Legacy/alias name for node timelines stored at the matrix root level
+    #[serde(rename = "customKeyframeData", default, deserialize_with = "deserialize_custom_timelines_map")]
+    pub custom_keyframe_data: std::collections::HashMap<String, CustomTimeline>,
 }
 
 impl TransitionSpecJson {
@@ -212,7 +265,7 @@ impl TransitionSpecJson {
         if self.from.is_empty() && self.to.is_empty() {
             return Err("TransitionSpec 'from' and 'to' cannot both be empty".to_string());
         }
-        for (prop_name, timeline) in &self.timelines {
+        for (prop_name, timeline) in self.timelines.iter().chain(self.custom_keyframe_data.iter()) {
             for keyframe in &timeline.keyframes {
                 if !(0.0..=1.0).contains(&keyframe.fraction) {
                     return Err(format!(
@@ -273,47 +326,38 @@ impl<'de> Deserialize<'de> for AnimationOverrideJson {
         // Tmp structure to deserialize the format from the API and handle cases hard to describe
         // with serde attributes.
         #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum CustomTimelineRaw {
-            Typed(CustomTimeline),
-            Stringified(String),
-        }
-
-        #[derive(Deserialize)]
         struct Tmp {
             #[serde(rename = "override", default)]
             override_type: String,
             spec: Option<AnimationSpec>,
             #[serde(rename = "customKeyframeData", default)]
             custom_keyframe_data_raw: std::collections::HashMap<String, CustomTimelineRaw>,
+            #[serde(rename = "timelines", default)]
+            timelines_raw: std::collections::HashMap<String, CustomTimelineRaw>,
             default_spec: Option<AnimationSpec>,
             transitions: Option<Vec<TransitionSpecJson>>,
         }
 
         let tmp = Tmp::deserialize(deserializer)?;
+        let mut custom_keyframe_data = std::collections::HashMap::new();
+        for (k, v) in tmp.custom_keyframe_data_raw.into_iter().chain(tmp.timelines_raw.into_iter()) {
+            if let Some(ct) = v.into_timeline() {
+                custom_keyframe_data.insert(k, ct);
+            }
+        }
+
         if tmp.transitions.is_some() || tmp.default_spec.is_some() {
             let matrix = AnimationMatrixJson {
                 default_spec: tmp.default_spec,
                 transitions: tmp.transitions.unwrap_or_default(),
+                custom_keyframe_data: custom_keyframe_data.clone(),
+                timelines: custom_keyframe_data,
             };
             Ok(AnimationOverrideJson::Matrix(matrix))
         } else if tmp.override_type == "Custom"
             || (tmp.override_type.is_empty() && tmp.spec.is_some())
         {
             if let Some(mut spec) = tmp.spec {
-                let mut custom_keyframe_data = std::collections::HashMap::new();
-                for (k, v) in tmp.custom_keyframe_data_raw {
-                    match v {
-                        CustomTimelineRaw::Typed(ct) => {
-                            custom_keyframe_data.insert(k, ct);
-                        }
-                        CustomTimelineRaw::Stringified(s) => {
-                            if let Ok(ct) = serde_json::from_str::<CustomTimeline>(&s) {
-                                custom_keyframe_data.insert(k, ct);
-                            }
-                        }
-                    }
-                }
                 spec.custom_keyframe_data = custom_keyframe_data;
                 Ok(AnimationOverrideJson::Custom(spec))
             } else {
@@ -526,8 +570,7 @@ mod tests {
             from: "".to_string(),
             to: "".to_string(),
             name: "Invalid".to_string(),
-            spec: None,
-            timelines: std::collections::HashMap::new(),
+            ..Default::default()
         };
         assert!(invalid_transition.validate().is_err());
 
@@ -535,8 +578,7 @@ mod tests {
             from: "A".to_string(),
             to: "B".to_string(),
             name: "Valid".to_string(),
-            spec: None,
-            timelines: std::collections::HashMap::new(),
+            ..Default::default()
         };
         assert!(valid_transition.validate().is_ok());
 
@@ -560,9 +602,9 @@ mod tests {
                 from: "".to_string(),
                 to: "".to_string(),
                 name: "Invalid".to_string(),
-                spec: None,
-                timelines: std::collections::HashMap::new(),
+                ..Default::default()
             }],
+            ..Default::default()
         };
         let err = matrix.validate().unwrap_err();
         assert!(err.contains("Transition [0] invalid:"));
@@ -585,9 +627,9 @@ mod tests {
                 from: "".to_string(),
                 to: "".to_string(),
                 name: "Invalid".to_string(),
-                spec: None,
-                timelines: std::collections::HashMap::new(),
+                ..Default::default()
             }],
+            ..Default::default()
         });
         assert!(invalid_matrix.validate().is_err());
     }
@@ -612,6 +654,7 @@ mod tests {
             name: "Test".to_string(),
             spec: None,
             timelines,
+            ..Default::default()
         };
         assert!(invalid_transition.validate().is_err());
 
@@ -633,6 +676,7 @@ mod tests {
             name: "Test".to_string(),
             spec: None,
             timelines: timelines_neg,
+            ..Default::default()
         };
         assert!(invalid_transition_neg.validate().is_err());
     }
@@ -657,6 +701,7 @@ mod tests {
             name: "Test".to_string(),
             spec: None,
             timelines,
+            ..Default::default()
         };
         assert!(valid_transition.validate().is_ok());
     }
@@ -669,9 +714,9 @@ mod tests {
                 from: "".to_string(),
                 to: "".to_string(),
                 name: "Invalid".to_string(),
-                spec: None,
-                timelines: std::collections::HashMap::new(),
+                ..Default::default()
             }],
+            ..Default::default()
         };
         assert!(matrix.validate().is_err());
     }
@@ -684,9 +729,9 @@ mod tests {
                 from: "A".to_string(),
                 to: "B".to_string(),
                 name: "Valid".to_string(),
-                spec: None,
-                timelines: std::collections::HashMap::new(),
+                ..Default::default()
             }],
+            ..Default::default()
         };
         assert!(matrix.validate().is_ok());
     }
@@ -699,9 +744,9 @@ mod tests {
                 from: "".to_string(),
                 to: "".to_string(),
                 name: "Invalid".to_string(),
-                spec: None,
-                timelines: std::collections::HashMap::new(),
+                ..Default::default()
             }],
+            ..Default::default()
         });
         assert!(invalid_matrix.validate().is_err());
 
@@ -711,9 +756,9 @@ mod tests {
                 from: "A".to_string(),
                 to: "B".to_string(),
                 name: "Valid".to_string(),
-                spec: None,
-                timelines: std::collections::HashMap::new(),
+                ..Default::default()
             }],
+            ..Default::default()
         });
         assert!(valid_matrix.validate().is_ok());
 
@@ -768,5 +813,44 @@ mod tests {
     fn test_animation_override_json_default() {
         let def = AnimationOverrideJson::default();
         assert!(matches!(def, AnimationOverrideJson::Default));
+    }
+
+    #[test]
+    fn test_deserialize_matrix_custom_keyframe_data_stringified() {
+        let json_str = r##"{
+            "transitions": [
+                {
+                    "from": "#driving/shift-state=N",
+                    "to": "#driving/shift-state=D",
+                    "name": "SportMode",
+                    "spec": {
+                        "initial_delay": { "secs": 0, "nanos": 0 },
+                        "animation": {
+                            "Smooth": {
+                                "duration": { "secs": 1, "nanos": 500000000 },
+                                "repeat_type": "NoRepeat",
+                                "easing": "EaseOut"
+                            }
+                        },
+                        "interrupt_type": "None"
+                    },
+                    "customKeyframeData": {
+                        "D-opacity": "{\"targetEasing\": \"EaseOut\", \"keyframes\": [{\"fraction\": 0.2, \"value\": 0.0, \"easing\": \"EaseIn\"}, {\"fraction\": 1.0, \"value\": 1.0, \"easing\": \"EaseOut\"}]}"
+                    }
+                }
+            ]
+        }"##;
+        let anim = serde_json::from_str::<AnimationOverrideJson>(json_str).unwrap();
+        if let AnimationOverrideJson::Matrix(matrix) = anim {
+            assert_eq!(matrix.transitions.len(), 1);
+            let t = &matrix.transitions[0];
+            assert_eq!(t.name, "SportMode");
+            assert!(t.custom_keyframe_data.contains_key("D-opacity"), "Expected D-opacity in custom_keyframe_data map");
+            let timeline = &t.custom_keyframe_data["D-opacity"];
+            assert_eq!(timeline.keyframes.len(), 2);
+            assert_eq!(timeline.keyframes[0].fraction, 0.2);
+        } else {
+            unreachable!("Expected Matrix");
+        }
     }
 }

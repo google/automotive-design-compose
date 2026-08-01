@@ -175,15 +175,22 @@ impl From<CustomTimelineJson> for CustomTimeline {
 /// Converts from the JSON `AnimationSpecJson` to the protobuf `AnimationSpec`.
 impl From<AnimationSpecJson> for AnimationSpec {
     fn from(json: AnimationSpecJson) -> Self {
+        let mut custom_keyframe_data: std::collections::HashMap<
+            String,
+            animationspec::CustomTimeline,
+        > = json
+            .custom_keyframe_data
+            .into_iter()
+            .map(|(k, v)| (k, v.into()))
+            .collect();
+        for (k, v) in json.timelines {
+            custom_keyframe_data.entry(k).or_insert_with(|| v.into());
+        }
         AnimationSpec {
             initial_delay: Some(json.initial_delay.into()).into(),
             animation: Some(json.animation.into()).into(),
             interrupt_type: json.interrupt_type.map(|x| x.into()).into(),
-            custom_keyframe_data: json
-                .custom_keyframe_data
-                .into_iter()
-                .map(|(k, v)| (k, v.into()))
-                .collect(),
+            custom_keyframe_data,
             ..Default::default()
         }
     }
@@ -192,12 +199,17 @@ impl From<AnimationSpecJson> for AnimationSpec {
 /// Converts from the JSON `TransitionSpecJson` to the protobuf `TransitionSpec`.
 impl From<TransitionSpecJson> for animationspec::TransitionSpec {
     fn from(json: TransitionSpecJson) -> Self {
+        let mut timelines: std::collections::HashMap<String, animationspec::CustomTimeline> =
+            json.timelines.into_iter().map(|(k, v)| (k, v.into())).collect();
+        for (k, v) in json.custom_keyframe_data {
+            timelines.entry(k).or_insert_with(|| v.into());
+        }
         animationspec::TransitionSpec {
             from_variant: json.from,
             to_variant: json.to,
             animation_name: json.name,
             spec: json.spec.map(|s| s.into()).into(),
-            timelines: json.timelines.into_iter().map(|(k, v)| (k, v.into())).collect(),
+            timelines,
             ..Default::default()
         }
     }
@@ -206,9 +218,25 @@ impl From<TransitionSpecJson> for animationspec::TransitionSpec {
 /// Converts from the JSON `AnimationMatrixJson` to the protobuf `AnimationMatrix`.
 impl From<AnimationMatrixJson> for animationspec::AnimationMatrix {
     fn from(json: AnimationMatrixJson) -> Self {
+        let mut root_timelines = json.timelines;
+        for (k, v) in json.custom_keyframe_data {
+            root_timelines.entry(k).or_insert(v);
+        }
+
+        let transitions = json
+            .transitions
+            .into_iter()
+            .map(|mut t_json| {
+                for (k, v) in &root_timelines {
+                    t_json.timelines.entry(k.clone()).or_insert_with(|| v.clone());
+                }
+                t_json.into()
+            })
+            .collect();
+
         animationspec::AnimationMatrix {
             default_spec: json.default_spec.map(|s| s.into()).into(),
-            transitions: json.transitions.into_iter().map(|t| t.into()).collect(),
+            transitions,
             ..Default::default()
         }
     }
@@ -461,7 +489,7 @@ mod tests {
             initial_delay: Duration { secs: 1, nanos: 500_000_000.0 },
             animation: AnimationsJson::default(),
             interrupt_type: Some(StopTypeJson::Complete),
-            custom_keyframe_data: std::collections::HashMap::new(),
+            ..Default::default()
         };
         let proto_spec: AnimationSpec = json_spec.into();
         assert_eq!(proto_spec.initial_delay.get_or_default().seconds, 1);
@@ -477,7 +505,7 @@ mod tests {
             initial_delay: Duration { secs: 1, nanos: 500_000_000.0 },
             animation: AnimationsJson::default(),
             interrupt_type: None,
-            custom_keyframe_data: std::collections::HashMap::new(),
+            ..Default::default()
         };
         let proto_spec_no_interrupt: AnimationSpec = json_spec_no_interrupt.into();
         assert!(proto_spec_no_interrupt.interrupt_type.is_none());

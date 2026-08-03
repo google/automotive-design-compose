@@ -1,4 +1,4 @@
-# Data Format (Option A Transition Matrix Schema)
+# Data Format (Transition Matrix Schema)
 
 This document describes the data structures used by the DC Squoosh Designer plugin to store animation specifications within Figma.
 
@@ -7,9 +7,10 @@ This document describes the data structures used by the DC Squoosh Designer plug
 The plugin stores data in the `sharedPluginData` of Figma components (variants).
 *   **Namespace:** `designcompose`
 *   **Key:** `squoosh`
-*   **Value:** A stringified JSON object conforming to the Option A Transition Matrix Schema.
+*   **Value:** A stringified JSON object conforming to the Transition Matrix Schema.
 
-## JSON Structure (Option A Transition Matrix)
+## JSON Structure (Transition Matrix)
+
 
 The root payload defines an explicit array of transition rules (`transitions`) and an optional default specification fallback (`default_spec`).
 

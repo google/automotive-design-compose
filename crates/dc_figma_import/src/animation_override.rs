@@ -73,12 +73,33 @@ impl From<&AnimationOverrideJson> for AnimationOverride {
     }
 }
 
+#[derive(serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct GradientStopJson {
+    position: f32,
+    color: crate::figma_schema::FigmaColor,
+}
+
+#[derive(serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct ArcDataJson {
+    #[serde(alias = "starting_angle")]
+    starting_angle: f32,
+    #[serde(alias = "ending_angle")]
+    ending_angle: f32,
+    #[serde(alias = "inner_radius")]
+    inner_radius: f32,
+}
+
 #[derive(serde::Deserialize)]
 #[serde(untagged)]
 enum CustomKeyframeValueJson {
     Scalar(f64),
+    Radii([f64; 4]),
     String(String),
     Color(crate::figma_schema::FigmaColor),
+    Gradient(Vec<GradientStopJson>),
+    Arc(ArcDataJson),
 }
 
 /// Converts from the JSON `CustomKeyframeJson` to the protobuf `CustomKeyframe`.
@@ -92,6 +113,17 @@ impl From<CustomKeyframeJson> for CustomKeyframe {
                 CustomKeyframeValueJson::Scalar(scalar) => {
                     typed_value.value =
                         Some(animationspec::custom_keyframe_value::Value::Scalar(scalar as f32));
+                }
+                CustomKeyframeValueJson::Radii(radii) => {
+                    typed_value.value = Some(animationspec::custom_keyframe_value::Value::Radii(
+                        animationspec::CornerRadiiValue {
+                            top_left: radii[0] as f32,
+                            top_right: radii[1] as f32,
+                            bottom_right: radii[2] as f32,
+                            bottom_left: radii[3] as f32,
+                            ..Default::default()
+                        },
+                    ));
                 }
                 CustomKeyframeValueJson::String(s) => {
                     if s.starts_with('#') {
@@ -145,6 +177,39 @@ impl From<CustomKeyframeJson> for CustomKeyframe {
                         },
                     ));
                 }
+                CustomKeyframeValueJson::Gradient(stops) => {
+                    let proto_stops = stops
+                        .into_iter()
+                        .map(|s| animationspec::GradientStopValue {
+                            position: s.position,
+                            color: ::protobuf::MessageField::some(animationspec::RgbaValue {
+                                r: (s.color.r * 255.0) as u32,
+                                g: (s.color.g * 255.0) as u32,
+                                b: (s.color.b * 255.0) as u32,
+                                a: (s.color.a * 255.0) as u32,
+                                ..Default::default()
+                            }),
+                            ..Default::default()
+                        })
+                        .collect();
+                    typed_value.value =
+                        Some(animationspec::custom_keyframe_value::Value::Gradient(
+                            animationspec::GradientValue {
+                                stops: proto_stops,
+                                ..Default::default()
+                            },
+                        ));
+                }
+                CustomKeyframeValueJson::Arc(arc) => {
+                    typed_value.value = Some(animationspec::custom_keyframe_value::Value::Arc(
+                        animationspec::ArcDataValue {
+                            starting_angle: arc.starting_angle,
+                            ending_angle: arc.ending_angle,
+                            inner_radius: arc.inner_radius,
+                            ..Default::default()
+                        },
+                    ));
+                }
             }
         }
 
@@ -178,11 +243,7 @@ impl From<AnimationSpecJson> for AnimationSpec {
         let mut custom_keyframe_data: std::collections::HashMap<
             String,
             animationspec::CustomTimeline,
-        > = json
-            .custom_keyframe_data
-            .into_iter()
-            .map(|(k, v)| (k, v.into()))
-            .collect();
+        > = json.custom_keyframe_data.into_iter().map(|(k, v)| (k, v.into())).collect();
         for (k, v) in json.timelines {
             custom_keyframe_data.entry(k).or_insert_with(|| v.into());
         }
@@ -202,7 +263,7 @@ impl From<TransitionSpecJson> for animationspec::TransitionSpec {
         let mut timelines: std::collections::HashMap<String, animationspec::CustomTimeline> =
             json.timelines.into_iter().map(|(k, v)| (k, v.into())).collect();
         for (k, v) in json.custom_keyframe_data {
-            timelines.entry(k).or_insert_with(|| v.into());
+            timelines.insert(k, v.into());
         }
         animationspec::TransitionSpec {
             from_variant: json.from,
@@ -218,19 +279,23 @@ impl From<TransitionSpecJson> for animationspec::TransitionSpec {
 /// Converts from the JSON `AnimationMatrixJson` to the protobuf `AnimationMatrix`.
 impl From<AnimationMatrixJson> for animationspec::AnimationMatrix {
     fn from(json: AnimationMatrixJson) -> Self {
-        let mut root_timelines = json.timelines;
+        let mut root_timelines: std::collections::HashMap<String, animationspec::CustomTimeline> =
+            json.timelines.into_iter().map(|(k, v)| (k, v.into())).collect();
         for (k, v) in json.custom_keyframe_data {
-            root_timelines.entry(k).or_insert(v);
+            root_timelines.insert(k, v.into());
         }
 
         let transitions = json
             .transitions
             .into_iter()
-            .map(|mut t_json| {
-                for (k, v) in &root_timelines {
-                    t_json.timelines.entry(k.clone()).or_insert_with(|| v.clone());
+            .map(|t_json| {
+                let mut proto: animationspec::TransitionSpec = t_json.into();
+                for (k, proto_timeline) in &root_timelines {
+                    if !proto.timelines.contains_key(k) {
+                        proto.timelines.insert(k.clone(), proto_timeline.clone());
+                    }
                 }
-                t_json.into()
+                proto
             })
             .collect();
 
@@ -654,5 +719,143 @@ mod tests {
         let proto_duration: ::protobuf::well_known_types::duration::Duration = json_duration.into();
         assert_eq!(proto_duration.seconds, 10);
         assert_eq!(proto_duration.nanos, 123);
+    }
+
+    #[test]
+    fn test_custom_keyframe_value_json_variants() {
+        // Test Radii
+        let json_radii = CustomKeyframeJson {
+            fraction: 0.5,
+            value_json: serde_json::json!([1.0, 2.0, 3.0, 4.0]),
+            easing: EasingJson::String("Linear".to_string()),
+        };
+        let proto_radii: CustomKeyframe = json_radii.into();
+        match proto_radii.value.as_ref().and_then(|v| v.value.as_ref()) {
+            Some(animationspec::custom_keyframe_value::Value::Radii(r)) => {
+                assert_eq!(r.top_left, 1.0);
+                assert_eq!(r.top_right, 2.0);
+                assert_eq!(r.bottom_right, 3.0);
+                assert_eq!(r.bottom_left, 4.0);
+            }
+            other => panic!("Expected Radii variant, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_transition_custom_keyframe_override_precedence() {
+        let root_tl = CustomTimelineJson {
+            target_easing: EasingJson::String("Linear".to_string()),
+            keyframes: vec![CustomKeyframeJson {
+                fraction: 0.0,
+                value_json: serde_json::json!(10.0),
+                easing: EasingJson::String("Linear".to_string()),
+            }],
+        };
+        let transition_tl = CustomTimelineJson {
+            target_easing: EasingJson::String("Linear".to_string()),
+            keyframes: vec![CustomKeyframeJson {
+                fraction: 0.0,
+                value_json: serde_json::json!(99.0),
+                easing: EasingJson::String("Linear".to_string()),
+            }],
+        };
+
+        let mut custom_keyframe_data = std::collections::HashMap::new();
+        custom_keyframe_data.insert("node-opacity".to_string(), transition_tl);
+
+        let mut root_timelines = std::collections::HashMap::new();
+        root_timelines.insert("node-opacity".to_string(), root_tl);
+
+        let transition_json = TransitionSpecJson {
+            from: "A".to_string(),
+            to: "B".to_string(),
+            name: String::new(),
+            spec: None,
+            timelines: root_timelines,
+            custom_keyframe_data,
+        };
+        let proto_transition: animationspec::TransitionSpec = transition_json.into();
+        let tl = proto_transition.timelines.get("node-opacity").expect("timeline should exist");
+        let first_kf = &tl.keyframes[0];
+        match first_kf.value.as_ref().and_then(|v| v.value.as_ref()) {
+            Some(animationspec::custom_keyframe_value::Value::Scalar(val)) => {
+                assert_eq!(
+                    *val, 99.0,
+                    "Transition override (99.0) should take precedence over root timeline (10.0)"
+                );
+            }
+            other => panic!("Expected Scalar(99.0), got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_root_timeline_deduplication_and_merging() {
+        let root_tl = CustomTimelineJson {
+            target_easing: EasingJson::String("Linear".to_string()),
+            keyframes: vec![CustomKeyframeJson {
+                fraction: 0.0,
+                value_json: serde_json::json!(5.0),
+                easing: EasingJson::String("Linear".to_string()),
+            }],
+        };
+        let override_tl = CustomTimelineJson {
+            target_easing: EasingJson::String("Linear".to_string()),
+            keyframes: vec![CustomKeyframeJson {
+                fraction: 0.0,
+                value_json: serde_json::json!(42.0),
+                easing: EasingJson::String("Linear".to_string()),
+            }],
+        };
+
+        let mut root_timelines = std::collections::HashMap::new();
+        root_timelines.insert("shared-prop".to_string(), root_tl);
+
+        let transition1 = TransitionSpecJson {
+            from: "A".to_string(),
+            to: "B".to_string(),
+            name: String::new(),
+            spec: None,
+            timelines: std::collections::HashMap::new(),
+            custom_keyframe_data: std::collections::HashMap::new(),
+        };
+
+        let mut t2_timelines = std::collections::HashMap::new();
+        t2_timelines.insert("shared-prop".to_string(), override_tl);
+        let transition2 = TransitionSpecJson {
+            from: "B".to_string(),
+            to: "C".to_string(),
+            name: String::new(),
+            spec: None,
+            timelines: t2_timelines,
+            custom_keyframe_data: std::collections::HashMap::new(),
+        };
+
+        let matrix_json = AnimationMatrixJson {
+            default_spec: None,
+            transitions: vec![transition1, transition2],
+            timelines: root_timelines,
+            custom_keyframe_data: std::collections::HashMap::new(),
+        };
+
+        let proto_matrix: animationspec::AnimationMatrix = matrix_json.into();
+        assert_eq!(proto_matrix.transitions.len(), 2);
+
+        let t1 = &proto_matrix.transitions[0];
+        let t1_tl = t1.timelines.get("shared-prop").expect("t1 should inherit root timeline");
+        match t1_tl.keyframes[0].value.as_ref().and_then(|v| v.value.as_ref()) {
+            Some(animationspec::custom_keyframe_value::Value::Scalar(val)) => {
+                assert_eq!(*val, 5.0);
+            }
+            other => panic!("Expected Scalar(5.0), got {:?}", other),
+        }
+
+        let t2 = &proto_matrix.transitions[1];
+        let t2_tl = t2.timelines.get("shared-prop").expect("t2 should have override timeline");
+        match t2_tl.keyframes[0].value.as_ref().and_then(|v| v.value.as_ref()) {
+            Some(animationspec::custom_keyframe_value::Value::Scalar(val)) => {
+                assert_eq!(*val, 42.0);
+            }
+            other => panic!("Expected Scalar(42.0), got {:?}", other),
+        }
     }
 }

@@ -212,7 +212,11 @@ pub struct AnimationSpec {
     pub interrupt_type: Option<StopType>,
     /// Optional dictionary containing Squoosh arbitrary layer property values to animate from
     /// strings directly written by the UI plugin format over into matching types in Compose
-    #[serde(rename = "customKeyframeData", default, deserialize_with = "deserialize_custom_timelines_map")]
+    #[serde(
+        rename = "customKeyframeData",
+        default,
+        deserialize_with = "deserialize_custom_timelines_map"
+    )]
     pub custom_keyframe_data: std::collections::HashMap<String, CustomTimeline>,
     /// Timelines for custom properties
     #[serde(default, deserialize_with = "deserialize_custom_timelines_map")]
@@ -235,7 +239,11 @@ pub struct TransitionSpecJson {
     #[serde(default, deserialize_with = "deserialize_custom_timelines_map")]
     pub timelines: std::collections::HashMap<String, CustomTimeline>,
     /// Legacy/plugin field for custom property keyframe timelines exported as stringified JSON
-    #[serde(rename = "customKeyframeData", default, deserialize_with = "deserialize_custom_timelines_map")]
+    #[serde(
+        rename = "customKeyframeData",
+        default,
+        deserialize_with = "deserialize_custom_timelines_map"
+    )]
     pub custom_keyframe_data: std::collections::HashMap<String, CustomTimeline>,
 }
 
@@ -255,7 +263,11 @@ pub struct AnimationMatrixJson {
     #[serde(default, deserialize_with = "deserialize_custom_timelines_map")]
     pub timelines: std::collections::HashMap<String, CustomTimeline>,
     /// Legacy/alias name for node timelines stored at the matrix root level
-    #[serde(rename = "customKeyframeData", default, deserialize_with = "deserialize_custom_timelines_map")]
+    #[serde(
+        rename = "customKeyframeData",
+        default,
+        deserialize_with = "deserialize_custom_timelines_map"
+    )]
     pub custom_keyframe_data: std::collections::HashMap<String, CustomTimeline>,
 }
 
@@ -340,7 +352,8 @@ impl<'de> Deserialize<'de> for AnimationOverrideJson {
 
         let tmp = Tmp::deserialize(deserializer)?;
         let mut custom_keyframe_data = std::collections::HashMap::new();
-        for (k, v) in tmp.custom_keyframe_data_raw.into_iter().chain(tmp.timelines_raw.into_iter()) {
+        for (k, v) in tmp.custom_keyframe_data_raw.into_iter().chain(tmp.timelines_raw.into_iter())
+        {
             if let Some(ct) = v.into_timeline() {
                 custom_keyframe_data.insert(k, ct);
             }
@@ -845,7 +858,10 @@ mod tests {
             assert_eq!(matrix.transitions.len(), 1);
             let t = &matrix.transitions[0];
             assert_eq!(t.name, "SportMode");
-            assert!(t.custom_keyframe_data.contains_key("D-opacity"), "Expected D-opacity in custom_keyframe_data map");
+            assert!(
+                t.custom_keyframe_data.contains_key("D-opacity"),
+                "Expected D-opacity in custom_keyframe_data map"
+            );
             let timeline = &t.custom_keyframe_data["D-opacity"];
             assert_eq!(timeline.keyframes.len(), 2);
             assert_eq!(timeline.keyframes[0].fraction, 0.2);

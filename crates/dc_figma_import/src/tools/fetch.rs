@@ -160,11 +160,8 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
         None,
     )?;
 
-    let nodes = if args.nodes.is_empty() {
-        doc.discover_top_level_nodes()
-    } else {
-        args.nodes.clone()
-    };
+    let nodes =
+        if args.nodes.is_empty() { doc.discover_top_level_nodes() } else { args.nodes.clone() };
     let dc_definition = build_definition(&mut doc, &nodes, !args.scalableui)?;
 
     println!("Fetched document");

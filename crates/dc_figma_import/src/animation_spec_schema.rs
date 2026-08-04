@@ -274,8 +274,12 @@ pub struct AnimationMatrixJson {
 impl TransitionSpecJson {
     /// Validates the transition spec fields.
     pub fn validate(&self) -> Result<(), String> {
-        if self.from.is_empty() && self.to.is_empty() {
-            return Err("TransitionSpec 'from' and 'to' cannot both be empty".to_string());
+        let from_is_wild = self.from.is_empty() || self.from == "*";
+        let to_is_wild = self.to.is_empty() || self.to == "*";
+        if from_is_wild && to_is_wild {
+            return Err(
+                "TransitionSpec 'from' and 'to' cannot both be wildcards (* -> *)".to_string()
+            );
         }
         for (prop_name, timeline) in self.timelines.iter().chain(self.custom_keyframe_data.iter()) {
             for keyframe in &timeline.keyframes {
@@ -586,6 +590,14 @@ mod tests {
             ..Default::default()
         };
         assert!(invalid_transition.validate().is_err());
+
+        let invalid_wildcard_transition = TransitionSpecJson {
+            from: "*".to_string(),
+            to: "*".to_string(),
+            name: "InvalidWildcard".to_string(),
+            ..Default::default()
+        };
+        assert!(invalid_wildcard_transition.validate().is_err());
 
         let mut valid_transition = TransitionSpecJson {
             from: "A".to_string(),

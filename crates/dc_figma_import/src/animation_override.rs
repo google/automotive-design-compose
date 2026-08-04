@@ -257,6 +257,22 @@ impl From<AnimationSpecJson> for AnimationSpec {
     }
 }
 
+/// Normalizes a comma-separated variant string by sorting "Property=Value" assignments alphabetically.
+/// For example: "#heartbeat=on, #debug=on" and "#debug=on, #heartbeat=on" both normalize to "#debug=on, #heartbeat=on".
+/// Wildcards ("*") or single-property strings are returned unchanged.
+fn normalize_variant_string(s: &str) -> String {
+    if s.is_empty() || s == "*" {
+        return s.to_string();
+    }
+    let mut parts: Vec<&str> =
+        s.split(',').map(|part| part.trim()).filter(|part| !part.is_empty()).collect();
+    if parts.len() <= 1 {
+        return s.to_string();
+    }
+    parts.sort_unstable();
+    parts.join(", ")
+}
+
 /// Converts from the JSON `TransitionSpecJson` to the protobuf `TransitionSpec`.
 impl From<TransitionSpecJson> for animationspec::TransitionSpec {
     fn from(json: TransitionSpecJson) -> Self {
@@ -266,8 +282,8 @@ impl From<TransitionSpecJson> for animationspec::TransitionSpec {
             timelines.insert(k, v.into());
         }
         animationspec::TransitionSpec {
-            from_variant: json.from,
-            to_variant: json.to,
+            from_variant: normalize_variant_string(&json.from),
+            to_variant: normalize_variant_string(&json.to),
             animation_name: json.name,
             spec: json.spec.map(|s| s.into()).into(),
             timelines,

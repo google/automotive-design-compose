@@ -373,14 +373,38 @@ pub struct PropertyLookup {
 }
 
 impl PropertyLookup {
-    /// Retrieves all parsed timeline data for a specific node.
+    /// Retrieves all parsed timeline data for a specific node or variant property.
     pub fn get_for_node(&self, node: &str) -> Option<Arc<NodeTimelines>> {
-        self.timelines.get(node).cloned()
+        if let Some(res) = self.timelines.get(node) {
+            return Some(res.clone());
+        }
+        // Multi-property check: check each "Property=Value" assignment cleanly
+        for part in node.split(',') {
+            let val = part.trim().split_once('=').map(|(_, v)| v.trim()).unwrap_or(part.trim());
+            if let Some(res) = self.timelines.get(val) {
+                return Some(res.clone());
+            }
+        }
+        None
     }
 
     /// Retrieves the parsed timeline data for a specific node and property.
     pub fn get(&self, node: &str, prop: AnimatableProperty) -> Option<&ParsedTimelineData> {
-        self.timelines.get(node).and_then(|nt| nt.get(&prop))
+        if let Some(nt) = self.timelines.get(node) {
+            if let Some(res) = nt.get(&prop) {
+                return Some(res);
+            }
+        }
+        // Multi-property check: check each "Property=Value" assignment cleanly
+        for part in node.split(',') {
+            let val = part.trim().split_once('=').map(|(_, v)| v.trim()).unwrap_or(part.trim());
+            if let Some(nt) = self.timelines.get(val) {
+                if let Some(res) = nt.get(&prop) {
+                    return Some(res);
+                }
+            }
+        }
+        None
     }
 }
 

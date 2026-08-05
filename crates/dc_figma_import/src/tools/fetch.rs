@@ -160,7 +160,9 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
         None,
     )?;
 
-    let dc_definition = build_definition(&mut doc, &args.nodes, !args.scalableui)?;
+    let nodes =
+        if args.nodes.is_empty() { doc.discover_top_level_nodes() } else { args.nodes.clone() };
+    let dc_definition = build_definition(&mut doc, &nodes, !args.scalableui)?;
 
     println!("Fetched document");
     println!("  DC Version: {}", DesignComposeDefinitionHeader::current_version());

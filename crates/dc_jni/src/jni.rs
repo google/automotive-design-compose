@@ -76,6 +76,7 @@ fn get_proxy_config(env: &mut Env, input: &JObject) -> Result<ProxyConfig, jni::
     })
 }
 
+#[allow(deprecated)]
 fn jni_fetch_doc<'local>(
     mut env: EnvUnowned<'local>,
     _class: JClass,

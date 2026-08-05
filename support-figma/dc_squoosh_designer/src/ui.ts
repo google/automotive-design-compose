@@ -17,7 +17,10 @@
 import { Variant, SerializedNode } from "./timeline/types";
 import { PlaybackController } from "./timeline/PlaybackController";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { getAnimationSegment } from "./timeline/utils";
+import {
+  getAnimationSegment,
+  setGlobalActiveTransitions,
+} from "./timeline/utils";
 import { DataMapper } from "./services/DataMapper";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { ControlPanel, AnimationSettings } from "./ui/ControlPanel";
@@ -42,6 +45,8 @@ class AnimationUI {
   private currentFrameIndex: number = 0;
   private isAnimationReady: boolean = false;
   private playAfterReady: boolean = false;
+  private isSeekingFromDropdown: boolean = false;
+  private selectedTransitionsMap: { [variantName: string]: number } = {};
 
   constructor() {
     this.timelineContainer = document.getElementById("timeline-container")!;
@@ -55,112 +60,189 @@ class AnimationUI {
     this.controlPanel = new ControlPanel(this.playbackController);
 
     this.timelineManager = new TimelineManager(
-        this.timelineContainer,
-        this.playbackController,
+      this.timelineContainer,
+      this.playbackController,
       null,
-        () => this.currentVariants,
-        () => this.currentSerializedVariants
+      () => this.currentVariants,
+      () => this.currentSerializedVariants,
     );
 
-    this.propertiesPanel = new PropertiesPanel(this.timelineManager.editor, this.playbackController);
+    this.propertiesPanel = new PropertiesPanel(
+      this.timelineManager.editor,
+      this.playbackController,
+    );
     this.timelineManager.setPropertiesPanel(this.propertiesPanel);
 
     this.resizeManager = new ResizeManager(
-        document.getElementById("resizeHandle")!,
-        document.getElementById("timeline-resizer")!,
-        this.timelineContainer
+      document.getElementById("resizeHandle")!,
+      document.getElementById("timeline-resizer")!,
+      this.timelineContainer,
     );
 
-    this.testRunner = new SimpleTestRunner('test-logs');
-    registerUITests(this.testRunner, this.controlPanel, this.timelineManager, this.propertiesPanel);
+    this.testRunner = new SimpleTestRunner("test-logs");
+    registerUITests(
+      this.testRunner,
+      this.controlPanel,
+      this.timelineManager,
+      this.propertiesPanel,
+    );
 
     this.setupEventListeners();
   }
   private setupEventListeners() {
     // Wiring ControlPanel events
-    this.controlPanel.on("save", (settings: AnimationSettings) => this.handleSave(settings));
+    this.controlPanel.on("save", (settings: AnimationSettings) =>
+      this.handleSave(settings),
+    );
     this.controlPanel.on("discard", () => this.handleDiscard());
+    this.controlPanel.on("delete-transition", (index: number) =>
+      this.handleDeleteTransition(index),
+    );
+    this.controlPanel.on("transition-selected", (index: number) =>
+      this.handleTransitionSelected(index),
+    );
     this.controlPanel.on("export", () => this.handleExport());
-    this.controlPanel.on("reset", () => parent.postMessage({ pluginMessage: { type: "reset-data" } }, "*"));
+    this.controlPanel.on("import", (file: File) => this.handleImport(file));
+    this.controlPanel.on("reset", () =>
+      parent.postMessage({ pluginMessage: { type: "reset-data" } }, "*"),
+    );
     this.controlPanel.on("ping", () => {
-        parent.postMessage({ pluginMessage: { type: "ping" } }, "*");
+      parent.postMessage({ pluginMessage: { type: "ping" } }, "*");
     });
-    this.controlPanel.on("clear-preview", () => parent.postMessage({ pluginMessage: { type: "clear-preview" } }, "*"));
+    this.controlPanel.on("clear-preview", () =>
+      parent.postMessage({ pluginMessage: { type: "clear-preview" } }, "*"),
+    );
     this.controlPanel.on("select-preview", (isSelecting: boolean) => {
-        if (isSelecting) {
-             parent.postMessage({ pluginMessage: { type: "select-preview-frame" } }, "*");
-        } else {
-             this.controlPanel.setSelectingPreview(true);
-             parent.postMessage({ pluginMessage: { type: "select-preview-frame" } }, "*");
-        }
+      if (isSelecting) {
+        parent.postMessage(
+          { pluginMessage: { type: "select-preview-frame" } },
+          "*",
+        );
+      } else {
+        this.controlPanel.setSelectingPreview(true);
+        parent.postMessage(
+          { pluginMessage: { type: "select-preview-frame" } },
+          "*",
+        );
+      }
     });
 
     this.controlPanel.on("frame-changed", (index: number) => {
-        if (index !== this.currentFrameIndex) {
-            this.currentFrameIndex = index;
-            this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex]);
-
-            const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(this.currentVariants);
-            const selectedKeyframe = keyframeTimes.find((kf) => kf.index === index);
-            if (selectedKeyframe && totalTime > 0) {
-                this.playbackController.seek(selectedKeyframe.time);
-            }
-            this.updateFigmaPreview();
+      if (index !== this.currentFrameIndex) {
+        this.currentFrameIndex = index;
+        this.controlPanel.setVariant(
+          this.currentVariants[this.currentFrameIndex],
+          this.currentVariants,
+        );
+        if (this.currentVariants[this.currentFrameIndex]) {
+          this.timelineManager.updateRootNodeName(
+            this.currentVariants[this.currentFrameIndex].name,
+          );
         }
+
+        const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(
+          this.currentVariants,
+        );
+        const selectedKeyframe = keyframeTimes.find((kf) => kf.index === index);
+        if (selectedKeyframe && totalTime > 0) {
+          this.isSeekingFromDropdown = true;
+          this.playbackController.seek(selectedKeyframe.time);
+          this.isSeekingFromDropdown = false;
+        }
+        this.updateFigmaPreview();
+      }
     });
 
     // Test Runner Events
-    const runTestsButton = document.getElementById('run-tests-button');
-    const closeTestsButton = document.getElementById('close-tests-button');
-    const testContainer = document.getElementById('test-runner-container');
+    const runTestsButton = document.getElementById("run-tests-button");
+    const closeTestsButton = document.getElementById("close-tests-button");
+    const testContainer = document.getElementById("test-runner-container");
 
     if (runTestsButton && testContainer && closeTestsButton) {
-        runTestsButton.onclick = () => {
-            testContainer.style.display = 'block';
-            this.testRunner.run();
-        };
-        closeTestsButton.onclick = () => {
-            testContainer.style.display = 'none';
-        };
+      runTestsButton.onclick = () => {
+        testContainer.style.display = "block";
+        this.testRunner.run();
+      };
+      closeTestsButton.onclick = () => {
+        testContainer.style.display = "none";
+      };
     }
 
     // Playback Controller Events
     this.playbackController.on("timeupdate", (time: number) => {
-      const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(this.currentVariants);
+      const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(
+        this.currentVariants,
+      );
       if (totalTime > 0) {
         this.timelineManager.editor.setPlayheadPosition(time / totalTime);
 
         let newFrameIndex = -1;
-        const exactKeyframe = keyframeTimes.find((kt) => Math.abs(kt.time - time) < 0.0001);
+        const exactKeyframe = keyframeTimes.find(
+          (kt) => Math.abs(kt.time - time) < 0.001,
+        );
         if (exactKeyframe) {
-            newFrameIndex = exactKeyframe.index;
+          newFrameIndex = exactKeyframe.index;
         } else {
-            const segment = getAnimationSegment(time / totalTime, keyframeTimes, totalTime, this.currentVariants);
-            if (segment) {
-                newFrameIndex = keyframeTimes[segment.endIndex].index;
-            } else if (time >= totalTime && keyframeTimes.length > 0) {
-                newFrameIndex = keyframeTimes[0].index;
-            }
+          const segment = getAnimationSegment(
+            time / totalTime,
+            keyframeTimes,
+            totalTime,
+            this.currentVariants,
+          );
+          if (segment) {
+            newFrameIndex = keyframeTimes[segment.endIndex].index;
+          } else if (time >= totalTime && keyframeTimes.length > 0) {
+            newFrameIndex = keyframeTimes[0].index;
+          }
         }
 
-        if (newFrameIndex !== -1 && newFrameIndex !== this.currentFrameIndex) {
+        const timeDisplay = document.getElementById("playhead-time-display");
+        if (timeDisplay) {
+          timeDisplay.textContent = `Time: ${time.toFixed(2)}s / ${totalTime.toFixed(2)}s`;
+        }
+
+        if (
+          !this.isSeekingFromDropdown &&
+          newFrameIndex !== -1 &&
+          newFrameIndex !== this.currentFrameIndex
+        ) {
           this.currentFrameIndex = newFrameIndex;
-          this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex]);
+          const targetVariant = this.currentVariants[this.currentFrameIndex];
+          const savedIndex = targetVariant
+            ? (this.selectedTransitionsMap[targetVariant.name] ?? 0)
+            : 0;
+          this.controlPanel.setVariant(
+            targetVariant,
+            this.currentVariants,
+            savedIndex,
+          );
           this.controlPanel.setSelectedFrame(this.currentFrameIndex);
+          if (targetVariant) {
+            this.timelineManager.updateRootNodeName(targetVariant.name);
+          }
         }
       }
     });
 
     this.playbackController.on("keyframe-changed", (index: number) => {
-      this.currentFrameIndex = index;
-      this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex]);
-      this.controlPanel.setSelectedFrame(this.currentFrameIndex);
+      if (!this.isSeekingFromDropdown && index !== this.currentFrameIndex) {
+        this.currentFrameIndex = index;
+        const targetVariant = this.currentVariants[this.currentFrameIndex];
+        const savedIndex = targetVariant
+          ? (this.selectedTransitionsMap[targetVariant.name] ?? 0)
+          : 0;
+        this.controlPanel.setVariant(
+          targetVariant,
+          this.currentVariants,
+          savedIndex,
+        );
+        this.controlPanel.setSelectedFrame(this.currentFrameIndex);
+      }
     });
 
     // Global Events
     window.addEventListener("mouseup", () => {
-
-        document.body.classList.remove("no-select");
+      document.body.classList.remove("no-select");
     });
 
     window.addEventListener("load", () =>
@@ -171,190 +253,458 @@ class AnimationUI {
   }
 
   private handleSave(settings: AnimationSettings) {
-      const existingAnimation = this.currentVariants[this.currentFrameIndex].animation || {};
-      const newAnimationData = {
-        ...existingAnimation,
-        spec: {
-          initial_delay: { secs: Math.floor(settings.initialDelay), nanos: (settings.initialDelay % 1) * 1e9 },
-          animation: {
-            Smooth: {
-              duration: {
-                secs: Math.floor(settings.duration),
-                nanos: (settings.duration % 1) * 1e9,
-              },
-              repeat_type: "NoRepeat",
-              easing: settings.easing,
-            },
+    const existingAnimation =
+      this.currentVariants[this.currentFrameIndex].animation || {};
+
+    const newSpec = {
+      initial_delay: {
+        secs: Math.floor(settings.initialDelay),
+        nanos: Math.round((settings.initialDelay % 1) * 1e9),
+      },
+      animation: {
+        Smooth: {
+          duration: {
+            secs: Math.floor(settings.duration),
+            nanos: Math.round((settings.duration % 1) * 1e9),
           },
-          interrupt_type: settings.interruptType,
+          repeat_type: "NoRepeat",
+          easing: settings.easing,
         },
-      };
+      },
+      interrupt_type: settings.interruptType,
+    };
 
-      this.currentVariants[this.currentFrameIndex].animation = newAnimationData;
+    const newAnimationData = { ...existingAnimation };
 
-      parent.postMessage({
-          pluginMessage: {
-            type: "save-data",
-            frameName: this.currentVariants[this.currentFrameIndex].name,
-            data: JSON.stringify(newAnimationData),
-          },
-      }, "*");
+    if (!newAnimationData.transitions) {
+      newAnimationData.transitions = [];
+    }
 
-      const newAnimationDataObject = DataMapper.transformDataToAnimationData(
-        this.currentVariants,
-        this.currentSerializedVariants,
+    const toVariantName = this.currentVariants[this.currentFrameIndex].name;
+
+    if (
+      settings.fromVariant === "*" &&
+      settings.animationName === "Default" &&
+      (toVariantName === "*" || !toVariantName)
+    ) {
+      newAnimationData.default_spec = newSpec;
+    } else {
+      let targetTransitionIndex = newAnimationData.transitions.findIndex(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (t: any) =>
+          t.from === settings.fromVariant &&
+          t.name === settings.animationName &&
+          (t.to === toVariantName || (!t.to && !toVariantName)),
       );
 
-      this.playbackController.updateData({
-        animationData: newAnimationDataObject,
-        serializedVariants: this.currentSerializedVariants,
-        variants: this.currentVariants,
-      });
+      if (targetTransitionIndex >= 0) {
+        newAnimationData.transitions[targetTransitionIndex].spec = newSpec;
+      } else {
+        newAnimationData.transitions.push({
+          from: settings.fromVariant,
+          to: toVariantName,
+          name: settings.animationName,
+          spec: newSpec,
+          timelines: {},
+        });
+        targetTransitionIndex = newAnimationData.transitions.length - 1;
+      }
+    }
 
-      this.timelineManager.editor.setData(newAnimationDataObject);
+    // Preserve legacy spec temporarily to prevent older UI code from crashing
+    newAnimationData.spec = newSpec;
 
-      this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex]); // Updates initial properties
+    this.currentVariants[this.currentFrameIndex].animation = newAnimationData;
+
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: "save-data",
+          frameName: this.currentVariants[this.currentFrameIndex].name,
+          data: JSON.stringify(newAnimationData),
+        },
+      },
+      "*",
+    );
+
+    const savedIndex = Math.max(0, targetTransitionIndex || 0);
+    const targetVariant = this.currentVariants[this.currentFrameIndex];
+    if (targetVariant) {
+      this.selectedTransitionsMap[targetVariant.name] = savedIndex;
+    }
+    setGlobalActiveTransitions(this.selectedTransitionsMap);
+
+    const newAnimationDataObject = DataMapper.transformDataToAnimationData(
+      this.currentVariants,
+      this.currentSerializedVariants,
+      this.selectedTransitionsMap,
+    );
+
+    this.playbackController.updateData({
+      animationData: newAnimationDataObject,
+      serializedVariants: this.currentSerializedVariants,
+      variants: this.currentVariants,
+    });
+
+    this.timelineManager.editor.setData(newAnimationDataObject);
+
+    this.controlPanel.setVariant(
+      this.currentVariants[this.currentFrameIndex],
+      this.currentVariants,
+      savedIndex,
+    );
   }
 
   private handleDiscard() {
-      this.controlPanel.setVariant(this.currentVariants[this.currentFrameIndex]);
+    const targetVariant = this.currentVariants[this.currentFrameIndex];
+    const savedIndex = targetVariant
+      ? (this.selectedTransitionsMap[targetVariant.name] ?? 0)
+      : 0;
+    this.controlPanel.setVariant(
+      targetVariant,
+      this.currentVariants,
+      savedIndex,
+    );
+  }
+
+  private handleDeleteTransition(index: number) {
+    const existingAnimation =
+      this.currentVariants[this.currentFrameIndex].animation || {};
+
+    if (
+      existingAnimation.transitions &&
+      index >= 0 &&
+      index < existingAnimation.transitions.length &&
+      existingAnimation.transitions.length > 1
+    ) {
+      existingAnimation.transitions.splice(index, 1);
+    }
+
+    this.currentVariants[this.currentFrameIndex].animation = existingAnimation;
+
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: "save-data",
+          frameName: this.currentVariants[this.currentFrameIndex].name,
+          data: JSON.stringify(existingAnimation),
+        },
+      },
+      "*",
+    );
+
+    const targetVariant = this.currentVariants[this.currentFrameIndex];
+    if (targetVariant) {
+      this.selectedTransitionsMap[targetVariant.name] = 0;
+    }
+    setGlobalActiveTransitions(this.selectedTransitionsMap);
+
+    const newAnimationDataObject = DataMapper.transformDataToAnimationData(
+      this.currentVariants,
+      this.currentSerializedVariants,
+      this.selectedTransitionsMap,
+    );
+
+    this.playbackController.updateData({
+      animationData: newAnimationDataObject,
+      serializedVariants: this.currentSerializedVariants,
+      variants: this.currentVariants,
+    });
+
+    this.timelineManager.editor.setData(newAnimationDataObject);
+
+    this.controlPanel.setVariant(
+      this.currentVariants[this.currentFrameIndex],
+      this.currentVariants,
+      0,
+    );
+  }
+
+  private handleTransitionSelected(index: number) {
+    const currentVariant = this.currentVariants[this.currentFrameIndex];
+    if (currentVariant) {
+      this.selectedTransitionsMap[currentVariant.name] = Math.max(0, index);
+    }
+    setGlobalActiveTransitions(this.selectedTransitionsMap);
+
+    const newAnimationDataObject = DataMapper.transformDataToAnimationData(
+      this.currentVariants,
+      this.currentSerializedVariants,
+      this.selectedTransitionsMap,
+    );
+
+    this.playbackController.updateData({
+      animationData: newAnimationDataObject,
+      serializedVariants: this.currentSerializedVariants,
+      variants: this.currentVariants,
+    });
+
+    this.timelineManager.editor.setData(newAnimationDataObject);
+
+    if (currentVariant) {
+      this.controlPanel.setVariant(
+        currentVariant,
+        this.currentVariants,
+        Math.max(0, index),
+      );
+    }
   }
 
   private handleExport() {
-      const dataToExport = {
-        variants: this.currentVariants,
-        serializedVariants: this.currentSerializedVariants,
-        animationData: DataMapper.transformDataToAnimationData(
+    const dataToExport = {
+      variants: this.currentVariants,
+      serializedVariants: this.currentSerializedVariants,
+      animationData: DataMapper.transformDataToAnimationData(
+        this.currentVariants,
+        this.currentSerializedVariants,
+        this.selectedTransitionsMap,
+      ),
+    };
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+    const downloadAnchorNode = document.createElement("a");
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "animation_data.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  }
+
+  private handleImport(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        if (!content) return;
+        const imported = JSON.parse(content);
+        if (!imported.variants || !Array.isArray(imported.variants)) {
+          alert("Invalid animation_data.json file: missing variants array.");
+          return;
+        }
+
+        imported.variants.forEach((importedVariant: Variant) => {
+          const targetVariant = this.currentVariants.find(
+            (v) => v.name === importedVariant.name,
+          );
+          if (targetVariant && importedVariant.animation) {
+            targetVariant.animation = importedVariant.animation;
+
+            parent.postMessage(
+              {
+                pluginMessage: {
+                  type: "save-data",
+                  frameName: targetVariant.name,
+                  data: JSON.stringify(importedVariant.animation),
+                },
+              },
+              "*",
+            );
+          }
+        });
+
+        setGlobalActiveTransitions(this.selectedTransitionsMap);
+        const newAnimationData = DataMapper.transformDataToAnimationData(
           this.currentVariants,
           this.currentSerializedVariants,
-        ),
-      };
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
-      const downloadAnchorNode = document.createElement("a");
-      downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", "animation_data.json");
-      document.body.appendChild(downloadAnchorNode);
-      downloadAnchorNode.click();
-      downloadAnchorNode.remove();
+          this.selectedTransitionsMap,
+        );
+
+        this.playbackController.updateData({
+          animationData: newAnimationData,
+          serializedVariants: this.currentSerializedVariants,
+          variants: this.currentVariants,
+        });
+
+        this.timelineManager.editor.setData(newAnimationData);
+        this.controlPanel.updateKeyframeSelector(
+          this.currentVariants,
+          this.currentFrameIndex,
+        );
+        const targetVariant = this.currentVariants[this.currentFrameIndex];
+        const savedIndex = targetVariant
+          ? (this.selectedTransitionsMap[targetVariant.name] ?? 0)
+          : 0;
+        this.controlPanel.setVariant(
+          targetVariant,
+          this.currentVariants,
+          savedIndex,
+        );
+        if (targetVariant) {
+          this.timelineManager.updateRootNodeName(targetVariant.name);
+        }
+
+        const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(
+          this.currentVariants,
+          this.selectedTransitionsMap,
+        );
+        const selectedKeyframe = keyframeTimes.find(
+          (kf) => kf.index === this.currentFrameIndex,
+        );
+        if (selectedKeyframe && totalTime > 0) {
+          this.isSeekingFromDropdown = true;
+          this.playbackController.seek(selectedKeyframe.time);
+          this.isSeekingFromDropdown = false;
+        }
+
+        alert("Successfully imported and saved animation data to Figma!");
+      } catch (err) {
+        console.error("Error importing file:", err);
+        alert("Failed to parse imported JSON file.");
+      }
+    };
+    reader.readAsText(file);
   }
 
   private updateFigmaPreview() {
-        const animatedNodes: SerializedNode[] = [];
-        const variantNode = this.currentSerializedVariants[this.currentFrameIndex];
-        DataMapper.collectNodesForPreview(variantNode, null, true, animatedNodes);
-        parent.postMessage({
-            pluginMessage: {
-              type: "update-figma-preview",
-              animatedNodes: animatedNodes,
-            },
-        }, "*");
+    const animatedNodes: SerializedNode[] = [];
+    const variantNode = this.currentSerializedVariants[this.currentFrameIndex];
+    DataMapper.collectNodesForPreview(variantNode, null, true, animatedNodes);
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: "update-figma-preview",
+          animatedNodes: animatedNodes,
+        },
+      },
+      "*",
+    );
   }
 
   private handleMessage(event: MessageEvent) {
-      const pluginMessage = event.data.pluginMessage;
-      if (!pluginMessage) return;
+    const pluginMessage = event.data.pluginMessage;
+    if (!pluginMessage) return;
 
-      switch (pluginMessage.type) {
-        case "animation-ready": {
-          this.isAnimationReady = true;
-          this.updateFigmaPreview(); // Ensure properties and metadata are synced
-          if (this.playAfterReady) {
-            this.playAfterReady = false;
-            this.playbackController.play();
-          }
-          break;
+    switch (pluginMessage.type) {
+      case "animation-ready": {
+        this.isAnimationReady = true;
+        this.updateFigmaPreview(); // Ensure properties and metadata are synced
+        if (this.playAfterReady) {
+          this.playAfterReady = false;
+          this.playbackController.play();
         }
-        case "pong": {
-          break;
-        }
-        case "selection-mode-started": {
-          this.controlPanel.setSelectingPreview(true);
-          break;
-        }
-        case "selection-mode-ended": {
-          this.controlPanel.setSelectingPreview(false);
-          break;
-        }
-        case "preview-frame-selected": {
-          this.controlPanel.setSelectingPreview(false, pluginMessage.name);
-          break;
-        }
-        case "preview-frame-cleared": {
-          this.controlPanel.setSelectingPreview(false);
-          break;
-        }
-        case "clear-timeline": {
-          this.currentSerializedVariants = [];
-          this.currentVariants = [];
-          this.currentFrameIndex = 0;
-          // Do not destroy/recreate the editor, just clear its data to preserve references
-          this.timelineManager.editor.setData({ nodes: [], duration: 1 });
-          break;
-        }
-        case "clear": {
-          document.getElementById("editor")!.style.display = "none";
-          this.currentSerializedVariants = [];
-          this.currentVariants = [];
-          this.currentFrameIndex = 0;
-          break;
-        }
-        case "update": {
-          this.isAnimationReady = false;
-          document.getElementById("editor")!.style.display = "block";
-          const { variants, serializedVariants, selectedVariantName } = pluginMessage;
-          this.currentSerializedVariants = serializedVariants;
-          this.currentVariants = variants;
-          this.propertiesPanel.setCurrentVariants(variants);
-
-          const animationData = DataMapper.transformDataToAnimationData(variants, serializedVariants);
-          this.timelineManager.editor.setData(animationData);
-          this.playbackController.updateData({
-            animationData: animationData,
-            serializedVariants: this.currentSerializedVariants,
-            variants: this.currentVariants,
-          });
-
-          let startIndex = 0;
-          if (selectedVariantName) {
-            const index = variants.findIndex((v: Variant) => v.name === selectedVariantName);
-            if (index !== -1) startIndex = index;
-          }
-          this.currentFrameIndex = startIndex;
-
-          this.controlPanel.updateKeyframeSelector(variants, startIndex);
-          this.controlPanel.setVariant(variants[startIndex]);
-
-          const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(this.currentVariants);
-          const selectedKeyframe = keyframeTimes.find((kf) => kf.index === startIndex);
-          if (selectedKeyframe && totalTime > 0) {
-            this.playbackController.seek(selectedKeyframe.time);
-          }
-
-          parent.postMessage({ pluginMessage: { type: "prepare-animation" } }, "*");
-          break;
-        }
-        case "preview-node-changed": {
-          const { originalNodeId, nodeProps } = pluginMessage;
-          compareAndPrintChanges(
-            originalNodeId,
-            nodeProps,
-            this.currentSerializedVariants,
-            this.currentFrameIndex,
-            this.timelineManager,
-            this.playbackController
-          );
-          break;
-        }
-        case "preview-node-selected": {
-           break;
-        }
-        case "preview-update-complete": {
-           this.playbackController.acknowledgePreviewUpdate();
-           break;
-        }
+        break;
       }
-  }
+      case "pong": {
+        break;
+      }
+      case "selection-mode-started": {
+        this.controlPanel.setSelectingPreview(true);
+        break;
+      }
+      case "selection-mode-ended": {
+        this.controlPanel.setSelectingPreview(false);
+        break;
+      }
+      case "preview-frame-selected": {
+        this.controlPanel.setSelectingPreview(false, pluginMessage.name);
+        break;
+      }
+      case "preview-frame-cleared": {
+        this.controlPanel.setSelectingPreview(false);
+        break;
+      }
+      case "clear-timeline": {
+        this.currentSerializedVariants = [];
+        this.currentVariants = [];
+        this.currentFrameIndex = 0;
+        // Do not destroy/recreate the editor, just clear its data to preserve references
+        this.timelineManager.editor.setData({ nodes: [], duration: 1 });
+        break;
+      }
+      case "clear": {
+        document.getElementById("editor")!.style.display = "none";
+        this.currentSerializedVariants = [];
+        this.currentVariants = [];
+        this.currentFrameIndex = 0;
+        break;
+      }
+      case "update": {
+        this.isAnimationReady = false;
+        document.getElementById("editor")!.style.display = "block";
+        const { variants, serializedVariants, selectedVariantName } =
+          pluginMessage;
+        this.currentSerializedVariants = serializedVariants;
+        this.currentVariants = variants;
+        this.propertiesPanel.setCurrentVariants(variants);
 
+        setGlobalActiveTransitions(this.selectedTransitionsMap);
+        const animationData = DataMapper.transformDataToAnimationData(
+          variants,
+          serializedVariants,
+          this.selectedTransitionsMap,
+        );
+        this.timelineManager.editor.setData(animationData);
+        this.playbackController.updateData({
+          animationData: animationData,
+          serializedVariants: this.currentSerializedVariants,
+          variants: this.currentVariants,
+        });
+
+        let startIndex = 0;
+        if (selectedVariantName) {
+          const index = variants.findIndex(
+            (v: Variant) => v.name === selectedVariantName,
+          );
+          if (index !== -1) startIndex = index;
+        }
+        this.currentFrameIndex = startIndex;
+
+        this.controlPanel.updateKeyframeSelector(variants, startIndex);
+        const targetVariant = variants[startIndex];
+        const savedIndex = targetVariant
+          ? (this.selectedTransitionsMap[targetVariant.name] ?? 0)
+          : 0;
+        this.controlPanel.setVariant(targetVariant, variants, savedIndex);
+        if (targetVariant) {
+          this.timelineManager.updateRootNodeName(targetVariant.name);
+        }
+
+        const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(
+          this.currentVariants,
+          this.selectedTransitionsMap,
+        );
+        const selectedKeyframe = keyframeTimes.find(
+          (kf) => kf.index === startIndex,
+        );
+        if (selectedKeyframe && totalTime > 0) {
+          this.isSeekingFromDropdown = true;
+          this.playbackController.seek(selectedKeyframe.time);
+          this.isSeekingFromDropdown = false;
+        }
+        const timeDisplay = document.getElementById("playhead-time-display");
+        if (timeDisplay) {
+          const initialTime = selectedKeyframe ? selectedKeyframe.time : 0;
+          timeDisplay.textContent = `Time: ${initialTime.toFixed(2)}s / ${totalTime.toFixed(2)}s`;
+        }
+
+        parent.postMessage(
+          { pluginMessage: { type: "prepare-animation" } },
+          "*",
+        );
+        break;
+      }
+      case "preview-node-changed": {
+        const { originalNodeId, nodeProps } = pluginMessage;
+        compareAndPrintChanges(
+          originalNodeId,
+          nodeProps,
+          this.currentSerializedVariants,
+          this.currentFrameIndex,
+          this.timelineManager,
+          this.playbackController,
+        );
+        break;
+      }
+      case "preview-node-selected": {
+        break;
+      }
+      case "preview-update-complete": {
+        this.playbackController.acknowledgePreviewUpdate();
+        break;
+      }
+    }
+  }
 }
 
 new AnimationUI();

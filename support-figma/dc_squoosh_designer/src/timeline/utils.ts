@@ -96,14 +96,18 @@ export function getAnimationSegment(
   const animSourceVariant = variants[animSourceVariantIndex];
 
   let delay = 0;
-  if (animSourceVariant?.animation?.spec?.initial_delay) {
-    const d = animSourceVariant.animation.spec.initial_delay;
+  let duration = 0;
+  const spec = resolveVariantSpec(
+    animSourceVariant?.animation,
+    animSourceVariant?.name,
+  );
+  if (spec?.initial_delay) {
+    const d = spec.initial_delay;
     delay = (d.secs || 0) + (d.nanos || 0) / 1e9;
   }
 
-  let duration = 0;
-  if (animSourceVariant?.animation?.spec?.animation?.Smooth) {
-    const d = animSourceVariant.animation.spec.animation.Smooth.duration;
+  if (spec?.animation?.Smooth) {
+    const d = spec.animation.Smooth.duration;
     duration = (d.secs || 0) + (d.nanos || 0) / 1e9;
   }
 
@@ -155,4 +159,128 @@ export function findNextKeyframe(
   }
 
   return bestKeyframe;
+}
+
+let globalActiveTransitionsMap:
+  | { [variantName: string]: number }
+  | Map<string, number>
+  | undefined = undefined;
+
+export function setGlobalActiveTransitions(
+  map?: { [variantName: string]: number } | Map<string, number>,
+): void {
+  globalActiveTransitionsMap = map;
+}
+
+export function getGlobalActiveTransitions():
+  | { [variantName: string]: number }
+  | Map<string, number>
+  | undefined {
+  return globalActiveTransitionsMap;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function resolveVariantSpec(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  anim: any,
+  variantName?: string,
+  activeTransitionsMap?:
+    | { [variantName: string]: number }
+    | Map<string, number>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
+  if (!anim) return undefined;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let spec: any = undefined;
+  const mapToUse = activeTransitionsMap || globalActiveTransitionsMap;
+
+  if (anim.transitions && anim.transitions.length > 0) {
+    let selectedIdx: number | undefined = undefined;
+    if (mapToUse && variantName) {
+      if (mapToUse instanceof Map) {
+        selectedIdx = mapToUse.get(variantName);
+      } else {
+        selectedIdx = mapToUse[variantName];
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let matchingTrans: any = undefined;
+    if (
+      typeof selectedIdx === "number" &&
+      selectedIdx >= 0 &&
+      selectedIdx < anim.transitions.length
+    ) {
+      matchingTrans = anim.transitions[selectedIdx];
+    } else {
+      matchingTrans =
+        anim.transitions.find(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (t: any) => (t.to === variantName || t.to === "*" || !t.to) && t.spec,
+        ) ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        anim.transitions.find((t: any) => t.spec);
+    }
+    if (matchingTrans && matchingTrans.spec) {
+      spec = matchingTrans.spec;
+    }
+  }
+
+  if (!spec && anim.spec) {
+    spec = anim.spec;
+  }
+  if (!spec && anim.default_spec) {
+    spec = anim.default_spec;
+  }
+
+  return spec;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function resolveVariantCustomKeyframeData(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  anim: any,
+  variantName?: string,
+  activeTransitionsMap?:
+    | { [variantName: string]: number }
+    | Map<string, number>,
+): { [key: string]: string } | undefined {
+  if (!anim) return undefined;
+
+  const mapToUse = activeTransitionsMap || globalActiveTransitionsMap;
+
+  if (anim.transitions && anim.transitions.length > 0) {
+    let selectedIdx: number | undefined = undefined;
+    if (mapToUse && variantName) {
+      if (mapToUse instanceof Map) {
+        selectedIdx = mapToUse.get(variantName);
+      } else {
+        selectedIdx = mapToUse[variantName];
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let matchingTrans: any = undefined;
+    if (
+      typeof selectedIdx === "number" &&
+      selectedIdx >= 0 &&
+      selectedIdx < anim.transitions.length
+    ) {
+      matchingTrans = anim.transitions[selectedIdx];
+    } else {
+      matchingTrans =
+        anim.transitions.find(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (t: any) =>
+            (t.to === variantName || t.to === "*" || !t.to) &&
+            t.customKeyframeData,
+        ) || anim.transitions[0];
+    }
+    if (matchingTrans && matchingTrans.customKeyframeData) {
+      return matchingTrans.customKeyframeData;
+    }
+  }
+
+  return anim.customKeyframeData;
 }

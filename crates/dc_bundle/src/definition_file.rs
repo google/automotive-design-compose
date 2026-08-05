@@ -128,7 +128,7 @@ mod tests {
 
         let view_name = "test_view".to_string();
         let view = View::new_rect(
-            &"test_id".to_string(),
+            "test_id",
             &view_name,
             ViewShape::default(),
             style,

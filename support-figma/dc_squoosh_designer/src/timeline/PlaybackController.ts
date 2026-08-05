@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-
-import { AnimationData, Node, Timeline, Keyframe, SerializedNode, Variant, KeyframeTime, AnimatedNode, AnimationNode } from "./types";
+import {
+  AnimationData,
+  Node,
+  Timeline,
+  Keyframe,
+  SerializedNode,
+  Variant,
+  KeyframeTime,
+  AnimatedNode,
+  AnimationNode,
+} from "./types";
 import { EventEmitter } from "./EventEmitter";
+import { resolveVariantSpec } from "./utils";
 import { InterpolationService } from "../utils/InterpolationService";
 import { DataMapper } from "../services/DataMapper";
 
@@ -68,13 +78,13 @@ export class PlaybackController extends EventEmitter {
   public setThrottleUpdates(enabled: boolean) {
     this.throttleUpdates = enabled;
     if (!enabled) {
-        // Reset state if disabling
-        this.isFigmaProcessing = false;
-        this.nextUpdateTime = null;
-        if (this.updateTimeout !== null) {
-            clearTimeout(this.updateTimeout);
-            this.updateTimeout = null;
-        }
+      // Reset state if disabling
+      this.isFigmaProcessing = false;
+      this.nextUpdateTime = null;
+      if (this.updateTimeout !== null) {
+        clearTimeout(this.updateTimeout);
+        this.updateTimeout = null;
+      }
     }
   }
 
@@ -85,8 +95,8 @@ export class PlaybackController extends EventEmitter {
   public acknowledgePreviewUpdate() {
     this.isFigmaProcessing = false;
     if (this.throttleUpdates && this.nextUpdateTime !== null) {
-        // Trigger processing of the latest pending time
-        this.updatePreviewAtTime(this.nextUpdateTime);
+      // Trigger processing of the latest pending time
+      this.updatePreviewAtTime(this.nextUpdateTime);
     }
   }
 
@@ -238,7 +248,9 @@ export class PlaybackController extends EventEmitter {
   }
 
   private calculateKeyframeData() {
-    const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(this.variants);
+    const { keyframeTimes, totalTime } = DataMapper.calculateKeyframeData(
+      this.variants,
+    );
     this.keyframeTimes = keyframeTimes;
     this.totalTime = totalTime;
   }
@@ -275,10 +287,10 @@ export class PlaybackController extends EventEmitter {
           this.updateTimeout = window.setTimeout(() => {
             // Check again if processing
             if (!this.isFigmaProcessing && this.nextUpdateTime !== null) {
-                this.isFigmaProcessing = true;
-                this.performUpdatePreviewAtTime(this.nextUpdateTime);
-                this.lastUpdateTime = Date.now();
-                this.nextUpdateTime = null;
+              this.isFigmaProcessing = true;
+              this.performUpdatePreviewAtTime(this.nextUpdateTime);
+              this.lastUpdateTime = Date.now();
+              this.nextUpdateTime = null;
             }
             this.updateTimeout = null;
           }, 16 - timeSinceLastUpdate);
@@ -290,9 +302,15 @@ export class PlaybackController extends EventEmitter {
   }
 
   private performUpdatePreviewAtTime(time: number) {
-    if (!this.animationData || !this.animationData.nodes || this.animationData.nodes.length === 0) {
-        console.warn("performUpdatePreviewAtTime: No animation data nodes available.");
-        return;
+    if (
+      !this.animationData ||
+      !this.animationData.nodes ||
+      this.animationData.nodes.length === 0
+    ) {
+      console.warn(
+        "performUpdatePreviewAtTime: No animation data nodes available.",
+      );
+      return;
     }
 
     let fromIndex = -1,
@@ -311,10 +329,11 @@ export class PlaybackController extends EventEmitter {
         toIndex = endKeyframe.index;
         segmentStartTime = startKeyframe.time;
         const anim = this.variants[toIndex].animation;
-        if (anim && anim.spec && anim.spec.initial_delay) {
+        const spec = resolveVariantSpec(anim, this.variants[toIndex].name);
+        if (spec && spec.initial_delay) {
           segmentDelay =
-            (anim.spec.initial_delay.secs || 0) +
-            (anim.spec.initial_delay.nanos || 0) / 1e9;
+            (spec.initial_delay.secs || 0) +
+            (spec.initial_delay.nanos || 0) / 1e9;
         }
         segmentDuration = endKeyframe.time - startKeyframe.time - segmentDelay;
         break;
@@ -331,9 +350,17 @@ export class PlaybackController extends EventEmitter {
       }
     }
 
-    if (fromIndex !== -1 && fromIndex !== this.currentKeyframeIndex) {
-      this.currentKeyframeIndex = fromIndex;
-      this.emit("keyframe-changed", fromIndex);
+    let emittedIndex = fromIndex;
+    const exact = this.keyframeTimes.find(
+      (kt) => !kt.isLoop && Math.abs(kt.time - time) < 0.001,
+    );
+    if (exact) {
+      emittedIndex = exact.index;
+    }
+
+    if (emittedIndex !== -1 && emittedIndex !== this.currentKeyframeIndex) {
+      this.currentKeyframeIndex = emittedIndex;
+      this.emit("keyframe-changed", emittedIndex);
     }
 
     let value = 0;
@@ -347,14 +374,10 @@ export class PlaybackController extends EventEmitter {
     value = Math.max(0, Math.min(1, value));
 
     const animData = this.variants[toIndex].animation;
+    const spec = resolveVariantSpec(animData, this.variants[toIndex].name);
     let nodeEasing: EasingFunction = Easing.easeInOutQuad;
-    if (
-      animData &&
-      animData.spec &&
-      animData.spec.animation &&
-      animData.spec.animation.Smooth
-    ) {
-      const easingStr = animData.spec.animation.Smooth.easing;
+    if (spec && spec.animation && spec.animation.Smooth) {
+      const easingStr = spec.animation.Smooth.easing;
       switch (easingStr) {
         case "Linear":
           nodeEasing = Easing.linear;
@@ -377,10 +400,20 @@ export class PlaybackController extends EventEmitter {
 
     const fromNodes = new Map();
     // Cast to AnimationNode (mostly compatible)
-    DataMapper.collectAnimationNodes(fromVariant as unknown as AnimationNode, null, true, fromNodes);
+    DataMapper.collectAnimationNodes(
+      fromVariant as unknown as AnimationNode,
+      null,
+      true,
+      fromNodes,
+    );
 
     const toNodes = new Map();
-    DataMapper.collectAnimationNodes(toVariant as unknown as AnimationNode, null, true, toNodes);
+    DataMapper.collectAnimationNodes(
+      toVariant as unknown as AnimationNode,
+      null,
+      true,
+      toNodes,
+    );
 
     const allNodeNames = new Set([...fromNodes.keys(), ...toNodes.keys()]);
     const animatedNodes: AnimatedNode[] = [];
@@ -419,7 +452,7 @@ export class PlaybackController extends EventEmitter {
       // Add all fill properties from the timeline
       if (timelineNode) {
         timelineNode.timelines.forEach((t) => {
-           propertiesToAnimate.add(t.property);
+          propertiesToAnimate.add(t.property);
         });
       }
 
@@ -446,7 +479,12 @@ export class PlaybackController extends EventEmitter {
 
           if (fromNode && toNode) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            props[propName] = InterpolationService.interpolate(startValue, endValue, easedValue, propName);
+            props[propName] = InterpolationService.interpolate(
+              startValue,
+              endValue,
+              easedValue,
+              propName,
+            );
           } else if (toNode) {
             const effectiveStart = propName === "opacity" ? 0 : endValue;
             if (
@@ -479,64 +517,100 @@ export class PlaybackController extends EventEmitter {
 
       // Post-process to fix rotation origin if no custom spatial timelines exist
       if (fromNode && toNode) {
-          const spatialProps = ['x', 'y', 'width', 'height', 'rotation'];
-        const hasCustomSpatialTimeline = spatialProps.some(prop =>
-          timelineNode?.timelines.some(t => t.property === prop && t.keyframes.some(kf => !kf.locked))
-          );
+        const spatialProps = ["x", "y", "width", "height", "rotation"];
+        const hasCustomSpatialTimeline = spatialProps.some((prop) =>
+          timelineNode?.timelines.some(
+            (t) => t.property === prop && t.keyframes.some((kf) => !kf.locked),
+          ),
+        );
 
-          if (!hasCustomSpatialTimeline) {
-              const startX = this.getNodePropertyValue(fromNode, 'x') as number;
-              const startY = this.getNodePropertyValue(fromNode, 'y') as number;
-              const startW = this.getNodePropertyValue(fromNode, 'width') as number;
-              const startH = this.getNodePropertyValue(fromNode, 'height') as number;
-              const startRot = this.getNodePropertyValue(fromNode, 'rotation') as number;
+        if (!hasCustomSpatialTimeline) {
+          const startX = this.getNodePropertyValue(fromNode, "x") as number;
+          const startY = this.getNodePropertyValue(fromNode, "y") as number;
+          const startW = this.getNodePropertyValue(fromNode, "width") as number;
+          const startH = this.getNodePropertyValue(
+            fromNode,
+            "height",
+          ) as number;
+          const startRot = this.getNodePropertyValue(
+            fromNode,
+            "rotation",
+          ) as number;
 
-              const endX = this.getNodePropertyValue(toNode, 'x') as number;
-              const endY = this.getNodePropertyValue(toNode, 'y') as number;
-              const endW = this.getNodePropertyValue(toNode, 'width') as number;
-              const endH = this.getNodePropertyValue(toNode, 'height') as number;
-              const endRot = this.getNodePropertyValue(toNode, 'rotation') as number;
+          const endX = this.getNodePropertyValue(toNode, "x") as number;
+          const endY = this.getNodePropertyValue(toNode, "y") as number;
+          const endW = this.getNodePropertyValue(toNode, "width") as number;
+          const endH = this.getNodePropertyValue(toNode, "height") as number;
+          const endRot = this.getNodePropertyValue(
+            toNode,
+            "rotation",
+          ) as number;
 
-              const degreesToRadians = (deg: number) => deg * (Math.PI / 180);
+          const degreesToRadians = (deg: number) => deg * (Math.PI / 180);
 
-              // Calculate Start Center
-              // We negate the angle because updateFigmaPreview applies node.rotation = -props.rotation
-              // implying the visual rotation is inverted relative to the DataMapper value.
-            const startRotRad = degreesToRadians(-startRot);
-              // Center relative to TopLeft(0,0) in local rotated space is (w/2, h/2)
-              // Vector d = (w/2, h/2). Rotate d by rot. Add to TopLeft (x,y).
-              // Standard rotation: x' = x*cos - y*sin, y' = x*sin + y*cos
-              const startCx = startX + (startW / 2) * Math.cos(startRotRad) - (startH / 2) * Math.sin(startRotRad);
-              const startCy = startY + (startW / 2) * Math.sin(startRotRad) + (startH / 2) * Math.cos(startRotRad);
+          // Calculate Start Center
+          // We negate the angle because updateFigmaPreview applies node.rotation = -props.rotation
+          // implying the visual rotation is inverted relative to the DataMapper value.
+          const startRotRad = degreesToRadians(-startRot);
+          // Center relative to TopLeft(0,0) in local rotated space is (w/2, h/2)
+          // Vector d = (w/2, h/2). Rotate d by rot. Add to TopLeft (x,y).
+          // Standard rotation: x' = x*cos - y*sin, y' = x*sin + y*cos
+          const startCx =
+            startX +
+            (startW / 2) * Math.cos(startRotRad) -
+            (startH / 2) * Math.sin(startRotRad);
+          const startCy =
+            startY +
+            (startW / 2) * Math.sin(startRotRad) +
+            (startH / 2) * Math.cos(startRotRad);
 
-              // Calculate End Center
-              const endRotRad = degreesToRadians(-endRot);
-              const endCx = endX + (endW / 2) * Math.cos(endRotRad) - (endH / 2) * Math.sin(endRotRad);
-              const endCy = endY + (endW / 2) * Math.sin(endRotRad) + (endH / 2) * Math.cos(endRotRad);
+          // Calculate End Center
+          const endRotRad = degreesToRadians(-endRot);
+          const endCx =
+            endX +
+            (endW / 2) * Math.cos(endRotRad) -
+            (endH / 2) * Math.sin(endRotRad);
+          const endCy =
+            endY +
+            (endW / 2) * Math.sin(endRotRad) +
+            (endH / 2) * Math.cos(endRotRad);
 
-              // Interpolate Center, Width, Height, Rotation
-              const currentCx = startCx + (endCx - startCx) * easedValue;
-              const currentCy = startCy + (endCy - startCy) * easedValue;
-              const currentW = props.width !== undefined ? props.width : (startW + (endW - startW) * easedValue);
-              const currentH = props.height !== undefined ? props.height : (startH + (endH - startH) * easedValue);
-              const currentRot = props.rotation !== undefined ? props.rotation : (startRot + (endRot - startRot) * easedValue);
+          // Interpolate Center, Width, Height, Rotation
+          const currentCx = startCx + (endCx - startCx) * easedValue;
+          const currentCy = startCy + (endCy - startCy) * easedValue;
+          const currentW =
+            props.width !== undefined
+              ? props.width
+              : startW + (endW - startW) * easedValue;
+          const currentH =
+            props.height !== undefined
+              ? props.height
+              : startH + (endH - startH) * easedValue;
+          const currentRot =
+            props.rotation !== undefined
+              ? props.rotation
+              : startRot + (endRot - startRot) * easedValue;
 
-              // Calculate New TopLeft from Interpolated Center
-              const currentRotRad = degreesToRadians(-currentRot);
-              // To go back from Center to TopLeft: subtract rotated (w/2, h/2)
-              const newX = currentCx - ((currentW / 2) * Math.cos(currentRotRad) - (currentH / 2) * Math.sin(currentRotRad));
-              const newY = currentCy - ((currentW / 2) * Math.sin(currentRotRad) + (currentH / 2) * Math.cos(currentRotRad));
+          // Calculate New TopLeft from Interpolated Center
+          const currentRotRad = degreesToRadians(-currentRot);
+          // To go back from Center to TopLeft: subtract rotated (w/2, h/2)
+          const newX =
+            currentCx -
+            ((currentW / 2) * Math.cos(currentRotRad) -
+              (currentH / 2) * Math.sin(currentRotRad));
+          const newY =
+            currentCy -
+            ((currentW / 2) * Math.sin(currentRotRad) +
+              (currentH / 2) * Math.cos(currentRotRad));
 
-              props.x = newX;
-              props.y = newY;
-              // Ensure width/height/rotation are set if not already (though loop above should have set them)
-              props.width = currentW;
-              props.height = currentH;
-              props.rotation = currentRot;
-          }
+          props.x = newX;
+          props.y = newY;
+          // Ensure width/height/rotation are set if not already (though loop above should have set them)
+          props.width = currentW;
+          props.height = currentH;
+          props.rotation = currentRot;
+        }
       }
-
-
 
       if (nodeName) {
         animatedNodes.push({
@@ -560,7 +634,7 @@ export class PlaybackController extends EventEmitter {
   public getInterpolatedValue(
     timelineId: string,
     time: number,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): any {
     const findResult = this.findKeyframeData(
       this.animationData.nodes,
@@ -576,14 +650,14 @@ export class PlaybackController extends EventEmitter {
       this.keyframeTimes,
       this.serializedVariants,
       this.variants,
-      node
+      node,
     );
   }
 
   public getNodePropertyValue(
     node: AnimationNode,
     propertyName: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): any {
     return DataMapper.getNodePropertyValue(node, propertyName);
   }

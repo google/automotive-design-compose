@@ -282,8 +282,8 @@ impl From<TransitionSpecJson> for animationspec::TransitionSpec {
             timelines.insert(k, v.into());
         }
         animationspec::TransitionSpec {
-            from_variant: normalize_variant_string(&json.from),
-            to_variant: normalize_variant_string(&json.to),
+            source_variant: normalize_variant_string(&json.from),
+            target_variant: normalize_variant_string(&json.to),
             animation_name: json.name,
             spec: json.spec.map(|s| s.into()).into(),
             timelines,

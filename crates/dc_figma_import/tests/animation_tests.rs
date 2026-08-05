@@ -147,8 +147,8 @@ fn test_animation_matrix_dcf_serialization() {
         assert!(matrix.default_spec.is_some());
         assert_eq!(matrix.transitions.len(), 1);
         let transition = &matrix.transitions[0];
-        assert_eq!(transition.from_variant, "VariantA");
-        assert_eq!(transition.to_variant, "VariantB");
+        assert_eq!(transition.source_variant, "VariantA");
+        assert_eq!(transition.target_variant, "VariantB");
         assert_eq!(transition.animation_name, "Transition1");
         assert!(transition.timelines.contains_key("PropA"));
         let timeline = &transition.timelines["PropA"];

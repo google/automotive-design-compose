@@ -84,12 +84,12 @@ export class NodeTreeView {
     const nodeId = nodeElement.dataset.nodeId;
 
     if (target.classList.contains("delete-timeline")) {
-        const timelineLi = target.closest("li.property") as HTMLElement;
-        if (timelineLi && timelineLi.dataset.timelineId) {
-            const timelineId = timelineLi.dataset.timelineId;
-            this.eventEmitter.emit("timeline:delete", timelineId);
-        }
-        return;
+      const timelineLi = target.closest("li.property") as HTMLElement;
+      if (timelineLi && timelineLi.dataset.timelineId) {
+        const timelineId = timelineLi.dataset.timelineId;
+        this.eventEmitter.emit("timeline:delete", timelineId);
+      }
+      return;
     }
 
     if (target.classList.contains("add-timeline")) {
@@ -102,14 +102,14 @@ export class NodeTreeView {
       return;
     }
     if (target.classList.contains("node-name")) {
-      const nodeToToggle = target.closest(".has-children");
-      if (nodeToToggle) {
-        nodeToToggle.classList.toggle("collapsed");
+      const liElement = target.closest("li");
+      if (liElement && liElement.classList.contains("has-children")) {
+        liElement.classList.toggle("collapsed");
         if (nodeId) {
           this.eventEmitter.emit(
             "node:toggle",
             nodeId,
-            nodeToToggle.classList.contains("collapsed"),
+            liElement.classList.contains("collapsed"),
           );
         }
       }
@@ -143,6 +143,29 @@ export class NodeTreeView {
     if (input) {
       input.focus();
       input.select();
+    }
+  }
+
+  /**
+   * Updates the displayed name of the root node in the tree.
+   * @param name The new root node name.
+   */
+  public updateRootNodeName(name: string): void {
+    if (this.nodes.length > 0) {
+      this.nodes[0].name = name;
+      const rootLi = this.container.querySelector(
+        'li[data-node-id="__ROOT__"]',
+      );
+      if (rootLi) {
+        const nodeNameSpan = rootLi.querySelector(".node-name");
+        if (nodeNameSpan) {
+          const arrow = nodeNameSpan.querySelector(".toggle-arrow");
+          nodeNameSpan.textContent = ` ${name}`;
+          if (arrow) {
+            nodeNameSpan.prepend(arrow);
+          }
+        }
+      }
     }
   }
 
@@ -234,7 +257,7 @@ export class NodeTreeView {
                     ? `<input type="text" value="${timeline.property}" list="property-options" />`
                     : timeline.property
                 }
-                ${timeline.isCustom ? '<button class="delete-timeline">-</button>' : ''}
+                ${timeline.isCustom ? '<button class="delete-timeline">-</button>' : ""}
               </li>
             `,
               )

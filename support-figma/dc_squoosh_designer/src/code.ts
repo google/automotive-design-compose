@@ -22,8 +22,10 @@
 import { hexToRgb, EPSILON } from "./utils/common";
 import { AnimatedNode, SerializedNode, Variant } from "./timeline/types";
 import { runSandboxTests } from "./timeline/sandbox_tests";
-import { serializeKeyframes, deserializeKeyframes } from "./timeline/serialization";
-
+import {
+  serializeKeyframes,
+  deserializeKeyframes,
+} from "./timeline/serialization";
 
 // Config
 const PERSIST_WINDOW_SIZE = true; // Set to false to disable saving window size
@@ -31,184 +33,345 @@ const PREFERRED_WIDTH = 320;
 const PREFERRED_HEIGHT = 480;
 const MIN_WIDTH = 280;
 const MIN_HEIGHT = 200;
-const MAX_WIDTH = 900;
-const MAX_HEIGHT = 800;
+const MAX_WIDTH = 3000;
+const MAX_HEIGHT = 3000;
 
 import { resolveComponentContext, isDescendantOf } from "./plugin/context";
 import { loadFontsForNode } from "./plugin/fonts";
 import { serializeNode } from "./plugin/serialize";
 import { compareNodes } from "./plugin/compare";
-import { cloneChildren, updateFigmaPreview, tagOriginalNodeId } from "./plugin/preview";
+import {
+  cloneChildren,
+  updateFigmaPreview,
+  tagOriginalNodeId,
+} from "./plugin/preview";
 let hasSavedSize = false;
 let windowSize = { width: PREFERRED_WIDTH, height: PREFERRED_HEIGHT };
 
 let animationNodeId: string | null = null;
+let activeComponentSetId: string | null = null;
 let isSelectingPreviewFrame = false;
 const isUpdatingPreview = false;
 
-async function updateSelection() {
-    if (isSelectingPreviewFrame) {
-      const selection = figma.currentPage.selection;
-      if (selection.length === 1) {
-        animationNodeId = selection[0].id;
-        isSelectingPreviewFrame = false;
-        figma.ui.postMessage({ type: "selection-mode-ended" });
-        figma.ui.postMessage({
-          type: "preview-frame-selected",
-          name: selection[0].name,
-        });
-        figma.notify(`Preview frame set to "${selection[0].name}"`);
-      }
-      return;
-    }
+async function prepareAndPopulatePreviewFrame(): Promise<void> {
+  let componentSet: ComponentSetNode | null = null;
+  let singleComponent: ComponentNode | null = null;
 
+  if (activeComponentSetId) {
+    const activeNode = await figma.getNodeByIdAsync(activeComponentSetId);
+    if (activeNode && activeNode.type === "COMPONENT_SET") {
+      componentSet = activeNode;
+    } else if (activeNode && activeNode.type === "COMPONENT") {
+      singleComponent = activeNode;
+    }
+  }
+
+  if (!componentSet && !singleComponent) {
     const selection = figma.currentPage.selection;
-
-    // Check if selection is inside the preview frame
-    if (animationNodeId && selection.length > 0) {
-        const selectedNode = selection[0];
-        if (isDescendantOf(selectedNode, animationNodeId)) {
-            // Optionally, we could send a message to the UI to highlight the corresponding node in the timeline
-            // But for now, we just prevent deselecting/changing the current component context.
-
-            // If the selected node corresponds to an original node, we might want to notify the UI?
-            if ("getPluginData" in selectedNode) {
-                const originalNodeId = selectedNode.getPluginData("originalNodeId");
-                if (originalNodeId) {
-                     // We can still notify the UI about which node was clicked in the preview
-                     // so it can highlight the corresponding timeline track, WITHOUT resetting the whole timeline view.
-                     figma.ui.postMessage({ type: "preview-node-selected", originalNodeId });
-                }
-            }
-            return;
-        }
+    if (selection.length === 1 && selection[0].id !== animationNodeId) {
+      const res = await resolveComponentContext(selection[0]);
+      componentSet = res.componentSet;
+      singleComponent = res.singleComponent;
+      if (componentSet) activeComponentSetId = componentSet.id;
+      else if (singleComponent) activeComponentSetId = singleComponent.id;
     }
+  }
 
-    // Check if selection is a preview node (old logic, can likely be merged or removed if the above covers it)
-    // keeping it for safety if animationNodeId is somehow lost or managed differently?
-    // Actually, the block above relies on animationNodeId being set.
-    // The old block below relies on `originalNodeId` plugin data being present.
-    if (selection.length === 1) {
-        const node = selection[0];
-        if ("getPluginData" in node) {
-            const originalNodeId = node.getPluginData("originalNodeId");
-            if (originalNodeId) {
-              // If we are here, it means we probably didn't catch it with the ancestor check
-                 // (maybe animationNodeId is unset but the node still has data?)
-                 // In this case, we ALSO want to avoid resetting the timeline.
-                 figma.ui.postMessage({ type: "preview-node-selected", originalNodeId });
-                 return;
-            }
-        }
-    }
+  if (!componentSet && !singleComponent) return;
 
-    if (selection.length !== 1) {
-      const message = "Please select a single layer.";
-      figma.notify(message);
-      figma.ui.postMessage({ type: "clear-timeline" });
-      return;
-    }
+  let primaryTarget: SceneNode | null = null;
+  if (componentSet && componentSet.children.length > 0) {
+    primaryTarget = componentSet.children[0] as SceneNode;
+  } else if (singleComponent) {
+    primaryTarget = singleComponent;
+  }
 
-    const node = selection[0];
-    const { componentSet, singleComponent } = await resolveComponentContext(node);
-    let selectedVariantName: string | null = null;
+  if (primaryTarget) {
+    await loadFontsForNode(primaryTarget);
+  }
 
-    if (componentSet) {
-        if (node.type === "INSTANCE") {
-            const main = await (node as InstanceNode).getMainComponentAsync();
-            selectedVariantName = main ? main.name : null;
-        } else if (node.type === "COMPONENT") {
-            selectedVariantName = node.name;
-        }
-    } else if (singleComponent) {
-        selectedVariantName = singleComponent.name;
-    }
+  let frame: FrameNode | ComponentNode | InstanceNode | null = null;
+  if (animationNodeId) {
+    frame = (await figma.getNodeByIdAsync(animationNodeId)) as
+      | FrameNode
+      | ComponentNode
+      | InstanceNode;
+  }
 
-    if (!componentSet && !singleComponent) {
-      let message = `Selected layer "${node.name}" of type "${node.type}" is not part of a component set with variants.`;
-      if (node.type === "INSTANCE") {
-        message = `Selected instance "${node.name}" is not a variant within a component set.`;
-      } else if (node.type === "COMPONENT") {
-        message = `Selected component "${node.name}" is not a variant within a component set.`;
+  if (!frame) {
+    let defaultFrame = figma.currentPage.findOne(
+      (n) => n.name === "PreviewFrame" && n.type === "FRAME",
+    ) as FrameNode;
+    if (!defaultFrame) {
+      defaultFrame = figma.createFrame();
+      defaultFrame.name = "PreviewFrame";
+      if (primaryTarget && "width" in primaryTarget) {
+        defaultFrame.x = primaryTarget.x + primaryTarget.width + 20;
+        defaultFrame.y = primaryTarget.y;
       }
-      figma.notify(message);
-      figma.ui.postMessage({ type: "clear-timeline" });
-      return;
     }
+    frame = defaultFrame;
+    animationNodeId = frame.id;
+    figma.ui.postMessage({
+      type: "preview-frame-selected",
+      name: frame.name,
+    });
+  }
 
-    const variants: Variant[] = [];
-    const serializedVariants: SerializedNode[] = [];
+  if (!frame || !("children" in frame)) {
+    figma.notify(
+      "The selected preview frame is not a valid container (e.g., a frame or component).",
+    );
+    return;
+  }
 
-    let variantsNodeList: SceneNode[] = [];
-    let componentName = "";
+  if (
+    frame.type === "COMPONENT_SET" ||
+    (frame.parent && frame.parent.type === "COMPONENT_SET") ||
+    (componentSet && frame.id === componentSet.id) ||
+    (singleComponent && frame.id === singleComponent.id)
+  ) {
+    figma.notify(
+      "A component set or variant cannot be used as a preview frame. Please select a separate frame.",
+    );
+    return;
+  }
 
-    if (componentSet) {
-        // Reverse the children array to match Figma's UI order
-        variantsNodeList = [...componentSet.children].reverse();
-        componentName = componentSet.name;
-    } else if (singleComponent) {
-        variantsNodeList = [singleComponent];
-        componentName = singleComponent.name;
-    }
+  frame.children.forEach((child) => child.remove());
 
-    let upgradedVariantsCount = 0;
+  if (primaryTarget && "width" in primaryTarget) {
+    frame.resize(primaryTarget.width, primaryTarget.height);
+  }
 
-    for (const variantNode of variantsNodeList) {
-      if (variantNode.type === "COMPONENT") {
-        const variantName = variantNode.name;
-        const animationDataString = variantNode.getSharedPluginData(
-          "designcompose",
-          "squoosh",
-        );
-        const animationData = animationDataString ? JSON.parse(animationDataString) : null;
-        let upgraded = false;
+  if ("fills" in frame && primaryTarget && "fills" in primaryTarget) {
+    frame.fills = primaryTarget.fills;
+  }
 
-        if (animationData && animationData.customKeyframeData) {
-          for (const [key, value] of Object.entries(animationData.customKeyframeData)) {
-            if (typeof value === "string" && !value.startsWith("{") && value.indexOf("|") !== -1) {
-              const deserialized = deserializeKeyframes(value);
-              animationData.customKeyframeData[key] = serializeKeyframes(
-                deserialized.keyframes,
-                deserialized.targetEasing
-              );
-              upgraded = true;
+  if (componentSet) {
+    const mergeChildren = (
+      source: SceneNode,
+      target: FrameNode | ComponentNode | InstanceNode | GroupNode,
+    ) => {
+      if (!("children" in source) || !("children" in target)) return;
+
+      for (const sourceChild of source.children) {
+        let targetChild = target.findChild((c) => c.name === sourceChild.name);
+
+        if (!targetChild) {
+          if ("clone" in sourceChild) {
+            targetChild = (sourceChild as any).clone();
+            if (targetChild) {
+              tagOriginalNodeId(targetChild, sourceChild);
+              target.appendChild(targetChild);
             }
           }
         }
 
-        if (upgraded) {
-          variantNode.setSharedPluginData(
-            "designcompose",
-            "squoosh",
-            JSON.stringify(animationData)
-          );
-          upgradedVariantsCount++;
-        }
-
-        variants.push({
-          name: variantName,
-          animation: animationData,
-        });
-        serializedVariants.push(serializeNode(variantNode));
-      } else {
-        console.warn(
-          `Skipping unexpected node type in component set children: ${variantNode.type}`,
+        mergeChildren(
+          sourceChild,
+          targetChild as FrameNode | ComponentNode | InstanceNode | GroupNode,
         );
       }
-    }
+    };
 
-    if (upgradedVariantsCount > 0) {
-      figma.notify(`Upgraded legacy animation data to JSON format for ${upgradedVariantsCount} variant(s).`);
+    for (const variant of componentSet.children) {
+      mergeChildren(variant as SceneNode, frame);
     }
-
-    figma.ui.postMessage({
-      type: "update",
-      componentName: componentName,
-      variants: variants,
-      serializedVariants: serializedVariants,
-      selectedVariantName: selectedVariantName,
-    });
+  } else if (singleComponent) {
+    await cloneChildren(singleComponent.children, frame);
   }
+  figma.ui.postMessage({ type: "animation-ready" });
+}
+
+async function updateSelection() {
+  if (isSelectingPreviewFrame) {
+    const selection = figma.currentPage.selection;
+    if (selection.length === 1) {
+      const selected = selection[0];
+      if (
+        selected.type === "COMPONENT_SET" ||
+        (selected.parent && selected.parent.type === "COMPONENT_SET")
+      ) {
+        figma.notify(
+          "Please select a separate preview frame on the canvas (not your component set or variant).",
+        );
+        return;
+      }
+      animationNodeId = selected.id;
+      isSelectingPreviewFrame = false;
+      figma.ui.postMessage({ type: "selection-mode-ended" });
+      figma.ui.postMessage({
+        type: "preview-frame-selected",
+        name: selected.name,
+      });
+      figma.notify(`Preview frame set to "${selected.name}"`);
+      await prepareAndPopulatePreviewFrame();
+    }
+    return;
+  }
+
+  const selection = figma.currentPage.selection;
+
+  // Check if selection is inside the preview frame
+  if (animationNodeId && selection.length > 0) {
+    const selectedNode = selection[0];
+    if (isDescendantOf(selectedNode, animationNodeId)) {
+      // Optionally, we could send a message to the UI to highlight the corresponding node in the timeline
+      // But for now, we just prevent deselecting/changing the current component context.
+
+      // If the selected node corresponds to an original node, we might want to notify the UI?
+      if ("getPluginData" in selectedNode) {
+        const originalNodeId = selectedNode.getPluginData("originalNodeId");
+        if (originalNodeId) {
+          // We can still notify the UI about which node was clicked in the preview
+          // so it can highlight the corresponding timeline track, WITHOUT resetting the whole timeline view.
+          figma.ui.postMessage({
+            type: "preview-node-selected",
+            originalNodeId,
+          });
+        }
+      }
+      return;
+    }
+  }
+
+  // Check if selection is a preview node (old logic, can likely be merged or removed if the above covers it)
+  // keeping it for safety if animationNodeId is somehow lost or managed differently?
+  // Actually, the block above relies on animationNodeId being set.
+  // The old block below relies on `originalNodeId` plugin data being present.
+  if (selection.length === 1) {
+    const node = selection[0];
+    if ("getPluginData" in node) {
+      const originalNodeId = node.getPluginData("originalNodeId");
+      if (originalNodeId) {
+        // If we are here, it means we probably didn't catch it with the ancestor check
+        // (maybe animationNodeId is unset but the node still has data?)
+        // In this case, we ALSO want to avoid resetting the timeline.
+        figma.ui.postMessage({ type: "preview-node-selected", originalNodeId });
+        return;
+      }
+    }
+  }
+
+  if (selection.length !== 1) {
+    const message = "Please select a single layer.";
+    figma.notify(message);
+    figma.ui.postMessage({ type: "clear-timeline" });
+    return;
+  }
+
+  const node = selection[0];
+  const { componentSet, singleComponent } = await resolveComponentContext(node);
+  let selectedVariantName: string | null = null;
+
+  if (componentSet) {
+    activeComponentSetId = componentSet.id;
+    if (node.type === "INSTANCE") {
+      const main = await (node as InstanceNode).getMainComponentAsync();
+      selectedVariantName = main ? main.name : null;
+    } else if (node.type === "COMPONENT") {
+      selectedVariantName = node.name;
+    }
+  } else if (singleComponent) {
+    activeComponentSetId = singleComponent.id;
+    selectedVariantName = singleComponent.name;
+  }
+
+  if (!componentSet && !singleComponent) {
+    let message = `Selected layer "${node.name}" of type "${node.type}" is not part of a component set with variants.`;
+    if (node.type === "INSTANCE") {
+      message = `Selected instance "${node.name}" is not a variant within a component set.`;
+    } else if (node.type === "COMPONENT") {
+      message = `Selected component "${node.name}" is not a variant within a component set.`;
+    }
+    figma.notify(message);
+    figma.ui.postMessage({ type: "clear-timeline" });
+    return;
+  }
+
+  const variants: Variant[] = [];
+  const serializedVariants: SerializedNode[] = [];
+
+  let variantsNodeList: SceneNode[] = [];
+  let componentName = "";
+
+  if (componentSet) {
+    // Reverse the children array to match Figma's UI order
+    variantsNodeList = [...componentSet.children].reverse();
+    componentName = componentSet.name;
+  } else if (singleComponent) {
+    variantsNodeList = [singleComponent];
+    componentName = singleComponent.name;
+  }
+
+  let upgradedVariantsCount = 0;
+
+  for (const variantNode of variantsNodeList) {
+    if (variantNode.type === "COMPONENT") {
+      const variantName = variantNode.name;
+      const animationDataString = variantNode.getSharedPluginData(
+        "designcompose",
+        "squoosh",
+      );
+      const animationData = animationDataString
+        ? JSON.parse(animationDataString)
+        : null;
+      let upgraded = false;
+
+      if (animationData && animationData.customKeyframeData) {
+        for (const [key, value] of Object.entries(
+          animationData.customKeyframeData,
+        )) {
+          if (
+            typeof value === "string" &&
+            !value.startsWith("{") &&
+            value.indexOf("|") !== -1
+          ) {
+            const deserialized = deserializeKeyframes(value);
+            animationData.customKeyframeData[key] = serializeKeyframes(
+              deserialized.keyframes,
+              deserialized.targetEasing,
+            );
+            upgraded = true;
+          }
+        }
+      }
+
+      if (upgraded) {
+        variantNode.setSharedPluginData(
+          "designcompose",
+          "squoosh",
+          JSON.stringify(animationData),
+        );
+        upgradedVariantsCount++;
+      }
+
+      variants.push({
+        name: variantName,
+        animation: animationData,
+      });
+      serializedVariants.push(serializeNode(variantNode));
+    } else {
+      console.warn(
+        `Skipping unexpected node type in component set children: ${variantNode.type}`,
+      );
+    }
+  }
+
+  if (upgradedVariantsCount > 0) {
+    figma.notify(
+      `Upgraded legacy animation data to JSON format for ${upgradedVariantsCount} variant(s).`,
+    );
+  }
+
+  figma.ui.postMessage({
+    type: "update",
+    componentName: componentName,
+    variants: variants,
+    serializedVariants: serializedVariants,
+    selectedVariantName: selectedVariantName,
+  });
+}
 
 (async () => {
   try {
@@ -253,33 +416,40 @@ async function updateSelection() {
 
       if (msg.type === "ping") {
         (async () => {
-            const selection = figma.currentPage.selection;
-            if (selection.length > 0) {
-                const node = selection[0];
-                let componentSet: ComponentSetNode | null = null;
+          const selection = figma.currentPage.selection;
+          if (selection.length > 0) {
+            const node = selection[0];
+            let componentSet: ComponentSetNode | null = null;
 
-                if (node.type === "INSTANCE") {
-                    const main = await node.getMainComponentAsync();
-                    if (main && main.parent && main.parent.type === "COMPONENT_SET") {
-                        componentSet = main.parent;
-                    }
-                } else if (node.type === "COMPONENT" && node.parent && node.parent.type === "COMPONENT_SET") {
-                     componentSet = node.parent;
-                } else if (node.type === "COMPONENT_SET") {
-                    componentSet = node;
-                }
+            if (node.type === "INSTANCE") {
+              const main = await node.getMainComponentAsync();
+              if (main && main.parent && main.parent.type === "COMPONENT_SET") {
+                componentSet = main.parent;
+              }
+            } else if (
+              node.type === "COMPONENT" &&
+              node.parent &&
+              node.parent.type === "COMPONENT_SET"
+            ) {
+              componentSet = node.parent;
+            } else if (node.type === "COMPONENT_SET") {
+              componentSet = node;
+            }
 
-                if (componentSet) {
-                    // Log the first child's data for sampling
-                    const firstVariant = componentSet.children[0];
-                    const data = firstVariant.getSharedPluginData("designcompose", "squoosh");
-                    // Also dump timeline data if available
-                    // We don't have easy access to the 'internal' AnimationData structure here as it's built in UI
-                    // But we can dump the customKeyframeData which is part of the spec.
-                } else {
-                }
+            if (componentSet) {
+              // Log the first child's data for sampling
+              const firstVariant = componentSet.children[0];
+              const data = firstVariant.getSharedPluginData(
+                "designcompose",
+                "squoosh",
+              );
+              // Also dump timeline data if available
+              // We don't have easy access to the 'internal' AnimationData structure here as it's built in UI
+              // But we can dump the customKeyframeData which is part of the spec.
             } else {
             }
+          } else {
+          }
         })();
 
         figma.ui.postMessage({ type: "pong" });
@@ -300,8 +470,8 @@ async function updateSelection() {
 
       if (msg.type === "run-sandbox-tests") {
         (async () => {
-            const results = await runSandboxTests();
-            figma.ui.postMessage({ type: "sandbox-tests-complete", results });
+          const results = await runSandboxTests();
+          figma.ui.postMessage({ type: "sandbox-tests-complete", results });
         })();
       }
 
@@ -323,11 +493,14 @@ async function updateSelection() {
           if (selection.length !== 1) return;
 
           const node = selection[0];
-          const { componentSet, singleComponent } = await resolveComponentContext(node);
+          const { componentSet, singleComponent } =
+            await resolveComponentContext(node);
 
           let variant: SceneNode | undefined;
           if (componentSet) {
-            variant = componentSet.children.find((child) => child.name === frameName);
+            variant = componentSet.children.find(
+              (child) => child.name === frameName,
+            );
           } else if (singleComponent && singleComponent.name === frameName) {
             variant = singleComponent;
           }
@@ -344,12 +517,18 @@ async function updateSelection() {
           if (selection.length !== 1) return;
 
           const node = selection[0];
-          const { componentSet, singleComponent } = await resolveComponentContext(node);
+          const { componentSet, singleComponent } =
+            await resolveComponentContext(node);
 
           let variant: SceneNode | undefined;
           if (componentSet) {
-            variant = componentSet.children.find((child) => child.name === endingVariantName);
-          } else if (singleComponent && singleComponent.name === endingVariantName) {
+            variant = componentSet.children.find(
+              (child) => child.name === endingVariantName,
+            );
+          } else if (
+            singleComponent &&
+            singleComponent.name === endingVariantName
+          ) {
             variant = singleComponent;
           }
 
@@ -372,11 +551,7 @@ async function updateSelection() {
               serializedKeyframes;
 
             const dataToSave = JSON.stringify(animationObject);
-            variant.setSharedPluginData(
-              "designcompose",
-              "squoosh",
-              dataToSave,
-            );
+            variant.setSharedPluginData("designcompose", "squoosh", dataToSave);
           }
         })();
       }
@@ -387,7 +562,8 @@ async function updateSelection() {
           if (selection.length !== 1) return;
 
           const node = selection[0];
-          const { componentSet, singleComponent } = await resolveComponentContext(node);
+          const { componentSet, singleComponent } =
+            await resolveComponentContext(node);
 
           let variants: SceneNode[] = [];
           if (componentSet) {
@@ -462,108 +638,7 @@ async function updateSelection() {
       }
       if (msg.type === "prepare-animation") {
         (async () => {
-          const selection = figma.currentPage.selection;
-          if (selection.length !== 1) return;
-
-          const node = selection[0];
-          const { componentSet, singleComponent } = await resolveComponentContext(node);
-
-          if (!componentSet && !singleComponent) return;
-
-          let primaryTarget: SceneNode | null = null;
-          if (node.type === "INSTANCE" || node.type === "COMPONENT") {
-             primaryTarget = node;
-          } else if (componentSet && componentSet.children.length > 0) {
-             primaryTarget = componentSet.children[0];
-          } else if (singleComponent) {
-             primaryTarget = singleComponent;
-          }
-
-          if (primaryTarget) {
-              await loadFontsForNode(primaryTarget);
-          }
-
-          let frame: FrameNode | ComponentNode | InstanceNode | null = null;
-          if (animationNodeId) {
-            frame = (await figma.getNodeByIdAsync(animationNodeId)) as
-              | FrameNode
-              | ComponentNode
-              | InstanceNode;
-          }
-
-          if (!frame) {
-            let defaultFrame = figma.currentPage.findOne(
-              (n) => n.name === "PreviewFrame" && n.type === "FRAME",
-            ) as FrameNode;
-            if (!defaultFrame) {
-              defaultFrame = figma.createFrame();
-              defaultFrame.name = "PreviewFrame";
-              if (primaryTarget && "width" in primaryTarget) {
-                  defaultFrame.x = primaryTarget.x + primaryTarget.width + 20;
-                  defaultFrame.y = primaryTarget.y;
-              }
-            }
-            frame = defaultFrame;
-            animationNodeId = frame.id;
-            figma.ui.postMessage({
-              type: "preview-frame-selected",
-              name: frame.name,
-            });
-          }
-
-          if (!frame || !("children" in frame)) {
-            figma.notify(
-              "The selected preview frame is not a valid container (e.g., a frame or component).",
-            );
-            return;
-          }
-
-          frame.children.forEach((child) => child.remove());
-
-          if (primaryTarget && "width" in primaryTarget) {
-            frame.resize(primaryTarget.width, primaryTarget.height);
-          }
-
-          if ("fills" in frame && primaryTarget && "fills" in primaryTarget) {
-            frame.fills = primaryTarget.fills;
-          }
-
-          if (componentSet) {
-              const mergeChildren = (source: SceneNode, target: FrameNode | ComponentNode | InstanceNode | GroupNode) => {
-                  if (!("children" in source) || !("children" in target)) return;
-
-                  // We need to iterate source children and see if they exist in target
-                  for (const sourceChild of source.children) {
-                      let targetChild = target.findChild((c) => c.name === sourceChild.name);
-
-                      if (!targetChild) {
-                          // Clone and add if missing
-                          if ("clone" in sourceChild) {
-                              targetChild = (sourceChild as any).clone();
-                              if (targetChild) {
-                                  tagOriginalNodeId(targetChild, sourceChild);
-                                  target.appendChild(targetChild);
-                              }
-                          }
-                      }
-
-                      // Recurse to ensure descendants from other variants are merged into this branch
-                      // (e.g. if targetChild existed or was just cloned, we still check if sourceChild has MORE descendants)
-                      // Note: sourceChild.clone() already brought its current descendants.
-                      // But if a *subsequent* variant has *additional* children inside this structure, we need to merge them in.
-                      // However, 'source' here IS the variant node.
-                      // So we are iterating the variant's structure.
-                      mergeChildren(sourceChild, targetChild as FrameNode | ComponentNode | InstanceNode | GroupNode);
-                  }
-              };
-
-              for (const variant of componentSet.children) {
-                  mergeChildren(variant as SceneNode, frame);
-              }
-          } else if (singleComponent) {
-              await cloneChildren(singleComponent.children, frame);
-          }
-          figma.ui.postMessage({ type: "animation-ready" });
+          await prepareAndPopulatePreviewFrame();
         })();
       }
       if (msg.type === "animate-figma-nodes") {
@@ -632,7 +707,8 @@ async function updateSelection() {
           if (selection.length !== 1) return;
 
           const node = selection[0];
-          const { componentSet, singleComponent } = await resolveComponentContext(node);
+          const { componentSet, singleComponent } =
+            await resolveComponentContext(node);
 
           let variants: SceneNode[] = [];
           if (componentSet) {
@@ -671,10 +747,31 @@ async function updateSelection() {
       if (msg.type === "select-preview-frame") {
         isSelectingPreviewFrame = !isSelectingPreviewFrame;
         if (isSelectingPreviewFrame) {
-          figma.ui.postMessage({ type: "selection-mode-started" });
+          const selection = figma.currentPage.selection;
+          if (
+            selection.length === 1 &&
+            selection[0].type !== "COMPONENT_SET" &&
+            !(
+              selection[0].parent &&
+              selection[0].parent.type === "COMPONENT_SET"
+            )
+          ) {
+            animationNodeId = selection[0].id;
+            isSelectingPreviewFrame = false;
+            figma.ui.postMessage({ type: "selection-mode-ended" });
+            figma.ui.postMessage({
+              type: "preview-frame-selected",
+              name: selection[0].name,
+            });
+            figma.notify(`Preview frame set to "${selection[0].name}"`);
+            (async () => {
+              await prepareAndPopulatePreviewFrame();
+            })();
+          } else {
+            figma.ui.postMessage({ type: "selection-mode-started" });
+          }
         } else {
           figma.ui.postMessage({ type: "selection-mode-ended" });
-          // If selection is cancelled, and we had a node before, tell the UI
           (async () => {
             if (animationNodeId) {
               const node = await figma.getNodeByIdAsync(animationNodeId);
@@ -684,7 +781,6 @@ async function updateSelection() {
                   name: node.name,
                 });
               } else {
-                // The node was deleted, so clear it
                 animationNodeId = null;
                 figma.ui.postMessage({ type: "preview-frame-cleared" });
               }
@@ -701,27 +797,29 @@ async function updateSelection() {
     await figma.loadAllPagesAsync();
 
     figma.on("documentchange", (event) => {
-        if (isUpdatingPreview) return; // Ignore programmatic changes
+      if (isUpdatingPreview) return; // Ignore programmatic changes
 
-        for (const change of event.documentChanges) {
-            if (change.type === "PROPERTY_CHANGE") {
-                const node = change.node;
+      for (const change of event.documentChanges) {
+        if (change.type === "PROPERTY_CHANGE") {
+          const node = change.node;
 
-                // Check if node is selected
-                const isSelected = figma.currentPage.selection.some(n => n.id === node.id);
-                if (!isSelected) continue;
+          // Check if node is selected
+          const isSelected = figma.currentPage.selection.some(
+            (n) => n.id === node.id,
+          );
+          if (!isSelected) continue;
 
-                if ("getPluginData" in node) {
-                    const originalNodeId = node.getPluginData("originalNodeId") || null;
-                    const serialized = serializeNode(node);
-                  figma.ui.postMessage({
-                    type: "preview-node-changed",
-                    originalNodeId,
-                    nodeProps: serialized
-                    });
-                }
-            }
+          if ("getPluginData" in node) {
+            const originalNodeId = node.getPluginData("originalNodeId") || null;
+            const serialized = serializeNode(node);
+            figma.ui.postMessage({
+              type: "preview-node-changed",
+              originalNodeId,
+              nodeProps: serialized,
+            });
+          }
         }
+      }
     });
 
     // Initial update

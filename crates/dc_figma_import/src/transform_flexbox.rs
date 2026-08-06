@@ -2244,7 +2244,7 @@ fn visit_node(
             );
             match serde_json::from_str::<AnimationOverrideJson>(anim_str) {
                 Ok(anim) => {
-                    log::info!("Figma Import: Successfully parsed squoosh animation format for node {}: {:?}", node.id, anim);
+                    log::info!("Figma Import: Successfully parsed squoosh animation format for node {}, name: {}", node.id, node.name);
                     parsed_plugin_override = Some(anim);
                 }
                 Err(e) => {

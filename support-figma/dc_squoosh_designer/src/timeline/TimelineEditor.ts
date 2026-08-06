@@ -249,6 +249,16 @@ export class TimelineEditor {
   }
 
   /**
+   * Updates the displayed name of the root node in the tree.
+   * @param name The new root node name.
+   */
+  public updateRootNodeName(name: string): void {
+    if (this.nodeTreeView) {
+      this.nodeTreeView.updateRootNodeName(name);
+    }
+  }
+
+  /**
    * Registers an event listener.
    * @param eventName The name of the event to listen for.
    * @param callback The callback function to execute when the event is triggered.
@@ -473,7 +483,7 @@ export class TimelineEditor {
                     newKeyframeId,
                   );
                   // Emit event to save the new keyframe data
-                  this.emit("keyframe:saved", timeline.id, newKeyframeId); 
+                  this.emit("keyframe:saved", timeline.id, newKeyframeId);
                 }
                 return true;
               }

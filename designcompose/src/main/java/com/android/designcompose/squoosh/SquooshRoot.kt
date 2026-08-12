@@ -28,6 +28,7 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -220,16 +221,9 @@ class RootRecurseParams(
 
     // Hash of text nodes seen in entire tree of nodes, for testing purposes
     val textHash: HashSet<String> = HashSet(),
-
-    // true if SquooshRoot() called as a sub-renderer for a modifier-wrap subtree
-    val isModifierWrapComponent: Boolean = false,
 ) {
     fun withScrolling(): RootRecurseParams {
-        return RootRecurseParams(true, textHash, isModifierWrapComponent)
-    }
-
-    fun withModifierWrapping(): RootRecurseParams {
-        return RootRecurseParams(isScrollComponent, textHash, true)
+        return RootRecurseParams(true, textHash)
     }
 }
 
@@ -397,7 +391,6 @@ fun SquooshRoot(
             rootRecurseParams.textHash,
             overlays,
             rootRecurseParams.isScrollComponent,
-            isModifierWrapComponent = rootRecurseParams.isModifierWrapComponent,
         ) ?: return
     val rootRemovalNodes = layoutIdAllocator.removalNodes()
 
@@ -452,7 +445,6 @@ fun SquooshRoot(
                 rootRecurseParams.textHash,
                 overlays,
                 rootRecurseParams.isScrollComponent,
-                isModifierWrapComponent = rootRecurseParams.isModifierWrapComponent,
             )
         transitionRootRemovalNodes = layoutIdAllocator.removalNodes()
     }
@@ -790,26 +782,6 @@ fun SquooshRoot(
                                 rootRecurseParams.withScrolling(), // Is scroll component
                             )
                         }
-                    } else if (child.renderSubtree) {
-                        // This child has a CustomizationContext.setModifier registered. Render
-                        // it via a sub-SquooshRoot so the user's Modifier (already applied to
-                        // composableChildModifier above) wraps the rendered pixels.
-                        val subtreeNodeQuery = NodeQuery.NodeId(child.node.view.id)
-                        child.component = {
-                            SquooshRoot(
-                                docName,
-                                incomingDocId,
-                                subtreeNodeQuery,
-                                Modifier,
-                                customizationContext,
-                                serverParams,
-                                setDocId,
-                                designSwitcherPolicy = DesignSwitcherPolicy.HIDE,
-                                liveUpdateMode,
-                                designComposeCallbacks,
-                                rootRecurseParams.withModifierWrapping(),
-                            )
-                        }
                     } else if (child.component == null) {
                         // If there are press or click reactions, composition is needed
                         var hasPressClick =
@@ -880,6 +852,31 @@ fun SquooshRoot(
                                     customizationContext,
                                     meter,
                                 )
+                        } else if (child.node.needsChildRender && child.customModifier != null) {
+                            // Modifier-only node: needs composition so the user's Modifier
+                            // wraps the rendered subtree pixels. Render using squooshRender
+                            // on the already-resolved tree — no sub-SquooshRoot, no recursion.
+                            child.component = { _ ->
+                                Spacer(
+                                    modifier = Modifier
+                                        .squooshRender(
+                                            child.node,
+                                            doc,
+                                            docName,
+                                            customizationContext,
+                                            childRenderSelector,
+                                            currentAnimations,
+                                            animPlayTimeNanosState,
+                                            VariableState.create(),
+                                            LocalVariableState.hasOverrideModeValues(),
+                                            computedPathCache,
+                                            shaderBrushCache,
+                                            appContext = LocalContext.current,
+                                            scrollOffset,
+                                            skipRootChildRender = true,
+                                        )
+                                )
+                            }
                         } else {
                             needsComposition = false
                         }

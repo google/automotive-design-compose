@@ -76,17 +76,19 @@ their addresses.
 Set the Figma token using adb to send an [explicit intent][4] directed to the
 app. The intent action is `setApiKey`, and it requires extra string data with
 key `ApiKey` and value `<your Figma Token>`. Both the app's main activity and a
-service that is included in DesignCompose can receive the intent. To start the
-service, run:
+service that is included in DesignCompose can receive the intent.
+
+To set the API key and enable dynamic discovery of all top-level nodes in one step,
+chain the `setApiKey` and `setDiscoverAllNodes` commands:
 
 ```shell
-adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a setApiKey -e ApiKey $FIGMA_ACCESS_TOKEN
+adb shell "am startservice -n '<YOUR_APP_ID>/com.android.designcompose.ApiKeyService' -a setApiKey -e ApiKey '$FIGMA_ACCESS_TOKEN' && am startservice -n '<YOUR_APP_ID>/com.android.designcompose.ApiKeyService' -a setDiscoverAllNodes --ez Enabled true"
 ```
 
 Example for the tutorial app:
 
 ```shell
-adb shell am startservice -n "com.android.designcompose.tutorial/com.android.designcompose.ApiKeyService" -a setApiKey -e ApiKey $FIGMA_ACCESS_TOKEN
+adb shell "am startservice -n 'com.android.designcompose.tutorial/com.android.designcompose.ApiKeyService' -a setApiKey -e ApiKey '$FIGMA_ACCESS_TOKEN' && am startservice -n 'com.android.designcompose.tutorial/com.android.designcompose.ApiKeyService' -a setDiscoverAllNodes --ez Enabled true"
 ```
 
 ### Advanced Live Update Configuration {#AdvancedLiveUpdateConfiguration}
@@ -125,6 +127,16 @@ Use the `setAutopauseTimeout` action with a long extra `TimeoutMs`. By default, 
 adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a setAutopauseTimeout --el TimeoutMs 3600000
 ```
 
+**Enable or Disable Dynamic Node Discovery:**
+
+Use the `setDiscoverAllNodes` action with a boolean extra `Enabled`. When enabled, Live Update automatically discovers all top-level frames across all pages and triggers a full document fetch.
+
+```shell
+adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a setDiscoverAllNodes --ez Enabled true
+```
+
+See [Dynamic Node Discovery][6] for more details.
+
 ### WebSocket Mode Configuration {#WebSocketConfiguration}
 
 DesignCompose supports an optional WebSocket mode for faster change detection.
@@ -153,4 +165,5 @@ adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyServ
 [3]: <https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens>
 [4]: <https://developer.android.com/guide/components/intents-filters#Types>
 [5]: {%link _docs/live-update/websocket-mode.md %}
+[6]: {%link _docs/live-update/dynamic-node-discovery.md %}
 

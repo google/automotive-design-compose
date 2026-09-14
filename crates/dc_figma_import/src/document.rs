@@ -1067,13 +1067,35 @@ impl Document {
                                     "{}{}/nodes?ids={}",
                                     BASE_FILE_URL, variant_document_id, parent_node_id
                                 );
-                                let http_str = http_fetch(
+                                let http_str = match http_fetch(
                                     self.api_key.as_str(),
-                                    nodes_url,
+                                    nodes_url.clone(),
                                     &self.proxy_config,
-                                )?;
+                                ) {
+                                    Ok(str) => str,
+                                    Err(e) => {
+                                        let err_msg = format!(
+                                            "Failed to fetch remote node {}: {:?}",
+                                            nodes_url, e
+                                        );
+                                        warn!("{}", err_msg);
+                                        error_list.push(err_msg);
+                                        return Ok(());
+                                    }
+                                };
                                 let response: figma_schema::NodesResponse =
-                                    serde_json::from_str(http_str.as_str())?;
+                                    match serde_json::from_str(http_str.as_str()) {
+                                        Ok(r) => r,
+                                        Err(e) => {
+                                            let err_msg = format!(
+                                                "Failed to parse remote node {}: {:?}",
+                                                nodes_url, e
+                                            );
+                                            warn!("{}", err_msg);
+                                            error_list.push(err_msg);
+                                            return Ok(());
+                                        }
+                                    };
                                 self.remote_node_responses.insert(
                                     (variant_document_id.clone(), parent_node_id.clone()),
                                     response.clone(),

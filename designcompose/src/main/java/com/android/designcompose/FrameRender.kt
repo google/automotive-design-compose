@@ -49,13 +49,7 @@ import com.android.designcompose.definition.element.ShaderUniform
 import com.android.designcompose.definition.element.ShaderUniformValue.ValueTypeCase
 import com.android.designcompose.definition.element.StrokeAlign
 import com.android.designcompose.definition.element.ViewShape
-import com.android.designcompose.definition.element.ViewShapeKt.vectorArc
-import com.android.designcompose.definition.element.imageRefValueOrNull
-import com.android.designcompose.definition.element.shaderDataOrNull
-import com.android.designcompose.definition.element.shaderFallbackColorOrNull
-import com.android.designcompose.definition.element.viewShape
 import com.android.designcompose.definition.layout.Overflow
-import com.android.designcompose.definition.modifier.outsetOrNull
 import com.android.designcompose.definition.plugin.ArcMeterData
 import com.android.designcompose.definition.plugin.MeterData
 import com.android.designcompose.definition.plugin.ProgressBarMeterData
@@ -63,7 +57,6 @@ import com.android.designcompose.definition.plugin.ProgressMarkerMeterData
 import com.android.designcompose.definition.plugin.ProgressVectorMeterData
 import com.android.designcompose.definition.plugin.RotationMeterData
 import com.android.designcompose.definition.view.ViewStyle
-import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.squoosh.SquooshResolvedNode
 import com.android.designcompose.utils.asBrush
 import com.android.designcompose.utils.asComposeBlendMode
@@ -311,17 +304,17 @@ private fun calculateArcData(
             arcData.discreteValue,
         )
     return if (!shape.hasArc()) shape
-    else
-        viewShape {
-            arc = vectorArc {
-                strokeCap = shape.arc.strokeCap
-                startAngleDegrees = arcData.start
-                sweepAngleDegrees = arcAngleMeter
-                innerRadius = shape.arc.innerRadius
-                cornerRadius = arcData.cornerRadius
-                isMask = shape.arc.isMask
-            }
-        }
+    else {
+        val arcBuilder =
+            ViewShape.VectorArc.newBuilder()
+                .setStrokeCap(shape.arc.strokeCap)
+                .setStartAngleDegrees(arcData.start)
+                .setSweepAngleDegrees(arcAngleMeter)
+                .setInnerRadius(shape.arc.innerRadius)
+                .setCornerRadius(arcData.cornerRadius)
+                .setIsMask(shape.arc.isMask)
+        ViewShape.newBuilder().setArc(arcBuilder).build()
+    }
 }
 
 // Set up the paint object to render a vector path as a stroke with a single dash that matches the
@@ -615,7 +608,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             val shadowBox = shadow.shadowStyle.outset
 
             // Make an appropriate paint.
-            val shadowPaint = Paint().asFrameworkPaint()
+            val shadowPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
             shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
             if (shadowBox.blurRadius > 0.0f) {
                 shadowPaint.maskFilter =
@@ -687,7 +680,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             val shadowBox = shadow.shadowStyle.inset
 
             // Make an appropriate paint.
-            val shadowPaint = Paint().asFrameworkPaint()
+            val shadowPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
             shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
             if (shadowBox.blurRadius > 0.0f) {
                 shadowPaint.maskFilter =
@@ -1056,3 +1049,22 @@ internal fun getShaderBrush(
     }
     return brush
 }
+
+private val com.android.designcompose.definition.view.NodeStyle.transformOrNull:
+    com.android.designcompose.definition.modifier.LayoutTransform?
+    get() = if (hasTransform()) transform else null
+private val com.android.designcompose.definition.view.ViewStyle.transformOrNull:
+    com.android.designcompose.definition.modifier.LayoutTransform?
+    get() = if (nodeStyle.hasTransform()) nodeStyle.transform else null
+private val com.android.designcompose.definition.element.ShaderData.shaderFallbackColorOrNull:
+    com.android.designcompose.definition.element.Color?
+    get() = if (hasShaderFallbackColor()) shaderFallbackColor else null
+private val com.android.designcompose.definition.element.Stroke.shaderDataOrNull:
+    com.android.designcompose.definition.element.ShaderData?
+    get() = if (hasShaderData()) shaderData else null
+private val com.android.designcompose.definition.modifier.BoxShadow.outsetOrNull:
+    com.android.designcompose.definition.modifier.BoxShadow.Shadow?
+    get() = if (hasOutset()) outset else null
+private val com.android.designcompose.definition.element.ShaderUniformValue.imageRefValueOrNull:
+    com.android.designcompose.definition.element.ShaderUniformValue.ImageRef?
+    get() = if (hasImageRefValue()) imageRefValue else null

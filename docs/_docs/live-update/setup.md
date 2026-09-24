@@ -41,6 +41,12 @@ To configure access to your documents, you need to generate an access token.
 To learn more about personal access tokens, see [Manage personal access
 tokens][3]{:.external} in the Figma help center.
 
+**Note:** Figma limits how many REST API requests your token can make, based on
+your seat and the plan of the file. On a free (Starter) plan or with a View or
+Collab seat, file requests are limited per month, and Live Update uses up that
+allowance within minutes. For regular Live Update use, you need a Full or Dev
+seat on a paid plan. See [Figma account rate limits][7].
+
 ## Set your Figma access token in an app {#SetUpFigmaToken}
 
 The Figma access token is set by using the Android Debug Bridge (adb) to send it
@@ -166,4 +172,5 @@ adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyServ
 [4]: <https://developer.android.com/guide/components/intents-filters#Types>
 [5]: {%link _docs/live-update/websocket-mode.md %}
 [6]: {%link _docs/live-update/dynamic-node-discovery.md %}
+[7]: {%link _docs/live-update/rate-limiting.md %}#FigmaAccountLimits
 

@@ -608,7 +608,12 @@ internal fun ContentDrawScope.squooshShapeRender(
             val shadowBox = shadow.shadowStyle.outset
 
             // Make an appropriate paint.
-            val shadowPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            val shadowPaint =
+                android.graphics.Paint(
+                    android.graphics.Paint.ANTI_ALIAS_FLAG or
+                        android.graphics.Paint.DITHER_FLAG or
+                        android.graphics.Paint.FILTER_BITMAP_FLAG
+                )
             shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
             if (shadowBox.blurRadius > 0.0f) {
                 shadowPaint.maskFilter =
@@ -680,7 +685,12 @@ internal fun ContentDrawScope.squooshShapeRender(
             val shadowBox = shadow.shadowStyle.inset
 
             // Make an appropriate paint.
-            val shadowPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            val shadowPaint =
+                android.graphics.Paint(
+                    android.graphics.Paint.ANTI_ALIAS_FLAG or
+                        android.graphics.Paint.DITHER_FLAG or
+                        android.graphics.Paint.FILTER_BITMAP_FLAG
+                )
             shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
             if (shadowBox.blurRadius > 0.0f) {
                 shadowPaint.maskFilter =

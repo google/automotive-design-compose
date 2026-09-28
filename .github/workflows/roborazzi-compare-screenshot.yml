@@ -18,6 +18,8 @@ name: CompareScreenshot
 
 on:
   pull_request:
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read

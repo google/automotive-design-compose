@@ -122,7 +122,7 @@ internal object Jni {
             System.load(tempFile.absolutePath)
         } else {
 
-            System.loadLibrary("dc_jni")
+            System.loadLibrary(BuildConfig.JNI_LIBRARY_NAME)
         }
     }
 }

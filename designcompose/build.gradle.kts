@@ -53,6 +53,7 @@ android {
             "DESIGNCOMPOSE_VERSION",
             "\"${libs.versions.designcompose.get()}\"",
         )
+        buildConfigField("String", "JNI_LIBRARY_NAME", "\"dc_jni\"")
         consumerProguardFiles("consumer-proguard-rules.pro")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         if (designcompose.figmaToken.isPresent) {

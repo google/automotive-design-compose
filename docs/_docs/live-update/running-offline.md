@@ -53,3 +53,36 @@ This method will allow you to add a pre-fetched Figma file to your DesignCompose
     In your app's main activity, find and delete the line `DesignSettings.enableLiveUpdates(this))`
 
     This will disable the DesignSwitcher widget and the rest of the Live Update system.
+
+## How bundled files are matched to documents {#BundledFileNaming}
+
+DesignCompose finds a bundled design by its file name:
+
+```
+src/main/assets/figma/<DocName>_<DocId>.dcf
+```
+
+`<DocName>` is the name of your `@DesignDoc` interface (for example,
+`TutorialDoc`), and `<DocId>` is the Figma document ID. If you switch to a
+different document ID at runtime, for example with the Design Switcher,
+DesignCompose looks for a file with that ID. If the file doesn't exist and Live
+Update can't fetch the document, nothing is displayed.
+
+### Reuse a bundled file for a copy of the document {#ReuseBundledFile}
+
+If you duplicated a Figma file, such as the tutorial file, you can reuse the
+original's bundled `.dcf` for your copy by saving it under your copy's ID:
+
+```shell
+cd src/main/assets/figma
+cp <DocName>_<ORIGINAL_DOC_ID>.dcf <DocName>_<YOUR_DOC_ID>.dcf
+```
+
+Then rebuild the app. The design shown is the content of the original file at
+the time the `.dcf` was saved.
+
+Alternatively, place the file in `res/raw` and map it to a document ID in code:
+
+```kotlin
+DesignSettings.setRawResourceId(DesignDocId("<YOUR_DOC_ID>"), R.raw.your_dcf_file)
+```

@@ -30,6 +30,7 @@ import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -874,6 +875,31 @@ fun SquooshRoot(
                                     customizationContext,
                                     meter,
                                 )
+                        } else if (child.node.needsChildRender && child.customModifier != null) {
+                            // Modifier-only node: needs composition so the user's Modifier
+                            // wraps the rendered subtree pixels. Render using squooshRender
+                            // on the already-resolved tree — no sub-SquooshRoot, no recursion.
+                            child.component = { _ ->
+                                Spacer(
+                                    modifier = Modifier
+                                        .squooshRender(
+                                            child.node,
+                                            doc,
+                                            docName,
+                                            customizationContext,
+                                            childRenderSelector,
+                                            currentAnimations,
+                                            animPlayTimeNanosState,
+                                            VariableState.create(),
+                                            LocalVariableState.hasOverrideModeValues(),
+                                            computedPathCache,
+                                            shaderBrushCache,
+                                            appContext = LocalContext.current,
+                                            scrollOffset,
+                                            skipRootChildRender = true,
+                                        )
+                                )
+                            }
                         } else {
                             needsComposition = false
                         }
@@ -1319,7 +1345,7 @@ private fun SquooshChildLayout(
         content = {
             child.component?.invoke(
                 object : ComponentReplacementContext {
-                    override val layoutModifier: Modifier = Modifier
+                    override val layoutModifier: Modifier = child.customModifier ?: Modifier
                     override val textStyle: TextStyle? = child.textStyle
                 }
             )

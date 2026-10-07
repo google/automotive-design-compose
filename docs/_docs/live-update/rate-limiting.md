@@ -23,6 +23,67 @@ temporarily.
 The rate limiter prevents this by controlling the rate of outgoing HTTP requests
 using the **token bucket algorithm**.
 
+## Figma account rate limits {#FigmaAccountLimits}
+
+The built-in rate limiter only smooths out short bursts of requests. It can't
+work around the limits Figma applies to your account. Figma sets those limits
+based on:
+
+- The **endpoint tier**. Live Update uses `GET file` and `GET file nodes`,
+  which are Tier 1 endpoints.
+- Your **seat type** (View/Collab or Full/Dev).
+- The **plan of the file** you're reading (Starter, Professional, Organization,
+  or Enterprise).
+
+For Tier 1 endpoints, Figma allows only a small number of requests **per
+month** for View and Collab seats on any plan, and for every seat on the free
+Starter plan. Full and Dev seats on paid plans get per-minute limits instead.
+See [Figma's rate limits documentation][figma-rate-limits] for the current
+values.
+
+Live Update polls the file every few seconds and makes several requests per
+poll. A monthly allowance is used up within the first minute or so. After
+that, every request fails with `429 Too Many Requests` until Figma resets the
+limit. In logcat, this looks like:
+
+```
+dc_jni::error_map: Network Error: DC_figma_import Error: HTTP Error: HTTP status client error (429 Too Many Requests) for url (https://api.figma.com/v1/files/<DOC_ID>?depth=1)
+```
+
+### Check whether you've hit the limit
+
+Send a single request with your token and inspect the response headers. The
+request itself counts against your limit, so don't run it repeatedly.
+
+```shell
+curl -i -H "X-Figma-Token: $FIGMA_ACCESS_TOKEN" \
+  "https://api.figma.com/v1/files/<DOC_ID>?depth=1"
+```
+
+- `HTTP 200`: your token isn't currently rate-limited for this file.
+- `HTTP 429`: you're rate-limited. Figma includes these headers only on `429`
+  responses:
+  - `Retry-After`: seconds until you can retry. A very large value (days)
+    means the monthly allowance is used up.
+  - `X-Figma-Plan-Tier`: the plan of the file, for example `starter`.
+  - `X-Figma-Rate-Limit-Type`: `low` for View/Collab seats, `high` for
+    Full/Dev seats.
+  - `X-Figma-Upgrade-Link`: a link to upgrade your plan or seat.
+
+### What to do
+
+- For continuous Live Update, use a Full or Dev seat on a paid Figma plan, and
+  keep the file in that plan.
+- Otherwise, turn off Live Update and run from a bundled design. See
+  [Running Offline][running-offline].
+- To reduce request volume, keep [adaptive polling][advanced-config] enabled,
+  increase the fetch interval, and turn off Live Update when you aren't editing
+  the design.
+
+[figma-rate-limits]: https://developers.figma.com/docs/rest-api/rate-limits/
+[running-offline]: {%link _docs/live-update/running-offline.md %}
+[advanced-config]: {%link _docs/live-update/setup.md %}#AdvancedLiveUpdateConfiguration
+
 ## How It Works
 
 | Parameter | Value | Description |

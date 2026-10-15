@@ -158,8 +158,9 @@ fn jni_fetch_doc_impl(
 
                 info!("Failed to fetch {}, Try fetching locally", doc_id);
                 info!("fetch --doc-id={} --version-id={} {} ", doc_id, version_id, queries_string);
-
-                map_err_to_exception(env, &err, doc_id).expect("Failed to throw exception");
+                if let Err(e) = crate::error::ack_throw(map_err_to_exception(env, &err, doc_id)) {
+                    error!("Failed to throw exception across JNI: {:?}", e);
+                }
                 return Err(err);
             }
         };

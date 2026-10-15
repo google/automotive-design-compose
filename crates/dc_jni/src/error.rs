@@ -33,9 +33,40 @@ pub enum Error {
     ProtobufWriteError(String),
 }
 
+pub fn ack_throw(res: Result<(), jni::errors::Error>) -> Result<(), jni::errors::Error> {
+    match res {
+        Ok(()) | Err(jni::errors::Error::JavaException) => Ok(()),
+        Err(err) => Err(err),
+    }
+}
+
 #[allow(unused_qualifications)] // Linter thinks `std:` isn't needed but removing it fails the build
 pub fn throw_basic_exception(env: &mut Env, err: &dyn std::error::Error) {
-    // An error occurring while trying to throw an exception shouldn't happen,
-    // but let's at least panic with a decent error message
-    env.throw(err.to_string()).expect("Error while trying to throw Exception");
+    // In jni 0.22+, `throw` returns `Err(Error::JavaException)` on a successful throw
+    // so that the calling Rust code can unwind with `?`. It is NOT a failure to throw.
+    // If throwing genuinely failed, log it instead of panicking to prevent aborting the host process.
+    if let Err(e) = ack_throw(env.throw(err.to_string())) {
+        log::error!("Failed to throw basic exception across JNI: {:?}", e);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ack_throw_ok() {
+        assert!(ack_throw(Ok(())).is_ok());
+    }
+
+    #[test]
+    fn test_ack_throw_java_exception_is_ok() {
+        assert!(ack_throw(Err(jni::errors::Error::JavaException)).is_ok());
+    }
+
+    #[test]
+    fn test_ack_throw_genuine_error_propagates() {
+        let res = ack_throw(Err(jni::errors::Error::ThrowFailed(-1)));
+        assert!(matches!(res, Err(jni::errors::Error::ThrowFailed(-1))));
+    }
 }

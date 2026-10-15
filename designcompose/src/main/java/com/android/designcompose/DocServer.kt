@@ -148,6 +148,15 @@ object DesignSettings {
         // will correct this to false if no token is found. (Issue #142)
         isDocumentLive.value = true
 
+        // Launch a coroutine that awaits updates to the discover-all-top-level-nodes state.
+        // Launched before settingsUpdateFlow so discoverAllTopLevelNodes is restored from
+        // DataStore before updateLiveUpdateStatus() starts Live Update fetches on restart.
+        activity.lifecycleScope.launch {
+            liveUpdateSettings!!.discoverAllNodesFlow.collectLatest { enabled ->
+                discoverAllTopLevelNodes.value = enabled
+            }
+        }
+
         // Launch a coroutine that awaits updates to the Figma Token
         activity.lifecycleScope.launch {
             liveUpdateSettings!!.settingsUpdateFlow.collectLatest { newTokenValue ->
@@ -668,8 +677,8 @@ internal fun fetchDocument(
 
     val serializedResponse: ByteArray =
         Jni.tracedJnifetchdoc(id.id, id.versionId, request.toByteArray(), proxyConfig)
-    val response = ConvertResponse.parseDelimitedFrom(serializedResponse.inputStream())
-    return response
+    return ConvertResponse.parseDelimitedFrom(serializedResponse.inputStream())
+        ?: throw FetchException()
 }
 
 internal fun DocServer.subscribe(doc: LiveDocSubscription) {

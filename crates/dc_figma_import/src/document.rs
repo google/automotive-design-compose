@@ -1971,23 +1971,32 @@ impl Document {
 
             for (id, v) in variables_response.meta.variables.iter() {
                 let var = create_variable(v);
-                // If we have a global ID for this variable's key, use it. Otherwise, use the local ID.
-                let map_key =
-                    self.key_to_global_id_map.get(&var.key).cloned().unwrap_or_else(|| id.clone());
 
                 let maybe_name_map =
                     variable_name_id_maps_by_cid.get_mut(&var.variable_collection_id);
                 if let Some(name_map) = maybe_name_map {
-                    name_map.m.insert(var.name.clone(), map_key.clone());
+                    name_map.m.insert(var.name.clone(), id.clone());
                 } else {
                     let mut name_to_id = HashMap::new();
-                    name_to_id.insert(var.name.clone(), map_key.clone());
+                    name_to_id.insert(var.name.clone(), id.clone());
                     variable_name_id_maps_by_cid.insert(
                         var.variable_collection_id.clone(),
                         NameIdMap { m: name_to_id, ..Default::default() },
                     );
                 }
-                variables_by_id.insert(map_key, var);
+
+                // Register under the local id, var.id, and global id so both local and remote nodes resolve.
+                // Fixes "Failed to get variable value for VariableID:..." warnings and wrong fallback colors
+                // when remote components alias the variable under library-hashed IDs.
+                if let Some(global_id) = self.key_to_global_id_map.get(&var.key) {
+                    if global_id != id && global_id != &var.id {
+                        variables_by_id.insert(global_id.clone(), var.clone());
+                    }
+                }
+                if &var.id != id {
+                    variables_by_id.insert(var.id.clone(), var.clone());
+                }
+                variables_by_id.insert(id.clone(), var);
             }
         }
 
@@ -2232,5 +2241,109 @@ mod tests {
 
         // Assert that we completed execution without panic
         assert!(true);
+    }
+
+    #[test]
+    fn test_build_variable_map_retains_local_and_global_alias_ids() {
+        let json = serde_json::json!({
+            "error": false,
+            "status": 200,
+            "meta": {
+                "variableCollections": {
+                    "VariableCollectionId:1:1": {
+                        "id": "VariableCollectionId:1:1",
+                        "name": "Collection 1",
+                        "modes": [
+                            {"modeId": "1:0", "name": "Mode 1"}
+                        ],
+                        "defaultModeId": "1:0",
+                        "remote": false,
+                        "hiddenFromPublishing": false,
+                        "variableIds": ["VariableID:12286:6095"],
+                        "key": "col_key"
+                    }
+                },
+                "variables": {
+                    "VariableID:12286:6095": {
+                        "id": "VariableID:12286:6095",
+                        "name": "colors/primary",
+                        "key": "var_key_123",
+                        "variableCollectionId": "VariableCollectionId:1:1",
+                        "resolvedType": "COLOR",
+                        "valuesByMode": {},
+                        "remote": false
+                    }
+                }
+            }
+        });
+        let variables_response: figma_schema::VariablesResponse =
+            serde_json::from_value(json).expect("Failed to deserialize mock variables response");
+
+        let mut key_to_global_id_map = HashMap::new();
+        let alias_id = "VariableID:remote_hash/999".to_string();
+        key_to_global_id_map.insert("var_key_123".to_string(), alias_id.clone());
+
+        let mut variables_responses = HashMap::new();
+        variables_responses.insert("doc_test".to_string(), variables_response);
+
+        let document_root: figma_schema::FileResponse = serde_json::from_value(serde_json::json!({
+            "document": {
+                "id": "0:0",
+                "name": "Document",
+                "type": "DOCUMENT",
+                "children": []
+            },
+            "components": {},
+            "componentSets": {},
+            "name": "Test Doc",
+            "lastModified": "",
+            "version": ""
+        }))
+        .expect("Failed to deserialize mock FileResponse");
+
+        let doc = Document {
+            api_key: String::new(),
+            document_id: "doc_test".to_string(),
+            version_id: String::new(),
+            proxy_config: ProxyConfig::None,
+            document_root,
+            variables_responses,
+            image_context: ImageContext::new(HashMap::new(), HashMap::new(), &ProxyConfig::None),
+            variant_nodes: HashMap::new(),
+            component_sets: HashMap::new(),
+            branches: vec![],
+            key_to_global_id_map,
+            remote_node_responses: HashMap::new(),
+            fetched_remote_images: HashSet::new(),
+            prefetched_components: HashMap::new(),
+            node_tracker: crate::node_tracker::NodeTracker::new(),
+            last_view_hashes: HashMap::new(),
+            cached_node_ids: HashMap::new(),
+            failed_component_keys: HashSet::new(),
+            is_update: false,
+        };
+
+        let variable_map = doc.build_variable_map();
+
+        // Assert variables_by_id contains BOTH the local id and the alias id
+        assert!(
+            variable_map.variables_by_id.contains_key("VariableID:12286:6095"),
+            "variables_by_id must contain local id"
+        );
+        assert!(
+            variable_map.variables_by_id.contains_key(&alias_id),
+            "variables_by_id must contain global alias id"
+        );
+
+        // Assert name map points to the local id
+        let name_map = variable_map
+            .variable_name_id_maps_by_cid
+            .get("VariableCollectionId:1:1")
+            .expect("Collection name map must exist");
+        assert_eq!(
+            name_map.m.get("colors/primary"),
+            Some(&"VariableID:12286:6095".to_string()),
+            "Name map must point to the local id"
+        );
     }
 }

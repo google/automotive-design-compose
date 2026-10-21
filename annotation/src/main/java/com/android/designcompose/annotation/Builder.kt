@@ -75,9 +75,11 @@ annotation class DesignComponent(
  * Specify a variant name for a component set that contains variant children.
  *
  * @param property the name of the variant property
+ * @param node optional node name of a child component instance to scope the variant property to
  */
 // TODO add AnnotationTarget.PROPERTY to the list of targets when the KSP bug is fixed
-@Target(AnnotationTarget.VALUE_PARAMETER) annotation class DesignVariant(val property: String)
+@Target(AnnotationTarget.VALUE_PARAMETER)
+annotation class DesignVariant(val property: String, val node: String = "")
 
 /**
  * Specify a variant name for a component set that contains variant children. This annotation should

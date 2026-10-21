@@ -795,7 +795,8 @@ fun SquooshRoot(
                     } else if (child.component == null) {
                         // If there are press or click reactions, composition is needed
                         var hasPressClick =
-                            customizationContext.getTapCallback(child.node.view) != null
+                            customizationContext.getTapCallback(child.node.unresolvedName) !=
+                                null || customizationContext.getTapCallback(child.node.view) != null
                         child.node.view.reactionsList.forEach {
                             if (it.trigger.hasPress() || it.trigger.hasClick()) hasPressClick = true
                             else if (it.trigger.hasAfterTimeout()) {

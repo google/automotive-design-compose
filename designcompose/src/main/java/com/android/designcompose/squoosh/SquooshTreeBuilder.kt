@@ -275,7 +275,7 @@ internal fun resolveVariantsRecursively(
             val variantNodeName =
                 variantTransition.selectVariant(
                     viewFromTree.id,
-                    customizations.getMatchingVariant(view.componentInfo)
+                    customizations.getMatchingVariant(view.componentInfo, viewFromTree.name)
                         ?: viewFromTree.componentInfo.name,
                 )
             if (variantNodeName != null && variantNodeName != viewFromTree.componentInfo.name) {

@@ -335,6 +335,29 @@ VariantTestDoc.Square(
 )
 ```
 
+#### Scoping a variant to one instance {#node-scoped-variants}
+
+By default a `@DesignVariant` parameter applies to every instance of the
+component set that exposes the property. When one `@DesignComponent` contains
+several instances of the same component set (for example a row of toggles
+built from one `#Toggle` component set), pass the optional `node` annotation
+parameter to drive each instance independently. The value is then applied only
+to the child instance with that name, and instances without a node-scoped value
+keep the regular, document-wide value for the property.
+
+```kotlin
+@DesignComponent(node = "#Controls")
+fun Controls(
+    @DesignVariant(property = "#State", node = "#lights-toggle") lights: State,
+    @DesignVariant(property = "#State", node = "#defrost-toggle") defrost: State,
+    @Design(node = "#lights-toggle") onLightsTap: TapCallback,
+    @Design(node = "#defrost-toggle") onDefrostTap: TapCallback,
+)
+```
+
+Tap callbacks registered on an instance name (`#lights-toggle` above) keep
+firing after the instance has been switched to another variant.
+
 ### Component replacement {#comp-replace}
 
 A node in a design can be replaced with a [`Composable`][2] of your choice while

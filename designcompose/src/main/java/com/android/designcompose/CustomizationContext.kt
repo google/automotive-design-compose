@@ -478,7 +478,10 @@ fun CustomizationContext.getComponent(
 //      and it does a lot of hashing and string operations. We can optimize this by parsing the node
 //      variants and sorting them in Rust during doc generation, and by interning strings in the
 //      serialized doc so that we don't need to hash.
-fun CustomizationContext.getMatchingVariant(componentInfo: ComponentInfo?): String? {
+fun CustomizationContext.getMatchingVariant(
+    componentInfo: ComponentInfo?,
+    nodeName: String = "",
+): String? {
     if (componentInfo == null) return null
     if (variantProperties.isEmpty()) return null
 
@@ -489,7 +492,9 @@ fun CustomizationContext.getMatchingVariant(componentInfo: ComponentInfo?): Stri
     // uses the specified variants
     var variantChanged = false
     nodeVariants.forEach {
-        val value = variantProperties[it.key]
+        val value =
+            (if (nodeName.isNotEmpty()) variantProperties["$nodeName:${it.key}"] else null)
+                ?: variantProperties[it.key]
         if (value != null && value != it.value) {
             nodeVariants[it.key] = value
             variantChanged = true

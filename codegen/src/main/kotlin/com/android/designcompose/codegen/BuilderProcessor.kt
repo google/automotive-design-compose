@@ -510,9 +510,13 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                             it.shortName.asString() == "DesignVariant"
                     } ?: return@forEach
                 val nodeArg: KSValueArgument =
-                    annotation.arguments.first { arg ->
-                        arg.name?.asString() == "node" || arg.name?.asString() == "property"
+                    annotation.arguments.firstOrNull { arg ->
+                        arg.name?.asString() == "node" &&
+                            (arg.value as? String)?.isNotEmpty() == true
                     }
+                        ?: annotation.arguments.first { arg ->
+                            arg.name?.asString() == "node" || arg.name?.asString() == "property"
+                        }
                 val nodeName = nodeArg.value as String
 
                 // Add a customization for this arg to the json list
@@ -870,10 +874,18 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 val propertyArg: KSValueArgument =
                     variantAnnotation.arguments.first { arg -> arg.name?.asString() == "property" }
                 val propertyName = propertyArg.value as String
+                val nodeArg =
+                    variantAnnotation.arguments
+                        .find { arg -> arg.name?.asString() == "node" }
+                        ?.value as? String ?: ""
                 val param = valueParameter.name!!.asString()
 
-                variantProperties[propertyName] = "$param.name"
-                nodeNameBuilder.add("        nodeName += \"$propertyName=\" + $param.name")
+                if (nodeArg.isNotEmpty()) {
+                    variantProperties["$nodeArg:$propertyName"] = "$param.name"
+                } else {
+                    variantProperties[propertyName] = "$param.name"
+                    nodeNameBuilder.add("        nodeName += \"$propertyName=\" + $param.name")
+                }
             }
 
             val annotation =

@@ -184,6 +184,35 @@ class CustomizationContextTest {
     }
 
     @Test
+    fun testGetMatchingVariantNodeScopedOverridesGlobal() {
+        val context = CustomizationContext()
+        context.setVariantProperties(hashMapOf("prop1" to "val2", "#instance-a:prop1" to "val3"))
+        val componentInfo =
+            com.android.designcompose.definition.view.ComponentInfo.newBuilder()
+                .setName("prop1=val1")
+                .build()
+        // The node-scoped value wins for the named instance...
+        assertThat(context.getMatchingVariant(componentInfo, "#instance-a")).isEqualTo("prop1=val3")
+        // ...other instances and callers without a node name keep the global value.
+        assertThat(context.getMatchingVariant(componentInfo, "#instance-b")).isEqualTo("prop1=val2")
+        assertThat(context.getMatchingVariant(componentInfo)).isEqualTo("prop1=val2")
+    }
+
+    @Test
+    fun testGetMatchingVariantNodeScopedOnly() {
+        val context = CustomizationContext()
+        context.setVariantProperties(hashMapOf("#instance-a:prop1" to "val2"))
+        val componentInfo =
+            com.android.designcompose.definition.view.ComponentInfo.newBuilder()
+                .setName("prop1=val1")
+                .build()
+        assertThat(context.getMatchingVariant(componentInfo, "#instance-a")).isEqualTo("prop1=val2")
+        // A node-scoped value must not leak into other instances of the component set.
+        assertThat(context.getMatchingVariant(componentInfo, "#instance-b")).isNull()
+        assertThat(context.getMatchingVariant(componentInfo)).isNull()
+    }
+
+    @Test
     fun testContentReplacement() {
         val context = CustomizationContext()
         val content = ReplacementContent(1) { {} }

@@ -205,6 +205,9 @@ pub enum EffectType {
     DropShadow,
     LayerBlur,
     BackgroundBlur,
+    #[serde(other)]
+    Unknown,
+
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

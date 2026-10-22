@@ -36,6 +36,13 @@ class InternalGradlePlugin : Plugin<Project> {
         val umbrellaFetchAndUpdateTask: TaskProvider<Task> =
             project.tasks.register("fetchAndUpdateFigmaFiles") { it.group = "designcompose" }
 
+        // Register the annotation-aware fetch task type so subprojects can use it
+        // Example usage in a subproject build.gradle.kts:
+        //   tasks.register<FetchFigmaDocTask>("fetchDoc") {
+        //       sourceDir.set(file("src/main/java"))
+        //       outputFile.set(file("src/main/assets/figma/MyDoc.dcf"))
+        //   }
+
         val figmaTokenProvider = project.objects.property(String::class.java)
 
         /**

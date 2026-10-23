@@ -113,6 +113,7 @@ fn jni_fetch_doc<'local>(
         let mut request: ConvertRequest = ConvertRequest::new();
         if let Err(err) = request.merge_from_bytes(&request_bytes).map_err(Error::from) {
             throw_basic_exception(env, &err);
+            return Ok::<_, jni::errors::Error>(JByteArray::default());
         };
 
         let proxy_config: ProxyConfig = match get_proxy_config(env, &jproxy_config) {
@@ -158,15 +159,18 @@ fn jni_fetch_doc_impl(
 
                 info!("Failed to fetch {}, Try fetching locally", doc_id);
                 info!("fetch --doc-id={} --version-id={} {} ", doc_id, version_id, queries_string);
-
-                map_err_to_exception(env, &err, doc_id).expect("Failed to throw exception");
+                if let Err(e) = crate::error::ack_throw(map_err_to_exception(env, &err, doc_id)) {
+                    error!("Failed to throw exception across JNI: {:?}", e);
+                }
                 return Err(err);
             }
         };
 
-    convert_result
-        .write_length_delimited_to_bytes()
-        .map_err(|e| Error::ProtobufWriteError(format!("Failed to write convert_result: {}", e)))
+    convert_result.write_length_delimited_to_bytes().map_err(|e| {
+        let err = Error::ProtobufWriteError(format!("Failed to write convert_result: {}", e));
+        throw_basic_exception(env, &err);
+        err
+    })
 }
 
 #[allow(non_snake_case)]

@@ -42,6 +42,7 @@ class LiveUpdateSettingsRepository(private val dataStore: DataStore<Preferences>
     private val liveUpdatePauseMillisPrefKey = longPreferencesKey("LiveUpdatePauseMillis")
     private val liveUpdateFetchMillisPrefKey = longPreferencesKey("FetchIntervalMillis")
     private val adaptivePollingEnabledPrefKey = booleanPreferencesKey("AdaptivePollingEnabled")
+    private val discoverAllNodesPrefKey = booleanPreferencesKey("DiscoverAllNodes")
 
     // Flow that watches the FigmaApiKey for new updates and returns the new value
     // to watchers
@@ -85,6 +86,19 @@ class LiveUpdateSettingsRepository(private val dataStore: DataStore<Preferences>
                 }
             }
             .map { settings -> settings[adaptivePollingEnabledPrefKey] ?: true }
+
+    internal val discoverAllNodesFlow: Flow<Boolean> =
+        dataStore.data
+            .catch { exception ->
+                if (exception is IOException) {
+                    Log.e(liveUpdateTag, "Error reading LiveUpdate Settings.", exception)
+                    emit(emptyPreferences())
+                } else {
+                    Log.e(liveUpdateTag, "ERROR")
+                    throw exception
+                }
+            }
+            .map { settings -> settings[discoverAllNodesPrefKey] ?: false }
 
     internal val liveUpdateTimeoutFlow: Flow<Long> =
         dataStore.data
@@ -140,5 +154,10 @@ class LiveUpdateSettingsRepository(private val dataStore: DataStore<Preferences>
     suspend fun setAdaptivePollingEnabled(enabled: Boolean) {
         dataStore.edit { it[adaptivePollingEnabledPrefKey] = enabled }
         Log.i(TAG, "Adaptive polling enabled set to $enabled")
+    }
+
+    suspend fun setDiscoverAllNodes(enabled: Boolean) {
+        dataStore.edit { it[discoverAllNodesPrefKey] = enabled }
+        Log.i(TAG, "Discover all top-level nodes set to $enabled")
     }
 }

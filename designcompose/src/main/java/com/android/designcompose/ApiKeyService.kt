@@ -190,6 +190,9 @@ class ApiKeyService : Service() {
     fun setDiscoverAllNodes(enabled: Boolean) {
         Log.i(TAG, "Setting discover all top-level nodes to $enabled")
         DesignSettings.discoverAllTopLevelNodes.value = enabled
+        CoroutineScope(dispatcher).launch {
+            DesignSettings.liveUpdateSettings?.setDiscoverAllNodes(enabled)
+        }
     }
 
     fun setWebSocketEnabled(enabled: Boolean) {

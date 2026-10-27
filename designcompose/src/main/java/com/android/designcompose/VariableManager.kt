@@ -16,6 +16,7 @@
 
 package com.android.designcompose
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -31,7 +32,6 @@ import com.android.designcompose.definition.element.NumOrVar
 import com.android.designcompose.definition.element.Variable
 import com.android.designcompose.definition.element.VariableMap
 import com.android.designcompose.definition.element.VariableValue
-import com.android.designcompose.definition.element.copy
 import com.android.designcompose.utils.toColor
 
 // A variable mode, e.g. "light" or "dark"
@@ -84,10 +84,14 @@ internal class VariableState(
     val materialColorScheme: ColorScheme? = null,
     val materialTypography: Typography? = null,
     val materialShapes: Shapes? = null,
+    val docId: String? = null,
 ) {
     companion object {
         @Composable
-        fun create(updatedModeValues: VariableModeValues? = null): VariableState {
+        fun create(
+            updatedModeValues: VariableModeValues? = null,
+            docId: String? = null,
+        ): VariableState {
             return VariableState(
                 varCollection = LocalVariableState.collection,
                 varModeValues = updatedModeValues ?: LocalVariableState.modeValues,
@@ -95,6 +99,7 @@ internal class VariableState(
                 materialColorScheme = MaterialTheme.colorScheme,
                 materialTypography = MaterialTheme.typography,
                 materialShapes = MaterialTheme.shapes,
+                docId = docId,
             )
         }
     }
@@ -107,7 +112,7 @@ internal class VariableState(
         // The mode values passed in are in the format of collection ID -> mode ID. Convert this to
         // collection name -> mode name.
         explicitModeValues.forEach { (collectionId, modeId) ->
-            val collection = VariableManager.getCollection(collectionId)
+            val collection = VariableManager.getCollection(collectionId, docId)
             collection?.let { c ->
                 val mode = c.modeIdHashMap[modeId]
                 mode?.let { m -> newModeValues[c.name] = m.name }
@@ -120,6 +125,7 @@ internal class VariableState(
             this.materialColorScheme,
             this.materialTypography,
             this.materialShapes,
+            this.docId,
         )
     }
 }
@@ -167,31 +173,18 @@ internal object VariableManager {
     // duplicate variable names across multiple documents.
     private var varMap: VariableMap = VariableMap.getDefaultInstance()
 
-    private lateinit var currentDocId: DesignDocId
+    private fun docMapFor(docId: String?): VariableMap? = docId?.let { docVarMap[it] }
 
     internal fun init(docId: DesignDocId, map: VariableMap) {
-
-        varMap =
-            varMap.copy {
-                // Remove old entries for docId
-                val oldVarMap = docVarMap[docId.id]
-                oldVarMap?.collectionsByIdMap?.forEach { this.collectionsById.remove(it.key) }
-                oldVarMap?.collectionIdsByNameMap?.forEach {
-                    this.collectionIdsByName.remove(it.key)
-                }
-                oldVarMap?.variablesByIdMap?.forEach { this.variablesById.remove(it.key) }
-                oldVarMap?.variableNameIdMapsByCidMap?.forEach {
-                    this.variableNameIdMapsByCid.remove(it.key)
-                }
-
-                // Add new entries for docId
-                docVarMap[docId.id] = map
-                this.collectionsById.putAll(map.collectionsByIdMap)
-                this.collectionIdsByName.putAll(map.collectionIdsByNameMap)
-                this.variablesById.putAll(map.variablesByIdMap)
-                this.variableNameIdMapsByCid.putAll(map.variableNameIdMapsByCidMap)
-            }
-        currentDocId = docId
+        docVarMap[docId.id] = map
+        val builder = VariableMap.newBuilder()
+        for (m in docVarMap.values) {
+            builder.putAllCollectionsById(m.collectionsByIdMap)
+            builder.putAllCollectionIdsByName(m.collectionIdsByNameMap)
+            builder.putAllVariablesById(m.variablesByIdMap)
+            builder.putAllVariableNameIdMapsByCid(m.variableNameIdMapsByCidMap)
+        }
+        varMap = builder.build()
     }
 
     // If the developer has not explicitly set variable override values, check to see if any
@@ -231,9 +224,12 @@ internal object VariableManager {
 
     // Return the collection given the collection ID
     internal fun getCollection(
-        collectionId: String
+        collectionId: String,
+        docId: String? = null,
     ): com.android.designcompose.definition.element.Collection? {
-        return varMap.collectionsByIdMap[collectionId]
+        val docMap = docMapFor(docId)
+        return docMap?.collectionsByIdMap?.get(collectionId)
+            ?: varMap.collectionsByIdMap[collectionId]
     }
 
     // Given a variable ID, return the color associated with it
@@ -244,7 +240,7 @@ internal object VariableManager {
         variable?.let { v ->
             return v.getColor(varMap, fallback, variableState)
         }
-        Feedback.documentVariableMissingWarning(currentDocId, varId)
+        variableState.docId?.let { Feedback.documentVariableMissingWarning(DesignDocId(it), varId) }
         return fallback
     }
 
@@ -254,7 +250,7 @@ internal object VariableManager {
         variable?.let { v ->
             return v.getNumber(varMap, fallback, variableState)
         }
-        Feedback.documentVariableMissingWarning(currentDocId, varId)
+        variableState.docId?.let { Feedback.documentVariableMissingWarning(DesignDocId(it), varId) }
         return fallback
     }
 
@@ -262,20 +258,26 @@ internal object VariableManager {
     // set, this will return a variable from that collection if one of the same name exists.
     // Otherwise, this will return the variable with the given ID.
     private fun resolveVariable(varId: String, variableState: VariableState): Variable? {
-        val variable = varMap.variablesByIdMap[varId]
+        val docMap = docMapFor(variableState.docId)
+        val variable = docMap?.variablesByIdMap?.get(varId) ?: varMap.variablesByIdMap[varId]
         variable?.let { v ->
             // If using material theme, return the variable since we don't need to resolve it based
             // on an overridden collection
             if (variableState.useMaterialTheme) return v
             val collectionOverride = variableState.varCollection
             collectionOverride?.let { cName ->
-                val collectionId = varMap.collectionIdsByNameMap[cName]
+                val collectionId =
+                    docMap?.collectionIdsByNameMap?.get(cName)
+                        ?: varMap.collectionIdsByNameMap[cName]
                 collectionId?.let { cId ->
-                    val nameMap = varMap.variableNameIdMapsByCidMap[cId]
+                    val nameMap =
+                        docMap?.variableNameIdMapsByCidMap?.get(cId)
+                            ?: varMap.variableNameIdMapsByCidMap[cId]
                     nameMap?.let { nMap ->
                         val resolvedVarId = nMap.m[v.name]
                         resolvedVarId?.let { newVarId ->
-                            return varMap.variablesByIdMap[newVarId]
+                            return docMap?.variablesByIdMap?.get(newVarId)
+                                ?: varMap.variablesByIdMap[newVarId]
                         }
                     }
                 }
@@ -290,7 +292,10 @@ internal object VariableManager {
         variableMap: VariableMap,
         variableState: VariableState,
     ): VariableValue? {
-        val collection = variableMap.collectionsByIdMap[variableCollectionId]
+        val docMap = docMapFor(variableState.docId)
+        val collection =
+            docMap?.collectionsByIdMap?.get(variableCollectionId)
+                ?: variableMap.collectionsByIdMap[variableCollectionId]
         collection?.let { c ->
             val modeName = variableState.varModeValues?.get(c.name)
             val modeId =
@@ -302,6 +307,31 @@ internal object VariableManager {
             }
         }
         return null
+    }
+
+    internal fun getVariableCollections(docId: DesignDocId): List<String> {
+        val map = docVarMap[docId.id] ?: return emptyList()
+        return map.collectionIdsByNameMap.keys.toList()
+    }
+
+    internal fun getVariableModes(docId: DesignDocId, collectionName: String): List<String> {
+        val map = docVarMap[docId.id] ?: return emptyList()
+        val collectionId = map.collectionIdsByNameMap[collectionName] ?: return emptyList()
+        val collection = map.collectionsByIdMap[collectionId] ?: return emptyList()
+        return collection.modeNameHashMap.keys.toList()
+    }
+
+    internal fun getVariableNames(docId: DesignDocId, collectionName: String): List<String> {
+        val map = docVarMap[docId.id] ?: return emptyList()
+        val collectionId = map.collectionIdsByNameMap[collectionName] ?: return emptyList()
+        val nameMap = map.variableNameIdMapsByCidMap[collectionId] ?: return emptyList()
+        return nameMap.m.keys.toList()
+    }
+
+    @VisibleForTesting
+    internal fun testOnlyReset() {
+        docVarMap.clear()
+        varMap = VariableMap.getDefaultInstance()
     }
 
     // Return this variable's color given the current variable state.

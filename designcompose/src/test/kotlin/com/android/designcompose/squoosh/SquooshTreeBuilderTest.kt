@@ -18,6 +18,8 @@ package com.android.designcompose.squoosh
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.createFontFamilyResolver
 import androidx.compose.ui.unit.Density
 import androidx.test.core.app.ApplicationProvider
@@ -398,5 +400,162 @@ class SquooshTreeBuilderTest {
 
         // Child customizationName should be set to parent's unresolved name "#progress"
         assertThat(indicatorNode.customizationName).isEqualTo("#progress")
+    }
+
+    @Test
+    fun testCustomModifierAttachedToSquooshChildComposable() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val density = Density(1f)
+        val fontResolver = createFontFamilyResolver(context)
+
+        val childView = view {
+            uniqueId = 2
+            id = "child-id"
+            name = "#child"
+        }
+        val parentView = view {
+            uniqueId = 1
+            id = "root-id"
+            name = "root"
+            data = viewData { container = container { children.add(childView) } }
+        }
+
+        val testModifier = Modifier.testTag("custom-tag")
+        val customizations = CustomizationContext()
+        customizations.setModifier("#child", testModifier)
+
+        val docContent = createDocContent(rootView = parentView)
+        val composableList = ComposableList()
+
+        val resolvedNode =
+            resolveVariantsRecursively(
+                viewFromTree = parentView,
+                document = docContent,
+                customizations = customizations,
+                variantTransition = SquooshVariantTransition(),
+                interactionState = InteractionState(),
+                keyTracker = KeyEventTracker(),
+                parentComponents = null,
+                density = density,
+                fontResolver = fontResolver,
+                composableList = composableList,
+                layoutIdAllocator = SquooshLayoutIdAllocator(),
+                isRoot = true,
+                variableState = VariableState(),
+                appContext = context,
+                customVariantTransition = null,
+                textMeasureCache = TextMeasureCache(),
+                textHash = HashSet(),
+            )
+
+        assertThat(resolvedNode).isNotNull()
+        assertThat(composableList.childComposables).hasSize(1)
+        val childComposable = composableList.childComposables[0]
+        assertThat(childComposable.customModifier).isEqualTo(testModifier)
+        assertThat(childComposable.node.unresolvedName).isEqualTo("#child")
+    }
+
+    @Test
+    fun testEmptyModifierCustomizationIsIgnored() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val density = Density(1f)
+        val fontResolver = createFontFamilyResolver(context)
+
+        val childView = view {
+            uniqueId = 2
+            id = "child-id"
+            name = "#child"
+        }
+        val parentView = view {
+            uniqueId = 1
+            id = "root-id"
+            name = "root"
+            data = viewData { container = container { children.add(childView) } }
+        }
+
+        val customizations = CustomizationContext()
+        customizations.setModifier("#child", Modifier)
+
+        val docContent = createDocContent(rootView = parentView)
+        val composableList = ComposableList()
+
+        val resolvedNode =
+            resolveVariantsRecursively(
+                viewFromTree = parentView,
+                document = docContent,
+                customizations = customizations,
+                variantTransition = SquooshVariantTransition(),
+                interactionState = InteractionState(),
+                keyTracker = KeyEventTracker(),
+                parentComponents = null,
+                density = density,
+                fontResolver = fontResolver,
+                composableList = composableList,
+                layoutIdAllocator = SquooshLayoutIdAllocator(),
+                isRoot = true,
+                variableState = VariableState(),
+                appContext = context,
+                customVariantTransition = null,
+                textMeasureCache = TextMeasureCache(),
+                textHash = HashSet(),
+            )
+
+        assertThat(resolvedNode).isNotNull()
+        assertThat(composableList.childComposables).isEmpty()
+        val childNode = resolvedNode!!.firstChild
+        assertThat(childNode).isNotNull()
+        assertThat(childNode!!.needsChildRender).isFalse()
+    }
+
+    @Test
+    fun testNonEmptyModifierSetsNeedsChildRender() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val density = Density(1f)
+        val fontResolver = createFontFamilyResolver(context)
+
+        val childView = view {
+            uniqueId = 2
+            id = "child-id"
+            name = "#child"
+        }
+        val parentView = view {
+            uniqueId = 1
+            id = "root-id"
+            name = "root"
+            data = viewData { container = container { children.add(childView) } }
+        }
+
+        val testModifier = Modifier.testTag("custom-tag")
+        val customizations = CustomizationContext()
+        customizations.setModifier("#child", testModifier)
+
+        val docContent = createDocContent(rootView = parentView)
+        val composableList = ComposableList()
+
+        val resolvedNode =
+            resolveVariantsRecursively(
+                viewFromTree = parentView,
+                document = docContent,
+                customizations = customizations,
+                variantTransition = SquooshVariantTransition(),
+                interactionState = InteractionState(),
+                keyTracker = KeyEventTracker(),
+                parentComponents = null,
+                density = density,
+                fontResolver = fontResolver,
+                composableList = composableList,
+                layoutIdAllocator = SquooshLayoutIdAllocator(),
+                isRoot = true,
+                variableState = VariableState(),
+                appContext = context,
+                customVariantTransition = null,
+                textMeasureCache = TextMeasureCache(),
+                textHash = HashSet(),
+            )
+
+        assertThat(resolvedNode).isNotNull()
+        val childNode = resolvedNode!!.firstChild
+        assertThat(childNode).isNotNull()
+        assertThat(childNode!!.needsChildRender).isTrue()
     }
 }

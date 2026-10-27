@@ -94,7 +94,11 @@ fn lookup_or_fetch(
                     return true;
                 }
                 Err(e) => {
-                    warn!("Unable to fetch Figma Image URL {}: {:#?}", url, e);
+                    warn!(
+                        "Unable to fetch or decode Figma image from URL {}: {:#?}. \
+                         Note: Figma may fail to export images exceeding its 32MP/4096px dimension limit.",
+                        url, e
+                    );
                 }
             }
         }
@@ -170,22 +174,45 @@ impl ImageContext {
     ///
     /// * `image_ref`: the Figma imageRef to fetch.
     pub fn image_fill(&mut self, image_ref: impl ToString, node_name: &String) -> Option<String> {
+        let image_ref_str = image_ref.to_string();
         if self.ignored_images.contains(node_name) {
             None
         } else {
-            let url = self.images.get(&image_ref.to_string());
-            if lookup_or_fetch(
-                &self.client_images,
-                &mut self.client_used_images,
-                &mut self.referenced_images,
-                &mut self.decoded_image_sizes,
-                &mut self.network_bytes,
-                url,
-                &self.proxy_config,
-            ) {
-                url.unwrap_or(&None).as_ref().map(|url_string| url_string.clone())
-            } else {
-                None
+            let url_entry = self.images.get(&image_ref_str);
+            match url_entry {
+                Some(Some(_)) => {
+                    if lookup_or_fetch(
+                        &self.client_images,
+                        &mut self.client_used_images,
+                        &mut self.referenced_images,
+                        &mut self.decoded_image_sizes,
+                        &mut self.network_bytes,
+                        url_entry,
+                        &self.proxy_config,
+                    ) {
+                        url_entry.and_then(|u| u.as_ref().cloned())
+                    } else {
+                        warn!(
+                            "Failed to fetch or decode image for ref '{}' (node: '{}'). The image may exceed Figma's maximum dimension limits (32MP/4096px).",
+                            image_ref_str, node_name
+                        );
+                        None
+                    }
+                }
+                Some(None) => {
+                    warn!(
+                        "Figma API returned no URL (None) for image ref '{}' (node: '{}'). The image may be missing or exceed Figma's export size limits (32MP/4096px).",
+                        image_ref_str, node_name
+                    );
+                    None
+                }
+                None => {
+                    warn!(
+                        "Image ref '{}' (node: '{}') not found in Figma document images map.",
+                        image_ref_str, node_name
+                    );
+                    None
+                }
             }
         }
     }
@@ -364,5 +391,57 @@ impl ImageContext {
         if merged_count > 0 {
             info!("Merged {} image refs from remote document", merged_count);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_image_fill_none_entry() {
+        let mut images = HashMap::new();
+        images.insert("img_oversized_none".to_string(), None);
+        let mut ctx = ImageContext::new(images, HashMap::new(), &ProxyConfig::None);
+
+        // When Figma returns None for an oversized image ref, image_fill should return None gracefully
+        let result = ctx.image_fill("img_oversized_none", &"OversizedNode".to_string());
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_image_fill_missing_entry() {
+        let ctx_images = HashMap::new();
+        let mut ctx = ImageContext::new(ctx_images, HashMap::new(), &ProxyConfig::None);
+
+        let result = ctx.image_fill("non_existent_ref", &"Node".to_string());
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_image_fill_invalid_url_fails_gracefully() {
+        let mut images = HashMap::new();
+        images.insert(
+            "img_invalid_url".to_string(),
+            Some("http://127.0.0.1:1/invalid_img.png".to_string()),
+        );
+        let mut ctx = ImageContext::new(images, HashMap::new(), &ProxyConfig::None);
+
+        // Fetch will fail to connect / download, should return None gracefully without panicking
+        let result = ctx.image_fill("img_invalid_url", &"Node".to_string());
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_image_fill_ignored_image() {
+        let mut images = HashMap::new();
+        images.insert("img_1".to_string(), Some("http://example.com/img.png".to_string()));
+        let mut ctx = ImageContext::new(images, HashMap::new(), &ProxyConfig::None);
+        let mut ignored = HashSet::new();
+        ignored.insert("IgnoredNode".to_string());
+        ctx.set_ignored_images(Some(&ignored));
+
+        let result = ctx.image_fill("img_1", &"IgnoredNode".to_string());
+        assert_eq!(result, None);
     }
 }

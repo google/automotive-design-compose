@@ -1,0 +1,964 @@
+commit 84d8a176e1c4eb768b5974e9de3e3a50bd40584c
+Author: yiqunw700 <yiqunw@google.com>
+Date:   Thu Mar 27 15:17:36 2025 -0700
+
+    Support shape overrides and nested component overrides
+
+diff --git a/crates/dc_bundle/src/definition/view.rs b/crates/dc_bundle/src/definition/view.rs
+index a5ca6f29..dce82056 100644
+--- a/crates/dc_bundle/src/definition/view.rs
++++ b/crates/dc_bundle/src/definition/view.rs
+@@ -32,7 +32,7 @@ use crate::text::{TextAlign, TextAlignVertical, TextOverflow};
+ use crate::text_style::StyledTextRun;
+ use crate::variable::NumOrVar;
+ use crate::view::view::RenderMethod;
+-use crate::view::view_data::{Container, StyledTextRuns, Text, View_data_type};
++use crate::view::view_data::{Container, StyledTextRuns, Text};
+ use crate::view::{ComponentInfo, View, ViewData};
+ use crate::view_shape::ViewShape;
+ use crate::view_style::ViewStyle;
+@@ -322,16 +322,21 @@ impl ViewStyle {
+ 
+ impl ViewData {
+     /// Compute the difference between this view data and the given view data.
+-    /// Right now only computes the text overrides.
+     pub fn difference(&self, other: &ViewData) -> Option<ViewData> {
+-        if let Some(View_data_type::Text { .. }) = self.view_data_type {
++        if (self.has_text() || self.has_styled_text())
++            && (other.has_text() || other.has_styled_text())
++        {
+             if self != other {
+                 return Some(other.clone());
+             }
+         }
+-        if let Some(View_data_type::StyledText { .. }) = self.view_data_type {
+-            if self != other {
+-                return Some(other.clone());
++        if other.has_container() && self.has_container() {
++            let shape = &self.container().shape;
++            let other_shape = &other.container().shape;
++            if other_shape != shape {
++                let mut data = ViewData::new();
++                data.set_container(Container { shape: other_shape.clone(), ..Default::default() });
++                return Some(data);
+             }
+         }
+         return None;
+@@ -366,6 +371,12 @@ impl View {
+         render_method: RenderMethod,
+         explicit_variable_modes: HashMap<String, String>,
+     ) -> View {
++        let mut data = ViewData::new();
++        data.set_container(Container {
++            shape: Some(shape).into(),
++            children: vec![],
++            ..Default::default()
++        });
+         View {
+             unique_id: View::next_unique_id() as u32,
+             id: id.clone(),
+@@ -375,17 +386,7 @@ impl View {
+             style: Some(style).into(),
+             frame_extras: frame_extras.into(),
+             scroll_info: Some(scroll_info).into(),
+-            data: Some(ViewData {
+-                view_data_type: Some(View_data_type::Container {
+-                    0: Container {
+-                        shape: Some(shape).into(),
+-                        children: vec![],
+-                        ..Default::default()
+-                    },
+-                }),
+-                ..Default::default()
+-            })
+-            .into(),
++            data: Some(data).into(),
+             design_absolute_bounding_box: design_absolute_bounding_box.into(),
+             render_method: render_method.into(),
+             explicit_variable_modes,
+@@ -404,6 +405,8 @@ impl View {
+         render_method: RenderMethod,
+         explicit_variable_modes: HashMap<String, String>,
+     ) -> View {
++        let mut data = ViewData::new();
++        data.set_text(Text { content: text.into(), res_name: text_res_name, ..Default::default() });
+         View {
+             unique_id: View::next_unique_id() as u32,
+             id: id.clone(),
+@@ -413,13 +416,7 @@ impl View {
+             style: Some(style).into(),
+             frame_extras: None.into(),
+             scroll_info: Some(ScrollInfo::new_default()).into(),
+-            data: Some(ViewData {
+-                view_data_type: Some(View_data_type::Text {
+-                    0: Text { content: text.into(), res_name: text_res_name, ..Default::default() },
+-                }),
+-                ..Default::default()
+-            })
+-            .into(),
++            data: Some(data).into(),
+             design_absolute_bounding_box: design_absolute_bounding_box.into(),
+             render_method: render_method.into(),
+             explicit_variable_modes,
+@@ -437,6 +434,12 @@ impl View {
+         design_absolute_bounding_box: Option<Rectangle>,
+         render_method: RenderMethod,
+     ) -> View {
++        let mut data = ViewData::new();
++        data.set_styled_text(StyledTextRuns {
++            styled_texts: text,
++            res_name: text_res_name,
++            ..Default::default()
++        });
+         View {
+             unique_id: View::next_unique_id() as u32,
+             id: id.clone(),
+@@ -446,17 +449,7 @@ impl View {
+             reactions: reactions.unwrap_or_default(),
+             frame_extras: None.into(),
+             scroll_info: Some(ScrollInfo::new_default()).into(),
+-            data: Some(ViewData {
+-                view_data_type: Some(View_data_type::StyledText {
+-                    0: StyledTextRuns {
+-                        styled_texts: text,
+-                        res_name: text_res_name,
+-                        ..Default::default()
+-                    },
+-                }),
+-                ..Default::default()
+-            })
+-            .into(),
++            data: Some(data).into(),
+             design_absolute_bounding_box: design_absolute_bounding_box.into(),
+             render_method: render_method.into(),
+             explicit_variable_modes: HashMap::new(),
+@@ -465,9 +458,8 @@ impl View {
+     }
+     pub fn add_child(&mut self, child: View) {
+         if let Some(data) = self.data.as_mut() {
+-            if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+-                data.view_data_type.as_mut()
+-            {
++            if data.has_container() {
++                let children: &mut Vec<View> = data.mut_container().children.as_mut();
+                 children.push(child);
+             }
+         }
+@@ -484,6 +476,12 @@ impl View {
+     pub fn find_view_by_id(&self, view_id: &String) -> Option<&View> {
+         if view_id.as_str() == self.id {
+             return Some(&self);
++        } else if self.id.starts_with("I") {
++            // If this id starts with I, meaning it is a neseted instance in this component.
++            let stripped_id = &self.id[1..];
++            if view_id.ends_with(stripped_id) {
++                return Some(&self);
++            }
+         } else if let Some(id) = view_id.split(";").last() {
+             // If this is a descendent node of an instance, the last section is the node id
+             // of the view in the component. Example: I70:17;29:15
+@@ -492,10 +490,8 @@ impl View {
+             }
+         }
+         if let Some(data) = &self.data.as_ref() {
+-            if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+-                &data.view_data_type
+-            {
+-                for child in children {
++            if data.has_container() {
++                for child in &data.container().children {
+                     let result = child.find_view_by_id(&view_id);
+                     if result.is_some() {
+                         return result;
+diff --git a/crates/dc_bundle/src/proto/definition/view/view.proto b/crates/dc_bundle/src/proto/definition/view/view.proto
+index a9e05fff..94f789b2 100644
+--- a/crates/dc_bundle/src/proto/definition/view/view.proto
++++ b/crates/dc_bundle/src/proto/definition/view/view.proto
+@@ -115,6 +115,8 @@ message ComponentOverrides {
+   reserved 2 to 4;
+   ViewStyle style = 1;
+   ViewData view_data = 5;
++  // This applys to the case when a nested instance was changed to another variant.
++  optional string variant_id = 6;
+ }
+ 
+ // Details on the Figma component that this view is an instance of.
+diff --git a/crates/figma_import/src/document.rs b/crates/figma_import/src/document.rs
+index 071ddeed..e67cd557 100644
+--- a/crates/figma_import/src/document.rs
++++ b/crates/figma_import/src/document.rs
+@@ -27,7 +27,6 @@ use dc_bundle::definition::NodeQuery;
+ use dc_bundle::figma_doc::FigmaDocInfo;
+ use dc_bundle::variable::variable_map::NameIdMap;
+ use dc_bundle::variable::{Collection, Mode, Variable, VariableMap};
+-use dc_bundle::view::view_data::{Container, View_data_type};
+ use dc_bundle::view::{ComponentInfo, ComponentOverrides, View, ViewData};
+ use dc_bundle::view_style::ViewStyle;
+ use log::error;
+@@ -464,106 +463,113 @@ impl Document {
+             view: &mut View,
+             parent_component_info: Option<&mut ComponentInfo>,
+             parent_reference_component: Option<&View>,
++            nested_instance_name_delimited: String,
+             action: &impl Fn(
+                 MessageField<ViewStyle>,
+                 MessageField<ViewData>,
+                 String,
+                 String,
++                String,
+                 &mut ComponentInfo,
+                 Option<&View>,
+                 bool,
+             ),
+         ) {
+-            match (view.component_info.as_mut(), parent_component_info) {
+-                (Some(info), _) => {
+-                    // This is the root node of a component instance.
+-                    // Compute its style and data overrides and write to its component info whose
+-                    // key is the component_set_name.
+-
+-                    // See if we can find the target component. If not then don't look up
+-                    // references. Try searching by id, name, and variant
+-                    let queries = [
+-                        NodeQuery::NodeId(info.id.clone()),
+-                        NodeQuery::NodeName(info.name.clone()),
+-                        NodeQuery::NodeVariant(info.name.clone(), info.component_set_name.clone()),
+-                    ];
+-
+-                    let reference_component_option =
+-                        queries.iter().find_map(|query| reference_components.get(query));
+-
+-                    if reference_component_option.is_some() {
+-                        action(
+-                            view.style.clone(),
+-                            view.data.clone(),
+-                            view.id.clone(),
+-                            info.component_set_name.clone(),
+-                            info,
+-                            reference_component_option,
+-                            true,
+-                        );
+-                    }
+-
+-                    if let Some(data) = view.data.as_mut() {
+-                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+-                            data.view_data_type.as_mut()
+-                        {
+-                            for child in children {
+-                                for_each_component_instance(
+-                                    reference_components,
+-                                    child,
+-                                    Some(info),
+-                                    reference_component_option,
+-                                    action,
+-                                );
+-                            }
+-                        }
+-                    }
+-                }
+-                (None, Some(parent_info)) => {
+-                    // This matches a descendent view of a component instance.
+-                    // The style and data overrides are written to hash map keyed by the view name
+-                    // in the component info of the instance.
++            let mut instance_name_delimited = String::new();
++            let mut component_id = String::new();
++            if let Some(info) = view.component_info.as_mut() {
++                // This is the root node of a component instance.
++                // Compute its style and data overrides and write to its component info whose
++                // key is the component_set_name.
++
++                // See if we can find the target component. If not then don't look up
++                // references. Try searching by id, name, and variant
++                let queries = [
++                    NodeQuery::NodeId(info.id.clone()),
++                    NodeQuery::NodeName(info.name.clone()),
++                    NodeQuery::NodeVariant(info.name.clone(), info.component_set_name.clone()),
++                ];
++
++                let reference_component_option =
++                    queries.iter().find_map(|query| reference_components.get(query));
++
++                if let Some(reference_component) = reference_component_option {
++                    component_id = reference_component.id.clone();
+                     action(
+                         view.style.clone(),
+                         view.data.clone(),
++                        component_id.clone(),
+                         view.id.clone(),
+-                        view.name.clone(),
+-                        parent_info,
+-                        parent_reference_component,
+-                        false,
++                        info.component_set_name.clone(),
++                        info,
++                        reference_component_option,
++                        true,
+                     );
+-                    if let Some(data) = view.data.as_mut() {
+-                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+-                            data.view_data_type.as_mut()
+-                        {
+-                            for child in children {
+-                                for_each_component_instance(
+-                                    reference_components,
+-                                    child,
+-                                    Some(parent_info),
+-                                    parent_reference_component,
+-                                    action,
+-                                );
+-                            }
++                }
++
++                if let Some(data) = view.data.as_mut() {
++                    if data.has_container() {
++                        let children: &mut Vec<View> = data.mut_container().children.as_mut();
++                        for child in children {
++                            for_each_component_instance(
++                                reference_components,
++                                child,
++                                Some(info),
++                                reference_component_option,
++                                String::new(),
++                                action,
++                            );
+                         }
+                     }
+                 }
+-                (None, None) => {
+-                    // This matches the nodes from the root node of the view tree until it
+-                    // meets a component instance.
+-                    if let Some(data) = view.data.as_mut() {
+-                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+-                            data.view_data_type.as_mut()
+-                        {
+-                            for child in children {
+-                                for_each_component_instance(
+-                                    reference_components,
+-                                    child,
+-                                    None,
+-                                    None,
+-                                    action,
+-                                );
+-                            }
++
++                instance_name_delimited = view.name.clone() + ":";
++            }
++
++            if let Some(parent_info) = parent_component_info {
++                // This matches a descendent view of a component instance.
++                // The style and data overrides are written to hash map keyed by the view name
++                // in the component info of the instance.
++                action(
++                    view.style.clone(),
++                    view.data.clone(),
++                    component_id.clone(),
++                    view.id.clone(),
++                    nested_instance_name_delimited.clone() + &view.name.clone(),
++                    parent_info,
++                    parent_reference_component,
++                    false,
++                );
++                if let Some(data) = view.data.as_mut() {
++                    if data.has_container() {
++                        let children: &mut Vec<View> = data.mut_container().children.as_mut();
++                        for child in children {
++                            for_each_component_instance(
++                                reference_components,
++                                child,
++                                Some(parent_info),
++                                parent_reference_component,
++                                nested_instance_name_delimited.clone() + &instance_name_delimited,
++                                action,
++                            );
++                        }
++                    }
++                }
++            } else {
++                // This matches the nodes from the root node of the view tree until it
++                // meets a component instance.
++                if let Some(data) = view.data.as_mut() {
++                    if data.has_container() {
++                        let children: &mut Vec<View> = data.mut_container().children.as_mut();
++                        for child in children {
++                            for_each_component_instance(
++                                reference_components,
++                                child,
++                                None,
++                                None,
++                                String::new(),
++                                action,
++                            );
+                         }
+                     }
+                 }
+@@ -576,8 +582,10 @@ impl Document {
+                 view,
+                 None,
+                 None,
++                String::new(),
+                 &|view_style,
+                   view_data,
++                  component_id,
+                   view_id,
+                   // overrides_table_key will either be the component_set_name or view_name.
+                   // This only works if the view name is identical.
+@@ -613,12 +621,30 @@ impl Document {
+                                     MessageField::none()
+                                 };
+ 
+-                            if override_view_style.is_some() || override_view_data.is_some() {
++                            let override_component_id = if let Some(template_component_info) =
++                                template_view.component_info.as_ref()
++                            {
++                                if !component_id.is_empty()
++                                    && component_id != template_component_info.id
++                                {
++                                    Some(component_id.clone())
++                                } else {
++                                    None
++                                }
++                            } else {
++                                None
++                            };
++
++                            if override_view_style.is_some()
++                                || override_view_data.is_some()
++                                || override_component_id.is_some()
++                            {
+                                 component_info.overrides_table.insert(
+                                     overrides_table_key,
+                                     ComponentOverrides {
+                                         style: override_view_style,
+                                         view_data: override_view_data,
++                                        variant_id: override_component_id,
+                                         ..Default::default()
+                                     },
+                                 );
+diff --git a/crates/figma_import/src/tools/fetch_layout.rs b/crates/figma_import/src/tools/fetch_layout.rs
+index 7b149b56..3ca73159 100644
+--- a/crates/figma_import/src/tools/fetch_layout.rs
++++ b/crates/figma_import/src/tools/fetch_layout.rs
+@@ -23,8 +23,7 @@ use dc_bundle::design_compose_definition::{
+ use dc_bundle::geometry::dimension_proto::Dimension;
+ use dc_bundle::geometry::DimensionProto;
+ use dc_bundle::positioning::LayoutSizing;
+-use dc_bundle::view::view_data::View_data_type;
+-use dc_bundle::view::{view_data, View};
++use dc_bundle::view::View;
+ use dc_layout::LayoutManager;
+ use std::collections::HashMap;
+ use std::io;
+@@ -134,8 +133,7 @@ fn test_layout(
+     println!("test_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
+     let my_id: i32 = id.clone();
+     *id = *id + 1;
+-    let data: &View_data_type = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
+-    if let View_data_type::Text { .. } = data {
++    if view.data.has_text() {
+         let mut use_measure_func = false;
+         if let Dimension::Auto(_) =
+             view.style().layout_style().width.clone().unwrap().Dimension.unwrap()
+@@ -184,9 +182,7 @@ fn test_layout(
+                 )
+                 .expect("Failed to add style");
+         }
+-    } else if let View_data_type::Container { 0: view_data::Container { shape: _, children, .. } } =
+-        data
+-    {
++    } else if view.data.has_container() {
+         if view.name.starts_with("#Replacement") {
+             let square = views.get(&NodeQuery::NodeName("#BlueSquare".to_string()));
+             if let Some(square) = square {
+@@ -218,6 +214,7 @@ fn test_layout(
+                 .expect("Failed to add style");
+         }
+         let mut index = 0;
++        let children = &view.data.container().children;
+         for child in children {
+             test_layout(layout_manager, child, id, my_id, index, views);
+             index = index + 1;
+diff --git a/crates/figma_import/tests/layout-unit-tests.dcf b/crates/figma_import/tests/layout-unit-tests.dcf
+index 82e8c98e..87d01d5d 100644
+Binary files a/crates/figma_import/tests/layout-unit-tests.dcf and b/crates/figma_import/tests/layout-unit-tests.dcf differ
+diff --git a/crates/figma_import/tests/layout_tests.rs b/crates/figma_import/tests/layout_tests.rs
+index 319d556f..411ac9be 100644
+--- a/crates/figma_import/tests/layout_tests.rs
++++ b/crates/figma_import/tests/layout_tests.rs
+@@ -29,10 +29,6 @@ use dc_bundle::design_compose_definition::DesignComposeDefinition;
+ use dc_bundle::geometry::dimension_proto::Dimension;
+ use dc_bundle::geometry::DimensionProto;
+ use dc_bundle::positioning::LayoutSizing;
+-use dc_bundle::view::view_data;
+-use dc_bundle::view::view_data::View_data_type;
+-use dc_bundle::view::view_data::View_data_type::Container;
+-use dc_bundle::view::view_data::View_data_type::Text;
+ use dc_bundle::view::View;
+ use dc_layout::LayoutManager;
+ use protobuf::Enum;
+@@ -75,9 +71,8 @@ fn add_view_to_layout(
+     //println!("add_view_to_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
+     let my_id: i32 = id.clone();
+     *id = *id + 1;
+-    let data: &View_data_type = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
+ 
+-    if let Text { .. } = data {
++    if view.data.has_text() {
+         let mut use_measure_func = false;
+         if let Some(Dimension::Auto(_)) = view.style().layout_style().width.Dimension {
+             if let Some(Dimension::Auto(_)) = view.style().layout_style().height.Dimension {
+@@ -122,9 +117,7 @@ fn add_view_to_layout(
+                 )
+                 .unwrap();
+         }
+-    } else if let Container { 0: view_data::Container { shape: _, children, special_fields: _ } } =
+-        data
+-    {
++    } else if view.data.has_container() {
+         manager
+             .add_style(
+                 my_id,
+@@ -138,6 +131,7 @@ fn add_view_to_layout(
+             )
+             .unwrap();
+         let mut index = 0;
++        let children = &view.data.container().children;
+         for child in children {
+             add_view_to_layout(child, manager, id, my_id, index, replacements, views);
+             index = index + 1;
+diff --git a/designcompose/src/main/assets/figma/DesignSwitcherDoc_Ljph4e3sC0lHcynfXpoh9f.dcf b/designcompose/src/main/assets/figma/DesignSwitcherDoc_Ljph4e3sC0lHcynfXpoh9f.dcf
+index d0c165f7..53630719 100644
+Binary files a/designcompose/src/main/assets/figma/DesignSwitcherDoc_Ljph4e3sC0lHcynfXpoh9f.dcf and b/designcompose/src/main/assets/figma/DesignSwitcherDoc_Ljph4e3sC0lHcynfXpoh9f.dcf differ
+diff --git a/designcompose/src/main/java/com/android/designcompose/InteractionState.kt b/designcompose/src/main/java/com/android/designcompose/InteractionState.kt
+index d0496cb1..8ae89397 100644
+--- a/designcompose/src/main/java/com/android/designcompose/InteractionState.kt
++++ b/designcompose/src/main/java/com/android/designcompose/InteractionState.kt
+@@ -532,7 +532,7 @@ internal fun InteractionState.invalAnimations() {
+ /// using the query, it may still be present but indexed using the variant map if the node is a
+ /// variant, or by ID (if queried by name) or name (if queried by ID). So we do a linear search if
+ /// the hash lookup and variant lookup fails.
+-private fun searchNodes(
++internal fun searchNodes(
+     q: NodeQuery,
+     nodes: Map<NodeQuery, View>,
+     parentViewMap: HashMap<String, HashMap<String, View>>,
+diff --git a/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshAnimate.kt b/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshAnimate.kt
+index ac3f0728..f140afaf 100644
+--- a/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshAnimate.kt
++++ b/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshAnimate.kt
+@@ -606,6 +606,7 @@ private fun SquooshResolvedNode.cloneSelf(parent: SquooshResolvedNode?): Squoosh
+         layoutId = this.layoutId,
+         textInfo = this.textInfo,
+         unresolvedNodeId = this.unresolvedNodeId,
++        overrideViewData = this.overrideViewData,
+         layoutNode = this,
+         parent = parent,
+         computedLayout = this.computedLayout,
+diff --git a/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshRender.kt b/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshRender.kt
+index 70ccb110..b96eb022 100644
+--- a/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshRender.kt
++++ b/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshRender.kt
+@@ -145,7 +145,9 @@ internal fun Modifier.squooshRender(
+                         childRenderSelector.selectedRenderChild = null
+                     } else {
+                         val shape =
+-                            if (node.view.data.hasContainer()) {
++                            if (node.overrideViewData?.hasContainer() == true) {
++                                node.overrideViewData!!.container.shape
++                            } else if (node.view.data.hasContainer()) {
+                                 node.view.data.container.shape
+                             } else {
+                                 // If this is text, just render the text and return
+diff --git a/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshResolvedNode.kt b/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshResolvedNode.kt
+index 96ec07a5..14c68477 100644
+--- a/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshResolvedNode.kt
++++ b/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshResolvedNode.kt
+@@ -19,6 +19,7 @@ package com.android.designcompose.squoosh
+ import android.graphics.PointF
+ import com.android.designcompose.TextMeasureData
+ import com.android.designcompose.definition.view.View
++import com.android.designcompose.definition.view.ViewData
+ import com.android.designcompose.definition.view.ViewStyle
+ import com.android.designcompose.layout_interface.Layout
+ 
+@@ -38,6 +39,7 @@ internal class SquooshResolvedNode(
+     // The node we look at for layout info, if we're in a tree that was derived
+     // from other trees (i.e.: the tree that combines the base and transition
+     // trees).
++    val overrideViewData: ViewData?,
+     val layoutNode: SquooshResolvedNode? = null,
+     var firstChild: SquooshResolvedNode? = null,
+     var nextSibling: SquooshResolvedNode? = null,
+diff --git a/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshTreeBuilder.kt b/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshTreeBuilder.kt
+index 5eda1fbd..1145447c 100644
+--- a/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshTreeBuilder.kt
++++ b/designcompose/src/main/java/com/android/designcompose/squoosh/SquooshTreeBuilder.kt
+@@ -30,6 +30,7 @@ import com.android.designcompose.KeyAction
+ import com.android.designcompose.KeyEventTracker
+ import com.android.designcompose.VariableState
+ import com.android.designcompose.common.NodeQuery
++import com.android.designcompose.common.views
+ import com.android.designcompose.definition.element.FontStyle
+ import com.android.designcompose.definition.element.StrokeAlign
+ import com.android.designcompose.definition.element.TextDecoration
+@@ -88,6 +89,7 @@ import com.android.designcompose.getTapCallback
+ import com.android.designcompose.getVisible
+ import com.android.designcompose.getVisibleState
+ import com.android.designcompose.isPressed
++import com.android.designcompose.searchNodes
+ import com.android.designcompose.squooshNodeVariant
+ import com.android.designcompose.squooshRootNode
+ import com.android.designcompose.utils.hasScrolling
+@@ -143,14 +145,17 @@ internal class SquooshOverlayComposable(val nodeId: String, val extras: FrameExt
+ internal class ParentComponentData(
+     val parent: ParentComponentData?,
+     val instanceId: String,
++    private val instanceName: String,
+     val componentInfo: ComponentInfo,
+ ) {
+     private val preComputedHashCode: Int =
+         if (parent != null) {
+-            (parent.preComputedHashCode * 31 + instanceId.hashCode()) * 31 +
+-                componentInfo.id.hashCode()
++            ((parent.preComputedHashCode * 31 + instanceId.hashCode()) * 31 +
++                instanceName.hashCode()) * 31
++            componentInfo.id.hashCode()
+         } else {
+-            instanceId.hashCode() * 31 + componentInfo.id.hashCode()
++            (instanceId.hashCode() * 31 + instanceName.hashCode()) * 31 +
++                componentInfo.id.hashCode()
+         }
+ 
+     override fun hashCode(): Int {
+@@ -166,10 +171,40 @@ internal class ParentComponentData(
+         if (preComputedHashCode != other.preComputedHashCode) return false
+         if (parent != other.parent) return false
+         if (instanceId != other.instanceId) return false
++        if (instanceName != other.instanceName) return false
+         if (componentInfo != other.componentInfo) return false
+ 
+         return true
+     }
++
++    fun getOverrideStyle(viewName: String, isComponentRoot: Boolean = false): ViewStyle? {
++        if (isComponentRoot && parent == null) {
++            return componentInfo.overridesTableMap[componentInfo.componentSetName]?.styleOrNull
++        }
++        val overrideStyle = componentInfo.overridesTableMap[viewName]?.styleOrNull
++        val parentOverride = parent?.getOverrideStyle("$instanceName:$viewName")
++        return parentOverride ?: overrideStyle
++    }
++
++    fun getOverrideData(viewName: String, isComponentRoot: Boolean = false): ViewData? {
++        if (isComponentRoot && parent == null) {
++            return componentInfo.overridesTableMap[componentInfo.componentSetName]?.viewDataOrNull
++        }
++        val overrideData = componentInfo.overridesTableMap[viewName]?.viewDataOrNull
++        val parentOverride = parent?.getOverrideData("$instanceName:$viewName")
++        return parentOverride ?: overrideData
++    }
++
++    fun getOverrideVariant(viewName: String, isComponentRoot: Boolean = false): String? {
++        if (isComponentRoot) {
++            return parent?.getOverrideVariant(instanceName)
++        } else {
++            val overrideVariant =
++                componentInfo.overridesTableMap[viewName]?.takeIf { it.hasVariantId() }?.variantId
++            val parentOverride = parent?.getOverrideVariant("$instanceName:$viewName")
++            return parentOverride ?: overrideVariant
++        }
++    }
+ }
+ 
+ /// Iterate over a given view tree recursively, applying customizations that will select
+@@ -216,16 +251,15 @@ internal fun resolveVariantsRecursively(
+     // need to get a different layout id.
+     if (viewFromTree.hasComponentInfo()) {
+         parentComps =
+-            ParentComponentData(parentComponents, viewFromTree.id, viewFromTree.componentInfo)
++            ParentComponentData(
++                parentComponents,
++                viewFromTree.id,
++                viewFromTree.name,
++                viewFromTree.componentInfo,
++            )
+ 
+-        overrideStyle =
+-            viewFromTree.componentInfo.overridesTableMap[
+-                    viewFromTree.componentInfo.componentSetName]
+-                ?.styleOrNull
+-        overrideViewData =
+-            viewFromTree.componentInfo.overridesTableMap[
+-                    viewFromTree.componentInfo.componentSetName]
+-                ?.viewDataOrNull
++        overrideStyle = parentComps.getOverrideStyle(viewFromTree.name, isComponentRoot = true)
++        overrideViewData = parentComps.getOverrideData(viewFromTree.name, isComponentRoot = true)
+ 
+         // Ensure that the children of this component get unique layout ids, even though there
+         // may be multiple instances of the same component in one tree.
+@@ -242,9 +276,7 @@ internal fun resolveVariantsRecursively(
+ 
+         // If we didn't replace the component because of an interaction, we might want to replace it
+         // because of a variant customization.
+-        if (
+-            view.name == viewFromTree.name
+-        ) { // TODO: why we don't check if view == viewFromTree????
++        if (view.name == viewFromTree.name) {
+             // If an interaction has not changed the current variant, then check to see if this node
+             // is part of a component set with variants and if any @DesignVariant annotations
+             // set variant properties that match. If so, variantNodeName will be set to the
+@@ -277,14 +309,24 @@ internal fun resolveVariantsRecursively(
+                 if (variantView != null) {
+                     view = variantView
+                 }
++            } else {
++                // If there is a variant override when there is no customization, replace it.
++                parentComps.getOverrideVariant(viewFromTree.name, isComponentRoot = true)?.let {
++                    searchNodes(
++                            NodeQuery.NodeId(it),
++                            document.c.document.views(),
++                            document.c.variantViewMap,
++                            document.c.variantPropertyMap,
++                            document.c.nodeIdMap,
++                        )
++                        ?.let { v -> view = v }
++                }
+             }
+             variantTransition.selectedVariant(viewFromTree, view, customVariantTransition)
+         }
+     } else {
+-        overrideViewData =
+-            parentComps?.componentInfo?.overridesTableMap?.get(viewFromTree.name)?.viewDataOrNull
+-        overrideStyle =
+-            parentComps?.componentInfo?.overridesTableMap?.get(viewFromTree.name)?.styleOrNull
++        overrideViewData = parentComps?.getOverrideData(viewFromTree.name)
++        overrideStyle = parentComps?.getOverrideStyle(viewFromTree.name)
+     }
+ 
+     // Calculate the style we're going to use. If we have an override style then we have to apply
+@@ -356,7 +398,15 @@ internal fun resolveVariantsRecursively(
+ 
+     // If this is a text node being replaced, don't store textInfo into resolvedView
+     val resolvedTextInfo = if (replacementComponent != null) null else textInfo
+-    val resolvedView = SquooshResolvedNode(view, style, layoutId, resolvedTextInfo, viewFromTree.id)
++    val resolvedView =
++        SquooshResolvedNode(
++            view,
++            style,
++            layoutId,
++            resolvedTextInfo,
++            viewFromTree.id,
++            overrideViewData,
++        )
+ 
+     var skipChildren = false // Set to true for customizations that replace children
+     var skipComposableList =
+@@ -619,6 +669,7 @@ internal fun generateReplacementListChildNode(
+             layoutId = layoutId,
+             textInfo = null,
+             unresolvedNodeId = "list-child-${node.unresolvedNodeId}-${childIdx}",
++            overrideViewData = null,
+             firstChild = null,
+             nextSibling = null,
+             parent = node,
+diff --git a/integration-tests/validation/src/main/assets/figma/AlignmentTestDoc_JIjE9oKQbq8ipi66ab5UaK.dcf b/integration-tests/validation/src/main/assets/figma/AlignmentTestDoc_JIjE9oKQbq8ipi66ab5UaK.dcf
+index ce3adc8a..8378803e 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/AlignmentTestDoc_JIjE9oKQbq8ipi66ab5UaK.dcf and b/integration-tests/validation/src/main/assets/figma/AlignmentTestDoc_JIjE9oKQbq8ipi66ab5UaK.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/AutoLayoutMinMaxTestDoc_ArHVZAQIsKf2B9mATnVvLX.dcf b/integration-tests/validation/src/main/assets/figma/AutoLayoutMinMaxTestDoc_ArHVZAQIsKf2B9mATnVvLX.dcf
+index b56f8c57..e7a1c336 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/AutoLayoutMinMaxTestDoc_ArHVZAQIsKf2B9mATnVvLX.dcf and b/integration-tests/validation/src/main/assets/figma/AutoLayoutMinMaxTestDoc_ArHVZAQIsKf2B9mATnVvLX.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/BattleshipDoc_RfGl9SWnBEvdg8T1Ex6ZAR.dcf b/integration-tests/validation/src/main/assets/figma/BattleshipDoc_RfGl9SWnBEvdg8T1Ex6ZAR.dcf
+index b401cb12..3c63f647 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/BattleshipDoc_RfGl9SWnBEvdg8T1Ex6ZAR.dcf and b/integration-tests/validation/src/main/assets/figma/BattleshipDoc_RfGl9SWnBEvdg8T1Ex6ZAR.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/BlendModeTestDoc_ZqX5i5g6inv9tANIwMMXUV.dcf b/integration-tests/validation/src/main/assets/figma/BlendModeTestDoc_ZqX5i5g6inv9tANIwMMXUV.dcf
+index f08e881b..30a18507 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/BlendModeTestDoc_ZqX5i5g6inv9tANIwMMXUV.dcf and b/integration-tests/validation/src/main/assets/figma/BlendModeTestDoc_ZqX5i5g6inv9tANIwMMXUV.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/BrushFromShaderPluginTestDoc_TkgjNl81e5joWeAivmIdzm.dcf b/integration-tests/validation/src/main/assets/figma/BrushFromShaderPluginTestDoc_TkgjNl81e5joWeAivmIdzm.dcf
+index c88cb4d3..bfc46600 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/BrushFromShaderPluginTestDoc_TkgjNl81e5joWeAivmIdzm.dcf and b/integration-tests/validation/src/main/assets/figma/BrushFromShaderPluginTestDoc_TkgjNl81e5joWeAivmIdzm.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ColorTintTestDoc_MCtUD3yjONxK6rQm65yqM5.dcf b/integration-tests/validation/src/main/assets/figma/ColorTintTestDoc_MCtUD3yjONxK6rQm65yqM5.dcf
+index 22fe8f82..42c6ef6f 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ColorTintTestDoc_MCtUD3yjONxK6rQm65yqM5.dcf and b/integration-tests/validation/src/main/assets/figma/ColorTintTestDoc_MCtUD3yjONxK6rQm65yqM5.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ComponentOverridesTestDoc_0yGWgsnmpZk1yVVcGnoEKN.dcf b/integration-tests/validation/src/main/assets/figma/ComponentOverridesTestDoc_0yGWgsnmpZk1yVVcGnoEKN.dcf
+index 963202e2..59cf0aa0 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ComponentOverridesTestDoc_0yGWgsnmpZk1yVVcGnoEKN.dcf and b/integration-tests/validation/src/main/assets/figma/ComponentOverridesTestDoc_0yGWgsnmpZk1yVVcGnoEKN.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ComponentReplaceDoc_bQVVy2GSZJ8veYaJUrG6Ni.dcf b/integration-tests/validation/src/main/assets/figma/ComponentReplaceDoc_bQVVy2GSZJ8veYaJUrG6Ni.dcf
+index fa1db0a4..5421fa90 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ComponentReplaceDoc_bQVVy2GSZJ8veYaJUrG6Ni.dcf and b/integration-tests/validation/src/main/assets/figma/ComponentReplaceDoc_bQVVy2GSZJ8veYaJUrG6Ni.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ComponentReplaceRelayoutDoc_qIh0IOQTCtgeAWZFF5gYSk.dcf b/integration-tests/validation/src/main/assets/figma/ComponentReplaceRelayoutDoc_qIh0IOQTCtgeAWZFF5gYSk.dcf
+index 1ca686b3..2af76c4b 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ComponentReplaceRelayoutDoc_qIh0IOQTCtgeAWZFF5gYSk.dcf and b/integration-tests/validation/src/main/assets/figma/ComponentReplaceRelayoutDoc_qIh0IOQTCtgeAWZFF5gYSk.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ComponentTapCallbackDoc_1jeKYynjk1nqYblZ66QDDK.dcf b/integration-tests/validation/src/main/assets/figma/ComponentTapCallbackDoc_1jeKYynjk1nqYblZ66QDDK.dcf
+index 478a44e4..e1a11faf 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ComponentTapCallbackDoc_1jeKYynjk1nqYblZ66QDDK.dcf and b/integration-tests/validation/src/main/assets/figma/ComponentTapCallbackDoc_1jeKYynjk1nqYblZ66QDDK.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ConstraintsDoc_KuHLbsKA23DjZPhhgHqt71.dcf b/integration-tests/validation/src/main/assets/figma/ConstraintsDoc_KuHLbsKA23DjZPhhgHqt71.dcf
+index 501383df..fcdc9390 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ConstraintsDoc_KuHLbsKA23DjZPhhgHqt71.dcf and b/integration-tests/validation/src/main/assets/figma/ConstraintsDoc_KuHLbsKA23DjZPhhgHqt71.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/CrossAxisFillTestDoc_GPr1cx4n3zBPwLhqlSL1ba.dcf b/integration-tests/validation/src/main/assets/figma/CrossAxisFillTestDoc_GPr1cx4n3zBPwLhqlSL1ba.dcf
+index 99379451..f50c56fe 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/CrossAxisFillTestDoc_GPr1cx4n3zBPwLhqlSL1ba.dcf and b/integration-tests/validation/src/main/assets/figma/CrossAxisFillTestDoc_GPr1cx4n3zBPwLhqlSL1ba.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/DialsGaugesTestDoc_lZj6E9GtIQQE4HNLpzgETw.dcf b/integration-tests/validation/src/main/assets/figma/DialsGaugesTestDoc_lZj6E9GtIQQE4HNLpzgETw.dcf
+index 98da1cd7..0978cfa5 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/DialsGaugesTestDoc_lZj6E9GtIQQE4HNLpzgETw.dcf and b/integration-tests/validation/src/main/assets/figma/DialsGaugesTestDoc_lZj6E9GtIQQE4HNLpzgETw.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/FancyFillTestDoc_xQ9cunHt8VUm6xqJJ2Pjb2.dcf b/integration-tests/validation/src/main/assets/figma/FancyFillTestDoc_xQ9cunHt8VUm6xqJJ2Pjb2.dcf
+index 11595852..bc32e9cf 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/FancyFillTestDoc_xQ9cunHt8VUm6xqJJ2Pjb2.dcf and b/integration-tests/validation/src/main/assets/figma/FancyFillTestDoc_xQ9cunHt8VUm6xqJJ2Pjb2.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/FillTestDoc_dB3q96FkxkTO4czn5NqnxV.dcf b/integration-tests/validation/src/main/assets/figma/FillTestDoc_dB3q96FkxkTO4czn5NqnxV.dcf
+index d8675490..c7e50bcd 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/FillTestDoc_dB3q96FkxkTO4czn5NqnxV.dcf and b/integration-tests/validation/src/main/assets/figma/FillTestDoc_dB3q96FkxkTO4czn5NqnxV.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/GridLayoutTestDoc_JOSOEvsrjvMqanyQa5OpNR.dcf b/integration-tests/validation/src/main/assets/figma/GridLayoutTestDoc_JOSOEvsrjvMqanyQa5OpNR.dcf
+index 5f244fff..93425a70 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/GridLayoutTestDoc_JOSOEvsrjvMqanyQa5OpNR.dcf and b/integration-tests/validation/src/main/assets/figma/GridLayoutTestDoc_JOSOEvsrjvMqanyQa5OpNR.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/GridWidgetTestDoc_OBhNItd9i9J2LwVYuLxEIx.dcf b/integration-tests/validation/src/main/assets/figma/GridWidgetTestDoc_OBhNItd9i9J2LwVYuLxEIx.dcf
+index fe152631..f3c5288a 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/GridWidgetTestDoc_OBhNItd9i9J2LwVYuLxEIx.dcf and b/integration-tests/validation/src/main/assets/figma/GridWidgetTestDoc_OBhNItd9i9J2LwVYuLxEIx.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/HelloVersionDoc_v62Vwlxa4Bb6nopJiAxQAQ_5668177823.dcf b/integration-tests/validation/src/main/assets/figma/HelloVersionDoc_v62Vwlxa4Bb6nopJiAxQAQ_5668177823.dcf
+index 9b767bc1..48e2cd28 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/HelloVersionDoc_v62Vwlxa4Bb6nopJiAxQAQ_5668177823.dcf and b/integration-tests/validation/src/main/assets/figma/HelloVersionDoc_v62Vwlxa4Bb6nopJiAxQAQ_5668177823.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/HyperlinkValidationDoc_uBExbEg4lcRa0xN2yaLTX8.dcf b/integration-tests/validation/src/main/assets/figma/HyperlinkValidationDoc_uBExbEg4lcRa0xN2yaLTX8.dcf
+index aeb1a10c..5f94f813 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/HyperlinkValidationDoc_uBExbEg4lcRa0xN2yaLTX8.dcf and b/integration-tests/validation/src/main/assets/figma/HyperlinkValidationDoc_uBExbEg4lcRa0xN2yaLTX8.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/IgnoreAutoLayoutTestDoc_vPNR6N02HfdcpC8wR5yBYP.dcf b/integration-tests/validation/src/main/assets/figma/IgnoreAutoLayoutTestDoc_vPNR6N02HfdcpC8wR5yBYP.dcf
+index 0b44e8aa..47672b41 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/IgnoreAutoLayoutTestDoc_vPNR6N02HfdcpC8wR5yBYP.dcf and b/integration-tests/validation/src/main/assets/figma/IgnoreAutoLayoutTestDoc_vPNR6N02HfdcpC8wR5yBYP.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ImageUpdateTestDoc_oQw7kiy94fvdVouCYBC9T0.dcf b/integration-tests/validation/src/main/assets/figma/ImageUpdateTestDoc_oQw7kiy94fvdVouCYBC9T0.dcf
+index 758daa59..ca2d538a 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ImageUpdateTestDoc_oQw7kiy94fvdVouCYBC9T0.dcf and b/integration-tests/validation/src/main/assets/figma/ImageUpdateTestDoc_oQw7kiy94fvdVouCYBC9T0.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/InteractionTestDoc_8Zg9viyjYTnyN29pbkR1CE.dcf b/integration-tests/validation/src/main/assets/figma/InteractionTestDoc_8Zg9viyjYTnyN29pbkR1CE.dcf
+index 97507c00..f0f4e5d3 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/InteractionTestDoc_8Zg9viyjYTnyN29pbkR1CE.dcf and b/integration-tests/validation/src/main/assets/figma/InteractionTestDoc_8Zg9viyjYTnyN29pbkR1CE.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ItemSpacingTestDoc_YXrHBp6C6OaW5ShcCYeGJc.dcf b/integration-tests/validation/src/main/assets/figma/ItemSpacingTestDoc_YXrHBp6C6OaW5ShcCYeGJc.dcf
+index 2551292f..7af7a0b4 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ItemSpacingTestDoc_YXrHBp6C6OaW5ShcCYeGJc.dcf and b/integration-tests/validation/src/main/assets/figma/ItemSpacingTestDoc_YXrHBp6C6OaW5ShcCYeGJc.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/LayoutReplacementTestDoc_dwk2GF7RiNvlbbAKPjqldx.dcf b/integration-tests/validation/src/main/assets/figma/LayoutReplacementTestDoc_dwk2GF7RiNvlbbAKPjqldx.dcf
+index e7d1464c..487971db 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/LayoutReplacementTestDoc_dwk2GF7RiNvlbbAKPjqldx.dcf and b/integration-tests/validation/src/main/assets/figma/LayoutReplacementTestDoc_dwk2GF7RiNvlbbAKPjqldx.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/LayoutTestsDoc_Gv63fYTzpeH2ZtxP4go31E.dcf b/integration-tests/validation/src/main/assets/figma/LayoutTestsDoc_Gv63fYTzpeH2ZtxP4go31E.dcf
+index 5c209810..e968d470 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/LayoutTestsDoc_Gv63fYTzpeH2ZtxP4go31E.dcf and b/integration-tests/validation/src/main/assets/figma/LayoutTestsDoc_Gv63fYTzpeH2ZtxP4go31E.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ListWidgetTestDoc_9ev0MBNHFrgTqJOrAGcEpV.dcf b/integration-tests/validation/src/main/assets/figma/ListWidgetTestDoc_9ev0MBNHFrgTqJOrAGcEpV.dcf
+index 25bb88ff..17504429 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ListWidgetTestDoc_9ev0MBNHFrgTqJOrAGcEpV.dcf and b/integration-tests/validation/src/main/assets/figma/ListWidgetTestDoc_9ev0MBNHFrgTqJOrAGcEpV.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/MaskTestDoc_mEmdUVEIjvBBbV0kELPy37.dcf b/integration-tests/validation/src/main/assets/figma/MaskTestDoc_mEmdUVEIjvBBbV0kELPy37.dcf
+index 691d0bb2..77e28464 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/MaskTestDoc_mEmdUVEIjvBBbV0kELPy37.dcf and b/integration-tests/validation/src/main/assets/figma/MaskTestDoc_mEmdUVEIjvBBbV0kELPy37.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ModuleExampleDoc_hPEGkrF0LUqNYEZObXqjXZ.dcf b/integration-tests/validation/src/main/assets/figma/ModuleExampleDoc_hPEGkrF0LUqNYEZObXqjXZ.dcf
+index 609d75ea..4bff838d 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ModuleExampleDoc_hPEGkrF0LUqNYEZObXqjXZ.dcf and b/integration-tests/validation/src/main/assets/figma/ModuleExampleDoc_hPEGkrF0LUqNYEZObXqjXZ.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/OnePxSeparatorDoc_EXjTHxfMNBtXDrz8hr6MFB.dcf b/integration-tests/validation/src/main/assets/figma/OnePxSeparatorDoc_EXjTHxfMNBtXDrz8hr6MFB.dcf
+index 45e15709..0ce9b538 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/OnePxSeparatorDoc_EXjTHxfMNBtXDrz8hr6MFB.dcf and b/integration-tests/validation/src/main/assets/figma/OnePxSeparatorDoc_EXjTHxfMNBtXDrz8hr6MFB.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/OpenLinkTestDoc_r7m4tqyKv6y9DWcg7QBEDf.dcf b/integration-tests/validation/src/main/assets/figma/OpenLinkTestDoc_r7m4tqyKv6y9DWcg7QBEDf.dcf
+index eb842705..dd724b60 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/OpenLinkTestDoc_r7m4tqyKv6y9DWcg7QBEDf.dcf and b/integration-tests/validation/src/main/assets/figma/OpenLinkTestDoc_r7m4tqyKv6y9DWcg7QBEDf.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/RecursiveCustomizationsDoc_o0GWzcqdOWEgzj4kIeIlAu.dcf b/integration-tests/validation/src/main/assets/figma/RecursiveCustomizationsDoc_o0GWzcqdOWEgzj4kIeIlAu.dcf
+index d2739cd7..c990e580 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/RecursiveCustomizationsDoc_o0GWzcqdOWEgzj4kIeIlAu.dcf and b/integration-tests/validation/src/main/assets/figma/RecursiveCustomizationsDoc_o0GWzcqdOWEgzj4kIeIlAu.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ScrollingTestDoc_1kyFRMyqZt6ylhOUKUvI2J.dcf b/integration-tests/validation/src/main/assets/figma/ScrollingTestDoc_1kyFRMyqZt6ylhOUKUvI2J.dcf
+index f1e52453..3dd5f0b1 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ScrollingTestDoc_1kyFRMyqZt6ylhOUKUvI2J.dcf and b/integration-tests/validation/src/main/assets/figma/ScrollingTestDoc_1kyFRMyqZt6ylhOUKUvI2J.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/ShadowsTestDoc_OqK58Y46IqP4wIgKCWys48.dcf b/integration-tests/validation/src/main/assets/figma/ShadowsTestDoc_OqK58Y46IqP4wIgKCWys48.dcf
+index c1bb9bc9..6cef6237 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/ShadowsTestDoc_OqK58Y46IqP4wIgKCWys48.dcf and b/integration-tests/validation/src/main/assets/figma/ShadowsTestDoc_OqK58Y46IqP4wIgKCWys48.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/SmartAnimateTestDoc_RW3lFurXCoVDeqY2Y7bf4v.dcf b/integration-tests/validation/src/main/assets/figma/SmartAnimateTestDoc_RW3lFurXCoVDeqY2Y7bf4v.dcf
+index aaceddca..797965a1 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/SmartAnimateTestDoc_RW3lFurXCoVDeqY2Y7bf4v.dcf and b/integration-tests/validation/src/main/assets/figma/SmartAnimateTestDoc_RW3lFurXCoVDeqY2Y7bf4v.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/StyledTextRunsDoc_mIYV4YsYYaMTsBMCVskA4N.dcf b/integration-tests/validation/src/main/assets/figma/StyledTextRunsDoc_mIYV4YsYYaMTsBMCVskA4N.dcf
+index 3b04d546..d0d43acf 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/StyledTextRunsDoc_mIYV4YsYYaMTsBMCVskA4N.dcf and b/integration-tests/validation/src/main/assets/figma/StyledTextRunsDoc_mIYV4YsYYaMTsBMCVskA4N.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/TelltaleTestDoc_TZgHrKWx8wvQM7UPTyEpmz.dcf b/integration-tests/validation/src/main/assets/figma/TelltaleTestDoc_TZgHrKWx8wvQM7UPTyEpmz.dcf
+index 0cd6cb87..d40f8a60 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/TelltaleTestDoc_TZgHrKWx8wvQM7UPTyEpmz.dcf and b/integration-tests/validation/src/main/assets/figma/TelltaleTestDoc_TZgHrKWx8wvQM7UPTyEpmz.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/TextElideTestDoc_oQ7nK49Ya5PJ3GpjI5iy8d.dcf b/integration-tests/validation/src/main/assets/figma/TextElideTestDoc_oQ7nK49Ya5PJ3GpjI5iy8d.dcf
+index 9e2770e8..e2283efa 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/TextElideTestDoc_oQ7nK49Ya5PJ3GpjI5iy8d.dcf and b/integration-tests/validation/src/main/assets/figma/TextElideTestDoc_oQ7nK49Ya5PJ3GpjI5iy8d.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/TextReplaceDoc_yX3mcO0qFnvG6ruUYhHBMR.dcf b/integration-tests/validation/src/main/assets/figma/TextReplaceDoc_yX3mcO0qFnvG6ruUYhHBMR.dcf
+index 6e054a5f..52e68a4c 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/TextReplaceDoc_yX3mcO0qFnvG6ruUYhHBMR.dcf and b/integration-tests/validation/src/main/assets/figma/TextReplaceDoc_yX3mcO0qFnvG6ruUYhHBMR.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/TextResizingTestDoc_kAoYvgHkPzA4J4pALZ3Xhg.dcf b/integration-tests/validation/src/main/assets/figma/TextResizingTestDoc_kAoYvgHkPzA4J4pALZ3Xhg.dcf
+index 8659833b..0e3f34fb 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/TextResizingTestDoc_kAoYvgHkPzA4J4pALZ3Xhg.dcf and b/integration-tests/validation/src/main/assets/figma/TextResizingTestDoc_kAoYvgHkPzA4J4pALZ3Xhg.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/VariableBorderTestDoc_MWnVAfW3FupV4VMLNR1m67.dcf b/integration-tests/validation/src/main/assets/figma/VariableBorderTestDoc_MWnVAfW3FupV4VMLNR1m67.dcf
+index 654aff11..bee626c6 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/VariableBorderTestDoc_MWnVAfW3FupV4VMLNR1m67.dcf and b/integration-tests/validation/src/main/assets/figma/VariableBorderTestDoc_MWnVAfW3FupV4VMLNR1m67.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/VariablesTestDoc_HhGxvL4aHhP8ALsLNz56TP.dcf b/integration-tests/validation/src/main/assets/figma/VariablesTestDoc_HhGxvL4aHhP8ALsLNz56TP.dcf
+index 854acc77..28f2fcf7 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/VariablesTestDoc_HhGxvL4aHhP8ALsLNz56TP.dcf and b/integration-tests/validation/src/main/assets/figma/VariablesTestDoc_HhGxvL4aHhP8ALsLNz56TP.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/VariantAnimationTestDoc_pghyUUhlzJNoxxSK86ngiw.dcf b/integration-tests/validation/src/main/assets/figma/VariantAnimationTestDoc_pghyUUhlzJNoxxSK86ngiw.dcf
+index ba436157..f0b0b4f3 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/VariantAnimationTestDoc_pghyUUhlzJNoxxSK86ngiw.dcf and b/integration-tests/validation/src/main/assets/figma/VariantAnimationTestDoc_pghyUUhlzJNoxxSK86ngiw.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/VariantAnimationTimelineTestDoc_vJRf4zxY4QX4zzSSUd1nJ5.dcf b/integration-tests/validation/src/main/assets/figma/VariantAnimationTimelineTestDoc_vJRf4zxY4QX4zzSSUd1nJ5.dcf
+index 776175dc..e6ab44b7 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/VariantAnimationTimelineTestDoc_vJRf4zxY4QX4zzSSUd1nJ5.dcf and b/integration-tests/validation/src/main/assets/figma/VariantAnimationTimelineTestDoc_vJRf4zxY4QX4zzSSUd1nJ5.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/VariantAsteriskTestDoc_gQeYHGCSaBE4zYSFpBrhre.dcf b/integration-tests/validation/src/main/assets/figma/VariantAsteriskTestDoc_gQeYHGCSaBE4zYSFpBrhre.dcf
+index e096a59a..d58b277d 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/VariantAsteriskTestDoc_gQeYHGCSaBE4zYSFpBrhre.dcf and b/integration-tests/validation/src/main/assets/figma/VariantAsteriskTestDoc_gQeYHGCSaBE4zYSFpBrhre.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/VariantInteractionsTestDoc_WcsgoLR4aDRSkZHY29Qdhq.dcf b/integration-tests/validation/src/main/assets/figma/VariantInteractionsTestDoc_WcsgoLR4aDRSkZHY29Qdhq.dcf
+index 05ff57ad..a5578813 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/VariantInteractionsTestDoc_WcsgoLR4aDRSkZHY29Qdhq.dcf and b/integration-tests/validation/src/main/assets/figma/VariantInteractionsTestDoc_WcsgoLR4aDRSkZHY29Qdhq.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/VariantNestingDoc_lpUWHv5gZh6WOx56pRnJ2s.dcf b/integration-tests/validation/src/main/assets/figma/VariantNestingDoc_lpUWHv5gZh6WOx56pRnJ2s.dcf
+index 0d6a216f..2f45a3b7 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/VariantNestingDoc_lpUWHv5gZh6WOx56pRnJ2s.dcf and b/integration-tests/validation/src/main/assets/figma/VariantNestingDoc_lpUWHv5gZh6WOx56pRnJ2s.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/VariantPropertiesTestDoc_4P7zDdrQxj7FZsKJoIQcx1.dcf b/integration-tests/validation/src/main/assets/figma/VariantPropertiesTestDoc_4P7zDdrQxj7FZsKJoIQcx1.dcf
+index 85ecfd97..cd2c8740 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/VariantPropertiesTestDoc_4P7zDdrQxj7FZsKJoIQcx1.dcf and b/integration-tests/validation/src/main/assets/figma/VariantPropertiesTestDoc_4P7zDdrQxj7FZsKJoIQcx1.dcf differ
+diff --git a/integration-tests/validation/src/main/assets/figma/VectorRenderingTestDoc_Z3ucY0wMAbIwZIa6mLEWIK.dcf b/integration-tests/validation/src/main/assets/figma/VectorRenderingTestDoc_Z3ucY0wMAbIwZIa6mLEWIK.dcf
+index 5f42ec28..07a5aed4 100644
+Binary files a/integration-tests/validation/src/main/assets/figma/VectorRenderingTestDoc_Z3ucY0wMAbIwZIa6mLEWIK.dcf and b/integration-tests/validation/src/main/assets/figma/VectorRenderingTestDoc_Z3ucY0wMAbIwZIa6mLEWIK.dcf differ
+diff --git a/integration-tests/validation/src/main/java/com/android/designcompose/testapp/validation/MainActivity.kt b/integration-tests/validation/src/main/java/com/android/designcompose/testapp/validation/MainActivity.kt
+index cc1bfd44..d7951043 100644
+--- a/integration-tests/validation/src/main/java/com/android/designcompose/testapp/validation/MainActivity.kt
++++ b/integration-tests/validation/src/main/java/com/android/designcompose/testapp/validation/MainActivity.kt
+@@ -57,7 +57,6 @@ const val TAG = "DesignCompose"
+ class MainActivity : ComponentActivity() {
+     private lateinit var currentDisplay:
+         MutableState<Triple<String, @Composable () -> Unit, String?>>
+-    private lateinit var enableRendererToggle: MutableState<Boolean>
+ 
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
+diff --git a/integration-tests/validation/src/testDebug/kotlin/com/android/designcompose/testapp/validation/ComponentOverrides.kt b/integration-tests/validation/src/testDebug/kotlin/com/android/designcompose/testapp/validation/ComponentOverrides.kt
+index b240e3fd..35fa0833 100644
+--- a/integration-tests/validation/src/testDebug/kotlin/com/android/designcompose/testapp/validation/ComponentOverrides.kt
++++ b/integration-tests/validation/src/testDebug/kotlin/com/android/designcompose/testapp/validation/ComponentOverrides.kt
+@@ -133,7 +133,7 @@ class ComponentOverrides {
+     fun testComponent_overrideTextProperty() {
+         with(composeTestRule) {
+             with(onDCDocAnyNode(ComponentOverridesTestDoc)) {
+-                onNodeWithTag("#button").performTouchInput { down(center) }
++                onNodeWithTag("#ok_button").performTouchInput { down(center) }
+                 captureRootRoboImage("button_overrideTextProperty")
+             }
+         }
+diff --git a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/button_overrideTextProperty.png b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/button_overrideTextProperty.png
+index d4aafba5..239a8124 100644
+Binary files a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/button_overrideTextProperty.png and b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/button_overrideTextProperty.png differ
+diff --git a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/differentTexts_overrideText.png b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/differentTexts_overrideText.png
+index b2f9a610..a365a0ca 100644
+Binary files a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/differentTexts_overrideText.png and b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/differentTexts_overrideText.png differ
+diff --git a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/fixedWidth_overrideWidth.png b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/fixedWidth_overrideWidth.png
+index 91622dc5..021bbaa3 100644
+Binary files a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/fixedWidth_overrideWidth.png and b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/fixedWidth_overrideWidth.png differ
+diff --git a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideChildFills.png b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideChildFills.png
+index 997bffd7..8e0063d9 100644
+Binary files a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideChildFills.png and b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideChildFills.png differ
+diff --git a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideFills.png b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideFills.png
+index 486ea9f5..453be846 100644
+Binary files a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideFills.png and b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideFills.png differ
+diff --git a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideSize.png b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideSize.png
+index c4c6b137..a9d32cb7 100644
+Binary files a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideSize.png and b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideSize.png differ
+diff --git a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideStroke.png b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideStroke.png
+index 4ea0a7d8..8a524e88 100644
+Binary files a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideStroke.png and b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/frame_overrideStroke.png differ
+diff --git a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/hug_overrideToFixedWidth.png b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/hug_overrideToFixedWidth.png
+index 09a04eef..2e22627c 100644
+Binary files a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/hug_overrideToFixedWidth.png and b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/hug_overrideToFixedWidth.png differ
+diff --git a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/sameText_overrideText.png b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/sameText_overrideText.png
+index 7567a817..4034f050 100644
+Binary files a/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/sameText_overrideText.png and b/integration-tests/validation/src/testDebug/roborazzi/ComponentOverrides/sameText_overrideText.png differ
+diff --git a/integration-tests/validation/src/testDebug/roborazzi/RenderAllExamples/Component-Overrides.png b/integration-tests/validation/src/testDebug/roborazzi/RenderAllExamples/Component-Overrides.png
+index 58cc969d..8dd511f7 100644
+Binary files a/integration-tests/validation/src/testDebug/roborazzi/RenderAllExamples/Component-Overrides.png and b/integration-tests/validation/src/testDebug/roborazzi/RenderAllExamples/Component-Overrides.png differ
+diff --git a/reference-apps/tutorial/app/src/main/assets/figma/TutorialDoc_3z4xExq0INrL9vxPhj9tl7.dcf b/reference-apps/tutorial/app/src/main/assets/figma/TutorialDoc_3z4xExq0INrL9vxPhj9tl7.dcf
+index 6d30205e..7878fc38 100644
+Binary files a/reference-apps/tutorial/app/src/main/assets/figma/TutorialDoc_3z4xExq0INrL9vxPhj9tl7.dcf and b/reference-apps/tutorial/app/src/main/assets/figma/TutorialDoc_3z4xExq0INrL9vxPhj9tl7.dcf differ

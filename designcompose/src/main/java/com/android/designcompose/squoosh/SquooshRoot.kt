@@ -30,6 +30,7 @@ import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -110,6 +111,7 @@ import com.android.designcompose.dispatch
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
+import com.android.designcompose.getLongPressCallback
 import com.android.designcompose.getModifier
 import com.android.designcompose.getOpenLinkCallback
 import com.android.designcompose.getScrollCallbacks
@@ -375,7 +377,7 @@ fun SquooshRoot(
     // what's different from last time? Does the Rust side track
     val composableList = ComposableList()
     keyEventTracker.clearListeners()
-    val variableState = VariableState.create()
+    val variableState = VariableState.create(docId = doc.c.docId.id)
     val root =
         resolveVariantsRecursively(
             startFrame,
@@ -445,7 +447,7 @@ fun SquooshRoot(
                 layoutIdAllocator,
                 variantParentName,
                 isRoot,
-                VariableState.create(),
+                VariableState.create(docId = doc.c.docId.id),
                 LocalContext.current,
                 LocalDesignDocSettings.current.customVariantTransition,
                 textMeasureCache,
@@ -706,9 +708,15 @@ fun SquooshRoot(
         LocalSquooshIsRootContext provides SquooshIsRoot(false),
         LocalCustomizationContext provides customizationContext,
     ) {
+        val rootCustomModifier =
+            (customizationContext.getModifier(root.unresolvedName)
+                    ?: customizationContext.getModifier(root.view.name))
+                .takeIfNotEmpty()
+        val combinedRootModifier =
+            if (rootCustomModifier != null) modifier.then(rootCustomModifier) else modifier
         androidx.compose.ui.layout.Layout(
             modifier =
-                modifier
+                combinedRootModifier
                     .squooshRender(
                         presentationRoot,
                         doc,
@@ -718,7 +726,7 @@ fun SquooshRoot(
                         // Is there a nicer way of passing these two?
                         currentAnimations,
                         animPlayTimeNanosState,
-                        VariableState.create(),
+                        VariableState.create(docId = doc.c.docId.id),
                         LocalVariableState.hasOverrideModeValues(),
                         computedPathCache,
                         shaderBrushCache,
@@ -768,9 +776,11 @@ fun SquooshRoot(
                     // Apply any user-provided Modifier customization. This was lost during the
                     // Squoosh migration — the setModifier/getModifier API existed but squoosh
                     // never retrieved and applied the custom modifier. (Issue #2292)
-                    customizationContext.getModifier(child.node.view.name)?.let {
-                        composableChildModifier = composableChildModifier.then(it)
-                    }
+                    (child.customModifier
+                            ?: customizationContext.getModifier(child.node.unresolvedName)
+                            ?: customizationContext.getModifier(child.node.view.name))
+                        .takeIfNotEmpty()
+                        ?.let { composableChildModifier = composableChildModifier.then(it) }
 
                     if (child.scrollView != null) {
                         // Compose a scrollable view as a separate composable in order to detect
@@ -795,7 +805,13 @@ fun SquooshRoot(
                     } else if (child.component == null) {
                         // If there are press or click reactions, composition is needed
                         var hasPressClick =
-                            customizationContext.getTapCallback(child.node.view) != null
+                            customizationContext.getTapCallback(child.node.unresolvedName) !=
+                                null ||
+                                customizationContext.getTapCallback(child.node.view) != null ||
+                                customizationContext.getLongPressCallback(
+                                    child.node.unresolvedName
+                                ) != null ||
+                                customizationContext.getLongPressCallback(child.node.view) != null
                         child.node.view.reactionsList.forEach {
                             if (it.trigger.hasPress() || it.trigger.hasClick()) hasPressClick = true
                             else if (it.trigger.hasAfterTimeout()) {
@@ -874,7 +890,41 @@ fun SquooshRoot(
                                     customizationContext,
                                     meter,
                                 )
-                        } else {
+                        }
+
+                        if (child.node.needsChildRender && child.customModifier != null) {
+                            // Modifier-only node: needs composition so the user's Modifier
+                            // wraps the rendered subtree pixels. Render using squooshRender
+                            // on the already-resolved tree — no sub-SquooshRoot, no recursion.
+                            child.component = { _ ->
+                                Spacer(
+                                    modifier =
+                                        Modifier.squooshRender(
+                                            child.node,
+                                            doc,
+                                            docName,
+                                            customizationContext,
+                                            childRenderSelector,
+                                            currentAnimations,
+                                            animPlayTimeNanosState,
+                                            VariableState.create(docId = doc.c.docId.id),
+                                            LocalVariableState.hasOverrideModeValues(),
+                                            computedPathCache,
+                                            shaderBrushCache,
+                                            appContext = LocalContext.current,
+                                            scrollOffset,
+                                            skipRootChildRender = true,
+                                        )
+                                )
+                            }
+                        } else if (
+                            !hasPressClick &&
+                                !interactionState.isPressed.contains(child.node.unresolvedNodeId) &&
+                                child.node.textInfo?.hyperlinkOffsetMap?.isNotEmpty() != true &&
+                                child.node.findProgressBarChild() == null &&
+                                child.node.findProgressMarkerDescendant() == null &&
+                                child.customModifier == null
+                        ) {
                             needsComposition = false
                         }
                     }

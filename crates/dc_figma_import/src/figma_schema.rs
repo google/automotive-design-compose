@@ -301,11 +301,20 @@ impl Into<dc_bundle::path::path::WindingRule> for WindingRule {
     }
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PathFillOverride {
+    #[serde(default)]
+    pub fills: Vec<Paint>,
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone, Hash, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Path {
     pub path: String,
     pub winding_rule: WindingRule,
+    #[serde(rename = "overrideID", default)]
+    pub override_id: Option<usize>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
@@ -1059,6 +1068,8 @@ pub struct Node {
     pub size: Option<Vector>,
     pub fill_geometry: Option<Vec<Path>>,
     pub stroke_geometry: Option<Vec<Path>>,
+    #[serde(default)]
+    pub fill_override_table: HashMap<String, Option<PathFillOverride>>,
     #[serde(default = "default_stroke_cap")]
     pub stroke_cap: StrokeCap,
     pub bound_variables: Option<BoundVariables>,
@@ -1487,5 +1498,91 @@ mod tests {
         }"#;
         let node: Node = serde_json::from_str(json).unwrap();
         assert_eq!(node.name, "Section With Extras");
+    }
+
+    #[test]
+    fn test_vector_node_with_fill_override_table() {
+        let json = r#"{
+            "id": "10:20",
+            "name": "Custom Vector",
+            "type": "VECTOR",
+            "visible": true,
+            "opacity": 1.0,
+            "fills": [],
+            "strokes": [],
+            "effects": [],
+            "children": [],
+            "constraints": {
+                "vertical": "TOP",
+                "horizontal": "LEFT"
+            },
+            "fillGeometry": [
+                {
+                    "path": "M 0 0 L 10 0 L 10 10 Z",
+                    "windingRule": "NONZERO",
+                    "overrideID": 0
+                },
+                {
+                    "path": "M 20 20 L 30 20 L 30 30 Z",
+                    "windingRule": "EVENODD",
+                    "overrideID": 1
+                }
+            ],
+            "fillOverrideTable": {
+                "0": {
+                    "fills": [
+                        {
+                            "type": "SOLID",
+                            "visible": true,
+                            "opacity": 1.0,
+                            "blendMode": "NORMAL",
+                            "color": { "r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0 }
+                        }
+                    ]
+                },
+                "1": {
+                    "fills": [
+                        {
+                            "type": "SOLID",
+                            "visible": true,
+                            "opacity": 0.8,
+                            "blendMode": "NORMAL",
+                            "color": { "r": 0.0, "g": 1.0, "b": 0.0, "a": 1.0 }
+                        }
+                    ]
+                }
+            }
+        }"#;
+
+        let node: Node = serde_json::from_str(json).unwrap();
+        assert_eq!(node.id, "10:20");
+        assert_eq!(node.name, "Custom Vector");
+
+        let fill_geom = node.fill_geometry.as_ref().expect("fillGeometry present");
+        assert_eq!(fill_geom.len(), 2);
+        assert_eq!(fill_geom[0].override_id, Some(0));
+        assert_eq!(fill_geom[1].override_id, Some(1));
+
+        let override_0 =
+            node.fill_override_table.get("0").and_then(|o| o.as_ref()).expect("override 0 present");
+        assert_eq!(override_0.fills.len(), 1);
+        match &override_0.fills[0].data {
+            PaintData::Solid { color, .. } => {
+                assert_eq!(color.r, 1.0);
+                assert_eq!(color.g, 0.0);
+            }
+            _ => panic!("Expected solid paint"),
+        }
+
+        let override_1 =
+            node.fill_override_table.get("1").and_then(|o| o.as_ref()).expect("override 1 present");
+        assert_eq!(override_1.fills.len(), 1);
+        match &override_1.fills[0].data {
+            PaintData::Solid { color, .. } => {
+                assert_eq!(color.r, 0.0);
+                assert_eq!(color.g, 1.0);
+            }
+            _ => panic!("Expected solid paint"),
+        }
     }
 }

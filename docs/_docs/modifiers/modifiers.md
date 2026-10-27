@@ -753,6 +753,67 @@ The live view appears below after replacing the data with live content.
 
 **Figure 5.** Grid view in Android
 
+### KSP-Generated Node JSON File {#ksp-generated-node-json}
+
+When you compile code containing `@DesignDoc` interfaces using Kotlin Symbol Processing (KSP), the DesignCompose KSP compiler plugin (`BuilderProcessor`) generates a JSON definition file per Kotlin package containing the component declarations, node queries, and customization specifications.
+
+#### File Location and Naming
+KSP generates one file per Kotlin package where package delimiters (`.`) are replaced with underscores (`_`):
+```
+<module>/build/generated/ksp/<variant>/resources/<package/as/path>/<package_with_underscores>_gen.json
+```
+If multiple `@DesignDoc` interfaces reside in the same Kotlin package, KSP serializes each doc as an independent top-level JSON object concatenated directly into that single package file.
+
+For example, in the `helloworld-app` reference module, the `@DesignDoc` interface in package `com.android.designcompose.testapp.helloworld` produces:
+```
+reference-apps/helloworld/helloworld-app/build/generated/ksp/release/resources/com/android/designcompose/testapp/helloworld/com_android_designcompose_testapp_helloworld_gen.json
+```
+
+#### JSON Structure
+Each JSON object in the file follows the `DesignDocSpec` schema:
+```json
+{
+  "name": "HelloWorldDoc",
+  "version": "0",
+  "components": [
+    {
+      "name": "MainFrame",
+      "node": "#MainFrame",
+      "isRoot": false,
+      "customizations": [
+        {
+          "name": "title",
+          "node": "#TitleText",
+          "kind": "Text"
+        }
+      ]
+    }
+  ]
+}
+```
+Top-level keys include `name` (the `@DesignDoc` interface name), `version`, and `components` (a list of `@DesignComponent` elements with their `node` query string, `name`, `isRoot`, and `customizations`).
+
+#### Usage with Figma Auto Content Preview Widget
+You can load this `<package_with_underscores>_gen.json` file into the **Auto Content Preview** widget in Figma (`support-figma/auto-content-preview-widget`). The widget parses the component specifications and customizations to preview layouts and data bindings directly on Figma canvas nodes.
+
+#### Usage with the `fetch` CLI Tool
+You can supply this file directly to the `fetch` CLI tool using `--nodes-json`:
+```bash
+cargo run --bin fetch --features fetch -- \
+    --doc-id <FIGMA_DOC_ID> \
+    --nodes-json reference-apps/helloworld/helloworld-app/build/generated/ksp/release/resources/com/android/designcompose/testapp/helloworld/com_android_designcompose_testapp_helloworld_gen.json \
+    --output app/src/main/assets/helloworld.dcf
+```
+When multiple `@DesignDoc` interfaces exist in the same package file, `--nodes-json` imports all nodes from all documents by default. You can isolate a specific document interface using `--nodes-json-doc <DocName>`:
+```bash
+cargo run --bin fetch --features fetch -- \
+    --doc-id <FIGMA_DOC_ID> \
+    --nodes-json <path-to-pkg_gen.json> \
+    --nodes-json-doc HelloWorldDoc \
+    --output app/src/main/assets/helloworld.dcf
+```
+You can also combine `--nodes-json` with explicit `-n`/`--nodes` queries; all node queries are merged in order and de-duplicated.
+
 ## Lists with `ReplacementContent`
 
 Here's how you can use `ReplacementContent` to populate a list with custom items:

@@ -46,3 +46,52 @@ $ cargo run --bin dcf_info --features=dcf_info hello.dcf
   Name: Hello World
   Last Modified: 2024-11-16T01:29:05Z
 ```
+
+## Custom Fonts Configuration {#custom-fonts}
+
+Figma documents often use custom typefaces (such as Google Fonts or brand-specific font families). By default, Android text rendering falls back to system fonts if the specified Figma font family is not registered.
+
+To configure custom fonts in DesignCompose:
+
+1. **Place Font Resources:**
+   Add your font `.ttf` or `.otf` files to your Android application module's `res/font/` directory (e.g., `res/font/inter_regular.ttf`, `res/font/inter_bold.ttf`).
+
+2. **Define Compose `FontFamily`:**
+   Create a Compose `FontFamily` referencing your font resources with their respective weights and styles:
+
+   ```kotlin
+   import androidx.compose.ui.text.font.Font
+   import androidx.compose.ui.text.font.FontFamily
+   import androidx.compose.ui.text.font.FontWeight
+   import androidx.compose.ui.text.font.FontStyle
+
+   val interFont = FontFamily(
+       Font(R.font.inter_regular, FontWeight.Normal, FontStyle.Normal),
+       Font(R.font.inter_medium, FontWeight.Medium, FontStyle.Normal),
+       Font(R.font.inter_bold, FontWeight.Bold, FontStyle.Normal),
+       Font(R.font.inter_italic, FontWeight.Normal, FontStyle.Italic),
+   )
+   ```
+
+3. **Register with `DesignSettings.addFontFamily`:**
+   In your `Application.onCreate()` or `Activity.onCreate()` (before rendering any `@DesignDoc` composable), register the font family mapping:
+
+   ```kotlin
+   import com.android.designcompose.DesignSettings
+
+   class MainActivity : ComponentActivity() {
+       override fun onCreate(savedInstanceState: Bundle?) {
+           super.onCreate(savedInstanceState)
+
+           // Register custom font family matching the exact Figma font name
+           DesignSettings.addFontFamily("Inter", interFont)
+           DesignSettings.addFontFamily("Cedarville Cursive", cursiveFont)
+
+           setContent {
+               MyDesignDoc.MainFrame()
+           }
+       }
+   }
+   ```
+
+   The first argument to `DesignSettings.addFontFamily` must match the font family name used in Figma.

@@ -36,6 +36,24 @@ use tokio::runtime::Runtime;
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
 const REQUEST_TIMEOUT_SECS: u64 = 90;
 
+/// Determine the appropriate HTTP header name and value for Figma authentication.
+///
+/// Figma supports two authentication schemes:
+/// 1. Personal Access Tokens (PAT): sent via `X-Figma-Token: <token>`.
+///    PATs typically start with `figd_` or legacy alphanumeric strings.
+/// 2. OAuth 2.0 Access Tokens: sent via `Authorization: Bearer <token>`.
+///    Figma OAuth tokens typically start with `figu_` or `figo_`, or may already be prefixed with `Bearer `.
+pub fn figma_auth_header(token: &str) -> (&'static str, String) {
+    let token = token.trim();
+    if token.len() >= 7 && token[..7].eq_ignore_ascii_case("bearer ") {
+        ("Authorization", format!("Bearer {}", token[7..].trim()))
+    } else if token.starts_with("figu_") || token.starts_with("figo_") {
+        ("Authorization", format!("Bearer {}", token))
+    } else {
+        (FIGMA_TOKEN_HEADER, token.to_string())
+    }
+}
+
 /// Shared tokio runtime for async HTTP operations.
 /// Since tokio is already a transitive dependency (via reqwest → hyper → h2),
 /// adding it explicitly does not increase binary size.
@@ -182,9 +200,10 @@ async fn async_http_fetch(
     proxy_config: &ProxyConfig,
 ) -> Result<String, Error> {
     let client = build_async_client(proxy_config)?;
+    let (header_name, header_val) = figma_auth_header(api_key);
     let body = client
         .get(url.as_str())
-        .header(FIGMA_TOKEN_HEADER, api_key)
+        .header(header_name, header_val)
         .send()
         .await?
         .error_for_status()?
@@ -277,15 +296,16 @@ pub fn http_fetch_batch(
             }
         };
 
+        let (header_name, header_val) = figma_auth_header(api_key);
         let futures: Vec<_> = requests
             .into_iter()
             .map(|req| {
                 let client = client.clone();
-                let api_key = api_key.to_string();
+                let header_val = header_val.clone();
                 async move {
                     let result = client
                         .get(req.url.as_str())
-                        .header(FIGMA_TOKEN_HEADER, &api_key)
+                        .header(header_name, header_val)
                         .send()
                         .await
                         .and_then(|r| r.error_for_status());
@@ -461,5 +481,50 @@ mod tests {
         let wait = limiter.acquire();
         assert!(wait.is_some());
         assert_eq!(wait.unwrap().as_secs(), 1, "Zero refill rate should return 1s fallback");
+    }
+
+    // Figma auth header unit tests
+
+    #[test]
+    fn test_figma_auth_header_personal_access_token() {
+        assert_eq!(figma_auth_header("figd_abc123"), ("X-Figma-Token", "figd_abc123".to_string()));
+        // Legacy token without figd_ prefix
+        assert_eq!(
+            figma_auth_header("123456-abcdef-fake"),
+            ("X-Figma-Token", "123456-abcdef-fake".to_string())
+        );
+        // Padded whitespace trimmed
+        assert_eq!(
+            figma_auth_header("   figd_abc123   \n"),
+            ("X-Figma-Token", "figd_abc123".to_string())
+        );
+    }
+
+    #[test]
+    fn test_figma_auth_header_oauth_token() {
+        assert_eq!(
+            figma_auth_header("figu_xyz789"),
+            ("Authorization", "Bearer figu_xyz789".to_string())
+        );
+        assert_eq!(
+            figma_auth_header("figo_987654"),
+            ("Authorization", "Bearer figo_987654".to_string())
+        );
+    }
+
+    #[test]
+    fn test_figma_auth_header_explicit_bearer() {
+        assert_eq!(
+            figma_auth_header("Bearer my_oauth_token"),
+            ("Authorization", "Bearer my_oauth_token".to_string())
+        );
+        assert_eq!(
+            figma_auth_header("bearer lowercase_bearer_token"),
+            ("Authorization", "Bearer lowercase_bearer_token".to_string())
+        );
+        assert_eq!(
+            figma_auth_header("  Bearer   token_with_spaces  "),
+            ("Authorization", "Bearer token_with_spaces".to_string())
+        );
     }
 }

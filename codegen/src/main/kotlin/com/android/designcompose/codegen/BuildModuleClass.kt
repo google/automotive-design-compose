@@ -181,6 +181,27 @@ private class DesignModuleVisitor(
                 setOf(classDeclaration.containingFile!!),
             )
 
+        // Emit imports for nested module customizations in other packages
+        val importedPackages = HashSet<String>()
+        classDeclaration.declarations.filterIsInstance<KSPropertyDeclaration>().forEach { property
+            ->
+            if (property.customizationType() == CustomizationType.Module) {
+                val propType = property.type.resolve()
+                val modulePackage = propType.declaration.packageName.asString()
+                if (
+                    modulePackage.isNotEmpty() &&
+                        modulePackage != packageName &&
+                        !importedPackages.contains(modulePackage)
+                ) {
+                    importedPackages.add(modulePackage)
+                    out += "import $modulePackage.customizations\n"
+                }
+            }
+        }
+        if (importedPackages.isNotEmpty()) {
+            out += "\n"
+        }
+
         // Create the customizations() extension function and boilerplate code
         out += "fun $className.customizations(): CustomizationContext {\n"
         out += "    val customizations = CustomizationContext()\n"

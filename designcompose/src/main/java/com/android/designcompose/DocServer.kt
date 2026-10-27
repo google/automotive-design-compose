@@ -231,12 +231,57 @@ object DesignSettings {
      * @sample R.raw.the_dcf_file
      */
     fun setRawResourceId(designDocId: DesignDocId, @RawRes resourceId: Int) {
-        rawResourceId[designDocId] = resourceId
+        val old = rawResourceId.put(designDocId, resourceId)
+        if (old != null && old != resourceId) {
+            DocServer.invalidateRawResource(designDocId)
+        }
     }
 
+    /**
+     * Invalidates the cached document for [designDocId] loaded from raw resources. Call after a
+     * Runtime Resource Overlay (RRO) change, e.g. from onConfigurationChanged; cached docs loaded
+     * from raw resources are evicted and DesignDoc composables reload them.
+     */
+    fun invalidateRawResource(designDocId: DesignDocId) {
+        DocServer.invalidateRawResource(designDocId)
+    }
+
+    /**
+     * Reloads all currently registered raw resources by evicting cached docs from memory. Call
+     * after a Runtime Resource Overlay (RRO) change, e.g. from onConfigurationChanged; cached docs
+     * loaded from raw resources are evicted and DesignDoc composables reload them.
+     */
+    fun reloadRawResources() {
+        DocServer.evictRawResourceDocs(rawResourceId.keys)
+    }
+
+    /** Clears all registered raw resource IDs and evicts their cached documents from memory. */
     fun clearRawResources() {
+        val keys = rawResourceId.keys.toList()
+        DocServer.evictRawResourceDocs(keys)
         rawResourceId.clear()
     }
+
+    /**
+     * Returns the collection names for the given [docId], or an empty list if that doc has not been
+     * loaded yet. The order of returned names is unspecified.
+     */
+    fun getVariableCollections(docId: DesignDocId): List<String> =
+        VariableManager.getVariableCollections(docId)
+
+    /**
+     * Returns the mode names for [collectionName] in the given [docId], or an empty list if that
+     * doc has not been loaded yet. The order of returned names is unspecified.
+     */
+    fun getVariableModes(docId: DesignDocId, collectionName: String): List<String> =
+        VariableManager.getVariableModes(docId, collectionName)
+
+    /**
+     * Returns the variable names for [collectionName] in the given [docId], or an empty list if
+     * that doc has not been loaded yet. The order of returned names is unspecified.
+     */
+    fun getVariableNames(docId: DesignDocId, collectionName: String): List<String> =
+        VariableManager.getVariableNames(docId, collectionName)
 
     fun addFontFamily(name: String, family: FontFamily) {
         fontDb[name] = family
@@ -312,6 +357,21 @@ internal object DocServer {
     internal val mainHandler = Handler(Looper.getMainLooper())
     internal var firstFetch = true
     internal var pauseUpdates = mutableStateOf(false)
+    internal var rawResourceGeneration = mutableStateOf(0)
+
+    internal fun invalidateRawResource(docId: DesignDocId) {
+        synchronized(documents) { documents.remove(docId) }
+        rawResourceGeneration.value++
+    }
+
+    internal fun evictRawResourceDocs(ids: Collection<DesignDocId>) {
+        synchronized(documents) { ids.forEach { documents.remove(it) } }
+        rawResourceGeneration.value++
+    }
+
+    internal fun clearRawResourceCache() {
+        evictRawResourceDocs(DesignSettings.rawResourceId.keys)
+    }
 
     // WebSocket client for real-time push notifications
     internal var wsClient: WebSocketUpdateClient? = null
@@ -724,6 +784,7 @@ internal fun DocServer.doc(
     beginSection(DCTraces.DOCSERVER_DOC)
 
     val id = "${resourceName}_${docId}"
+    val rawGen = rawResourceGeneration.value
 
     // Create a state var to remember the document contents and update it when the doc changes
     val (liveDoc, setLiveDoc) = remember { mutableStateOf<DocContent?>(null) }
@@ -741,7 +802,7 @@ internal fun DocServer.doc(
     // will run any time id changes, and also on first execution; and runs the
     // onDispose closure prior to running a change, or when the parent Composable
     // is no longer in use).
-    DisposableEffect(id) {
+    DisposableEffect(id, rawGen) {
         // DisposableEffect can cause execution of the hosting Composable to be
         // suspended, OR the closure we're in here is run later. That means that
         // another Composable could have loaded `docId` before we were run, so

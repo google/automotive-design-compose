@@ -197,6 +197,28 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     setOf(classDeclaration.containingFile!!),
                 )
 
+            // Emit imports for module customizations in other packages
+            val importedPackages = HashSet<String>()
+            classDeclaration.getAllFunctions().forEach { func ->
+                func.parameters.forEach { param ->
+                    if (param.customizationType() == CustomizationType.Module) {
+                        val paramType = param.type.resolve()
+                        val modulePackage = paramType.declaration.packageName.asString()
+                        if (
+                            modulePackage.isNotEmpty() &&
+                                modulePackage != packageName &&
+                                !importedPackages.contains(modulePackage)
+                        ) {
+                            importedPackages.add(modulePackage)
+                            out.appendText("import $modulePackage.customizations\n")
+                        }
+                    }
+                }
+            }
+            if (importedPackages.isNotEmpty()) {
+                out.appendText("\n")
+            }
+
             currentJsonStream = jsonStreams[packageName]
 
             // We don't support inheritance from another interface. Check for this and emit an

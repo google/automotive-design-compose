@@ -519,6 +519,21 @@ internal fun ContentDrawScope.squooshShapeRender(
         drawContext.canvas.saveLayer(Rect(Offset.Zero, size).inflate(outset * density), paint)
     }
 
+    val imgContext by
+        lazy(LazyThreadSafetyMode.NONE) {
+            ImageContext(
+                background = node.style.nodeStyle.backgroundsList,
+                minWidth = node.style.layoutStyle.minWidth,
+                maxWidth = node.style.layoutStyle.maxWidth,
+                width = node.style.layoutStyle.width,
+                minHeight = node.style.layoutStyle.minHeight,
+                maxHeight = node.style.layoutStyle.maxHeight,
+                height = node.style.layoutStyle.height,
+                frameWidth = size.width / density,
+                frameHeight = size.height / density,
+            )
+        }
+
     val customFillBrush =
         getCustomBrush(
             node,
@@ -529,6 +544,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             document,
             appContext,
             density,
+            { imgContext },
         )
 
     val brushSize = getNodeRenderSize(rectSize, size, style, node.layoutId, density)
@@ -641,16 +657,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             customImage =
                 it(
                     object : ImageReplacementContext {
-                        override val imageContext =
-                            ImageContext(
-                                background = node.style.nodeStyle.backgroundsList,
-                                minWidth = node.style.layoutStyle.minWidth,
-                                maxWidth = node.style.layoutStyle.maxWidth,
-                                width = node.style.layoutStyle.width,
-                                minHeight = node.style.layoutStyle.minHeight,
-                                maxHeight = node.style.layoutStyle.maxHeight,
-                                height = node.style.layoutStyle.height,
-                            )
+                        override val imageContext = imgContext
                     }
                 )
         }
@@ -952,9 +959,24 @@ internal fun getCustomBrush(
     document: DocContent,
     appContext: Context,
     density: Float,
+    imageContextProvider: (() -> ImageContext)? = null,
 ): Brush? {
     val nodeName = node.view.name
-    var customFillBrush = customizations.getBrush(nodeName)
+    var customFillBrush =
+        if (imageContextProvider != null) {
+            val brushWithContext = customizations.getBrushWithContext(nodeName)
+            if (brushWithContext != null) {
+                val replacementContext =
+                    object : ImageReplacementContext {
+                        override val imageContext: ImageContext = imageContextProvider()
+                    }
+                brushWithContext(replacementContext)
+            } else {
+                customizations.getBrush(nodeName)
+            }
+        } else {
+            customizations.getBrush(nodeName)
+        }
     if (customFillBrush == null) {
         node.style.nodeStyle
             .takeIf { it.hasShaderData() }

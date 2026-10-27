@@ -218,4 +218,39 @@ class CustomizationContextTest {
         assertThat(imageContext.getPixelWidth()).isEqualTo(15)
         assertThat(imageContext.getPixelHeight()).isEqualTo(35)
     }
+
+    @Test
+    fun testImageContextFrameDimensionsFallback() {
+        val imageContext = ImageContext(frameWidth = 320.5f, frameHeight = 240.2f)
+        assertThat(imageContext.getPixelWidth()).isEqualTo(320)
+        assertThat(imageContext.getPixelHeight()).isEqualTo(240)
+    }
+
+    @Test
+    fun testSetAndGetBrushFunctionWithContext() {
+        val context = CustomizationContext()
+        var receivedContext: ImageReplacementContext? = null
+        val greenBrush = SolidColor(Color.Green)
+        context.setBrushWithContext("node1") { imgCtx ->
+            receivedContext = imgCtx
+            greenBrush
+        }
+        val imgCtx =
+            object : ImageReplacementContext {
+                override val imageContext = ImageContext(frameWidth = 400f, frameHeight = 250f)
+            }
+        val brush = context.getBrushWithContext("node1")!!.invoke(imgCtx)
+        assertThat(brush).isEqualTo(greenBrush)
+        assertThat(receivedContext?.imageContext?.frameWidth).isEqualTo(400f)
+        assertThat(receivedContext?.imageContext?.frameHeight).isEqualTo(250f)
+        assertThat(receivedContext?.imageContext?.getPixelWidth()).isEqualTo(400)
+        assertThat(receivedContext?.imageContext?.getPixelHeight()).isEqualTo(250)
+    }
+
+    @Test
+    fun testBrushFunctionLambdaLiteralStillResolves() {
+        val context = CustomizationContext()
+        context.setBrushFunction("n") { SolidColor(Color.Red) }
+        assertThat(context.getBrush("n")).isEqualTo(SolidColor(Color.Red))
+    }
 }

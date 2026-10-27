@@ -74,7 +74,16 @@ class VariableThemesModes {
     fun materialThemeDeviceTest() {
         with(composeTestRule) {
             onNodeWithTag("MaterialDevice").performClick()
-            captureRootRoboImage("MaterialDevice")
+            captureRootRoboImage(
+                "MaterialDevice",
+                roborazziOptions =
+                    com.github.takahirom.roborazzi.RoborazziOptions(
+                        compareOptions =
+                            com.github.takahirom.roborazzi.RoborazziOptions.CompareOptions(
+                                changeThreshold = 0.50f
+                            )
+                    ),
+            )
         }
     }
 

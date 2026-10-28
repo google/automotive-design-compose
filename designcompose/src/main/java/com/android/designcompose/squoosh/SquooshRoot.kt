@@ -377,7 +377,7 @@ fun SquooshRoot(
     // what's different from last time? Does the Rust side track
     val composableList = ComposableList()
     keyEventTracker.clearListeners()
-    val variableState = VariableState.create(docId = doc.c.docId.id)
+    val variableState = VariableState.create()
     val root =
         resolveVariantsRecursively(
             startFrame,
@@ -447,7 +447,7 @@ fun SquooshRoot(
                 layoutIdAllocator,
                 variantParentName,
                 isRoot,
-                VariableState.create(docId = doc.c.docId.id),
+                VariableState.create(),
                 LocalContext.current,
                 LocalDesignDocSettings.current.customVariantTransition,
                 textMeasureCache,
@@ -726,7 +726,7 @@ fun SquooshRoot(
                         // Is there a nicer way of passing these two?
                         currentAnimations,
                         animPlayTimeNanosState,
-                        VariableState.create(docId = doc.c.docId.id),
+                        VariableState.create(),
                         LocalVariableState.hasOverrideModeValues(),
                         computedPathCache,
                         shaderBrushCache,
@@ -907,7 +907,7 @@ fun SquooshRoot(
                                             childRenderSelector,
                                             currentAnimations,
                                             animPlayTimeNanosState,
-                                            VariableState.create(docId = doc.c.docId.id),
+                                            VariableState.create(),
                                             LocalVariableState.hasOverrideModeValues(),
                                             computedPathCache,
                                             shaderBrushCache,

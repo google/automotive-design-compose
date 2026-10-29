@@ -16,8 +16,6 @@
 
 package com.android.designcompose.squoosh
 
-import android.graphics.Bitmap
-import android.graphics.Color as AndroidColor
 import android.graphics.Rect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -25,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
@@ -49,8 +46,6 @@ import com.github.takahirom.roborazzi.RoboComponent
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.google.common.truth.Truth.assertThat
-import java.io.File
-import java.io.FileOutputStream
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.junit.Rule
@@ -211,40 +206,6 @@ class ChildModifierRenderTest {
 
         if (diffCount > 0) {
             println("Pixel difference: diffCount=$diffCount, maxChannelDelta=$maxDelta")
-            val scratchDir =
-                File(
-                    "/usr/local/google/home/priyanksingh/.gemini/jetski/brain/3400f02a-d388-483b-8f02-3bacbcb83923/scratch/render"
-                )
-            scratchDir.mkdirs()
-            val fileA = File(scratchDir, "A.png")
-            val fileB = File(scratchDir, "B.png")
-            val fileDiff = File(scratchDir, "diff.png")
-
-            FileOutputStream(fileA).use { out ->
-                imageA.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, out)
-            }
-            FileOutputStream(fileB).use { out ->
-                imageB.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, out)
-            }
-
-            val diffBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            for (x in 0 until width) {
-                for (y in 0 until height) {
-                    val cA = pixelMapA[x, y]
-                    val cB = pixelMapB[x, y]
-                    if (cA != cB) {
-                        diffBitmap.setPixel(x, y, AndroidColor.RED)
-                    } else {
-                        diffBitmap.setPixel(x, y, AndroidColor.TRANSPARENT)
-                    }
-                }
-            }
-            FileOutputStream(fileDiff).use { out ->
-                diffBitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-            }
-            println(
-                "Saved diff images to: ${fileA.absolutePath}, ${fileB.absolutePath}, ${fileDiff.absolutePath}"
-            )
         }
 
         assertThat(diffCount).isEqualTo(0)

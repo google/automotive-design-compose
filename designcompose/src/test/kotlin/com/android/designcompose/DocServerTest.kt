@@ -16,13 +16,22 @@
 
 package com.android.designcompose
 
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.google.common.truth.Truth.assertThat
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -30,6 +39,8 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class DocServerTest {
+
+    @get:Rule val tempFolder = TemporaryFolder()
 
     @Before
     fun setUp() {
@@ -123,5 +134,38 @@ class DocServerTest {
         assertThat(DesignSettings.discoverAllTopLevelNodes.value).isTrue()
         // Restore
         DesignSettings.discoverAllTopLevelNodes.value = original
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun testDiscoverAllNodesPersistedInDataStore() = runTest {
+        val originalDiscover = DesignSettings.discoverAllTopLevelNodes.value
+        val originalRepo = DesignSettings.liveUpdateSettings
+        try {
+            val testDataStore =
+                PreferenceDataStoreFactory.create(
+                    scope =
+                        CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob()),
+                    produceFile = { tempFolder.newFile("test_live_update.preferences_pb") },
+                )
+            val repo = LiveUpdateSettingsRepository(testDataStore)
+            DesignSettings.liveUpdateSettings = repo
+
+            assertThat(repo.discoverAllNodesFlow.first()).isFalse()
+
+            val service = ApiKeyService()
+            service.dispatcher = UnconfinedTestDispatcher(testScheduler)
+            service.setDiscoverAllNodes(true)
+
+            assertThat(DesignSettings.discoverAllTopLevelNodes.value).isTrue()
+            assertThat(repo.discoverAllNodesFlow.first()).isTrue()
+
+            service.setDiscoverAllNodes(false)
+            assertThat(DesignSettings.discoverAllTopLevelNodes.value).isFalse()
+            assertThat(repo.discoverAllNodesFlow.first()).isFalse()
+        } finally {
+            DesignSettings.discoverAllTopLevelNodes.value = originalDiscover
+            DesignSettings.liveUpdateSettings = originalRepo
+        }
     }
 }

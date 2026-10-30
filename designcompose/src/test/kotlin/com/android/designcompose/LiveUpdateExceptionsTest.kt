@@ -27,12 +27,27 @@ import org.robolectric.annotation.Config
 class LiveUpdateExceptionsTest {
 
     @Test
+    fun testFetchException() {
+        val defaultEx = FetchException()
+        assertThat(defaultEx).isInstanceOf(RuntimeException::class.java)
+        assertThat(defaultEx.message).isNull()
+
+        val messageEx = FetchException("Bad request: 400")
+        assertThat(messageEx.message).isEqualTo("Bad request: 400")
+    }
+
+    @Test
     fun testAccessDeniedException() {
         try {
             throw AccessDeniedException()
         } catch (e: AccessDeniedException) {
             assertThat(e).isInstanceOf(FetchException::class.java)
+            assertThat(e.message).isNull()
         }
+
+        val messageEx = AccessDeniedException("Invalid Authentication Token")
+        assertThat(messageEx).isInstanceOf(FetchException::class.java)
+        assertThat(messageEx.message).isEqualTo("Invalid Authentication Token")
     }
 
     @Test
@@ -41,7 +56,12 @@ class LiveUpdateExceptionsTest {
             throw FigmaFileNotFoundException()
         } catch (e: FigmaFileNotFoundException) {
             assertThat(e).isInstanceOf(FetchException::class.java)
+            assertThat(e.message).isNull()
         }
+
+        val messageEx = FigmaFileNotFoundException("doc_123")
+        assertThat(messageEx).isInstanceOf(FetchException::class.java)
+        assertThat(messageEx.message).isEqualTo("doc_123")
     }
 
     @Test
@@ -50,7 +70,12 @@ class LiveUpdateExceptionsTest {
             throw RateLimitedException()
         } catch (e: RateLimitedException) {
             assertThat(e).isInstanceOf(FetchException::class.java)
+            assertThat(e.message).isNull()
         }
+
+        val messageEx = RateLimitedException("Figma Rate Limit Exceeded")
+        assertThat(messageEx).isInstanceOf(FetchException::class.java)
+        assertThat(messageEx.message).isEqualTo("Figma Rate Limit Exceeded")
     }
 
     @Test
@@ -59,6 +84,34 @@ class LiveUpdateExceptionsTest {
             throw InternalFigmaErrorException()
         } catch (e: InternalFigmaErrorException) {
             assertThat(e).isInstanceOf(FetchException::class.java)
+            assertThat(e.message).isNull()
+        }
+
+        val messageEx = InternalFigmaErrorException("Figma.com internal error")
+        assertThat(messageEx).isInstanceOf(FetchException::class.java)
+        assertThat(messageEx.message).isEqualTo("Figma.com internal error")
+    }
+
+    @Test
+    fun testJniReflectiveConstructorLookup() {
+        val exceptionClasses =
+            listOf(
+                FetchException::class.java,
+                AccessDeniedException::class.java,
+                FigmaFileNotFoundException::class.java,
+                RateLimitedException::class.java,
+                InternalFigmaErrorException::class.java,
+            )
+
+        for (clazz in exceptionClasses) {
+            val noArgInstance = clazz.getDeclaredConstructor().newInstance()
+            assertThat(noArgInstance).isInstanceOf(FetchException::class.java)
+            assertThat(noArgInstance.message).isNull()
+
+            val msgConstructor = clazz.getDeclaredConstructor(String::class.java)
+            val msgInstance = msgConstructor.newInstance("jni error message")
+            assertThat(msgInstance).isInstanceOf(FetchException::class.java)
+            assertThat(msgInstance.message).isEqualTo("jni error message")
         }
     }
 }

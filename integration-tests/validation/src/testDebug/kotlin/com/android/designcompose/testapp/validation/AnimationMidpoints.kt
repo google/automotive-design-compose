@@ -39,7 +39,6 @@ import com.android.designcompose.testapp.validation.examples.State
 import com.android.designcompose.testapp.validation.examples.TestState
 import com.android.designcompose.testapp.validation.examples.VariantAnimationTestDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
-import com.github.takahirom.roborazzi.RoborazziOptions
 import kotlin.math.sqrt
 import org.junit.Rule
 import org.junit.Test
@@ -274,12 +273,7 @@ class AnimationMidpoints {
             // Touch red square to start onPress anim, capture screen mid anim changing to blue
             onNodeWithTag("V1").performTouchInput { down(Offset.Zero) }
             mainClock.advanceTimeBy(100L)
-            captureRootRoboImage(
-                "VariantOnPress-anim1",
-                RoborazziOptions(
-                    compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.15f)
-                ),
-            )
+            captureRootRoboImage("VariantOnPress-anim1")
 
             // Capture screen after anim done (blue)
             mainClock.advanceTimeBy(400L)
@@ -310,12 +304,7 @@ class AnimationMidpoints {
             // green square
             onNodeWithTag("V2").performTouchInput { down(Offset.Zero) }
             mainClock.advanceTimeBy(100L)
-            captureRootRoboImage(
-                "VariantOnPress-anim4",
-                RoborazziOptions(
-                    compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.15f)
-                ),
-            )
+            captureRootRoboImage("VariantOnPress-anim4")
         }
     }
 

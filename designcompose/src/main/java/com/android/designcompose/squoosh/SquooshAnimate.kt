@@ -822,7 +822,7 @@ private fun mergeRecursive(
             )
         }
 
-        if (needsStyleTween(from.style, to.style)) {
+        if (needsStyleTween(from.style, to.style) && canInterpolateStyle(from.style, to.style)) {
             anims.add(SquooshAnimatedBackgroundAndStroke(n, from.style, to.style, transition))
         }
 

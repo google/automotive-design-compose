@@ -495,9 +495,6 @@ internal fun resolveVariantsRecursively(
                 customModifier = customModifier,
             )
         )
-        if (!isRoot && customModifier != null) {
-            resolvedView.needsChildRender = true
-        }
     }
 
     if (!skipChildren) {

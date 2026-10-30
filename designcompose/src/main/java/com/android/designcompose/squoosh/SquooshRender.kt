@@ -85,7 +85,6 @@ internal fun Modifier.squooshRender(
     shaderBrushCache: ShaderBrushCache,
     appContext: Context,
     scrollOffset: State<Offset>,
-    skipRootChildRender: Boolean = false,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
@@ -107,11 +106,7 @@ internal fun Modifier.squooshRender(
 
             var nodeRenderCount = 0
             val renderTime = measureTimeMillis {
-                fun renderNode(
-                    node: SquooshResolvedNode,
-                    parentVariableState: VariableState,
-                    isRoot: Boolean = false,
-                ) {
+                fun renderNode(node: SquooshResolvedNode, parentVariableState: VariableState) {
                     // If there is no programmatic mode override and this node has explicitly set
                     // mode values, update variablestate with these values
                     val newVariableState =
@@ -144,7 +139,7 @@ internal fun Modifier.squooshRender(
 
                     // If we need to do a child render, then don't render the content defined
                     // in the view tree, and just let the content render everything.
-                    if (node.needsChildRender && !(isRoot && skipRootChildRender)) {
+                    if (node.needsChildRender) {
                         // We need to offset the translation that we did to position the child
                         // Composable for Compose's layout phase. We lay the child out in the
                         // correct position so that hit testing works, but we've already got the
@@ -288,7 +283,7 @@ internal fun Modifier.squooshRender(
                     nodeRenderCount++
                     if (scroll) drawContext.canvas.restore()
                 }
-                renderNode(node, variableState, isRoot = true)
+                renderNode(node, variableState)
             }
             if (renderTime > 16)
                 Log.d(TAG, "$docName rendered $nodeRenderCount nodes in ${renderTime}ms")

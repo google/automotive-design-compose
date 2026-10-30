@@ -100,63 +100,6 @@ class ChildModifierRenderTest {
         hasCustomization = true
         composeTestRule.waitForIdle()
 
-        try {
-            val nameNode = composeTestRule.onNodeWithTag("#Name", useUnmergedTree = true)
-            val semNode = nameNode.fetchSemanticsNode()
-            val layoutNodeField =
-                semNode.javaClass.getDeclaredField("layoutNode").apply { isAccessible = true }
-            val layoutNode = layoutNodeField.get(semNode)
-            if (layoutNode != null) {
-                var currCls: Class<*>? = layoutNode.javaClass
-                var nodesField: java.lang.reflect.Field? = null
-                while (currCls != null && currCls != Any::class.java) {
-                    try {
-                        nodesField = currCls.getDeclaredField("nodes")
-                        break
-                    } catch (_: NoSuchFieldException) {
-                        currCls = currCls.superclass
-                    }
-                }
-                val nodeChain = nodesField?.apply { isAccessible = true }?.get(layoutNode)
-                if (nodeChain != null) {
-                    val headField =
-                        nodeChain.javaClass.getDeclaredField("head").apply { isAccessible = true }
-                    var curr = headField.get(nodeChain) as? Modifier.Node
-                    while (curr != null) {
-                        if (curr.javaClass.simpleName == "TestTagNode") {
-                            for (field in curr.javaClass.declaredFields) {
-                                if (field.type == String::class.java) {
-                                    field.isAccessible = true
-                                    field.set(curr, "dc-child-mod")
-                                }
-                            }
-                        }
-                        var cls: Class<*>? = curr.javaClass
-                        var nextNode: Modifier.Node? = null
-                        while (cls != null && cls != Any::class.java) {
-                            try {
-                                val f = cls.getDeclaredField("child")
-                                f.isAccessible = true
-                                nextNode = f.get(curr) as? Modifier.Node
-                                break
-                            } catch (_: NoSuchFieldException) {
-                                cls = cls.superclass
-                            }
-                        }
-                        curr = nextNode
-                    }
-                }
-                for (f in layoutNode.javaClass.declaredFields) {
-                    if (f.name.contains("collapsedSemantics", ignoreCase = true)) {
-                        f.isAccessible = true
-                        try {
-                            f.set(layoutNode, null)
-                        } catch (_: Throwable) {}
-                    }
-                }
-            }
-        } catch (_: Throwable) {}
-
         val childNode = composeTestRule.onNodeWithTag("dc-child-mod", useUnmergedTree = true)
         childNode.assertExists()
         val childBounds = childNode.getBoundsInRoot()

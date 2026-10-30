@@ -30,7 +30,6 @@ import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -709,9 +708,13 @@ fun SquooshRoot(
         LocalCustomizationContext provides customizationContext,
     ) {
         val rootCustomModifier =
-            (customizationContext.getModifier(root.unresolvedName)
-                    ?: customizationContext.getModifier(root.view.name))
-                .takeIfNotEmpty()
+            if (!rootRecurseParams.isScrollComponent) {
+                (customizationContext.getModifier(root.unresolvedName)
+                        ?: customizationContext.getModifier(root.view.name))
+                    .takeIfNotEmpty()
+            } else {
+                null
+            }
         val combinedRootModifier =
             if (rootCustomModifier != null) modifier.then(rootCustomModifier) else modifier
         androidx.compose.ui.layout.Layout(
@@ -771,16 +774,17 @@ fun SquooshRoot(
                                 }
                             }
                             .then(SquooshParentData(node = child.node))
-                            .then(Modifier.testTag(child.node.view.name))
+                    val customMod =
+                        (child.customModifier
+                                ?: customizationContext.getModifier(child.node.unresolvedName)
+                                ?: customizationContext.getModifier(child.node.view.name))
+                            .takeIfNotEmpty()
 
-                    // Apply any user-provided Modifier customization. This was lost during the
-                    // Squoosh migration — the setModifier/getModifier API existed but squoosh
-                    // never retrieved and applied the custom modifier. (Issue #2292)
-                    (child.customModifier
-                            ?: customizationContext.getModifier(child.node.unresolvedName)
-                            ?: customizationContext.getModifier(child.node.view.name))
-                        .takeIfNotEmpty()
-                        ?.let { composableChildModifier = composableChildModifier.then(it) }
+                    if (customMod != null) {
+                        composableChildModifier = composableChildModifier.then(customMod)
+                    }
+                    composableChildModifier =
+                        composableChildModifier.then(Modifier.testTag(child.node.view.name))
 
                     if (child.scrollView != null) {
                         // Compose a scrollable view as a separate composable in order to detect
@@ -890,33 +894,6 @@ fun SquooshRoot(
                                     customizationContext,
                                     meter,
                                 )
-                        }
-
-                        if (child.node.needsChildRender && child.customModifier != null) {
-                            // Modifier-only node: needs composition so the user's Modifier
-                            // wraps the rendered subtree pixels. Render using squooshRender
-                            // on the already-resolved tree — no sub-SquooshRoot, no recursion.
-                            child.component = { _ ->
-                                Spacer(
-                                    modifier =
-                                        Modifier.squooshRender(
-                                            child.node,
-                                            doc,
-                                            docName,
-                                            customizationContext,
-                                            childRenderSelector,
-                                            currentAnimations,
-                                            animPlayTimeNanosState,
-                                            VariableState.create(),
-                                            LocalVariableState.hasOverrideModeValues(),
-                                            computedPathCache,
-                                            shaderBrushCache,
-                                            appContext = LocalContext.current,
-                                            scrollOffset,
-                                            skipRootChildRender = true,
-                                        )
-                                )
-                            }
                         } else if (
                             !hasPressClick &&
                                 !interactionState.isPressed.contains(child.node.unresolvedNodeId) &&

@@ -508,7 +508,7 @@ class SquooshTreeBuilderTest {
     }
 
     @Test
-    fun testNonEmptyModifierSetsNeedsChildRender() {
+    fun testNonEmptyModifierDoesNotSetNeedsChildRender() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val density = Density(1f)
         val fontResolver = createFontFamilyResolver(context)
@@ -556,6 +556,8 @@ class SquooshTreeBuilderTest {
         assertThat(resolvedNode).isNotNull()
         val childNode = resolvedNode!!.firstChild
         assertThat(childNode).isNotNull()
-        assertThat(childNode!!.needsChildRender).isTrue()
+        assertThat(childNode!!.needsChildRender).isFalse()
+        assertThat(composableList.childComposables).hasSize(1)
+        assertThat(composableList.childComposables[0].customModifier).isEqualTo(testModifier)
     }
 }

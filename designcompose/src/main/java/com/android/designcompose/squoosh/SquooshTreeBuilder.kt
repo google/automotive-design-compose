@@ -18,6 +18,7 @@ package com.android.designcompose.squoosh
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Density
@@ -87,6 +88,7 @@ import com.android.designcompose.getKey
 import com.android.designcompose.getListContent
 import com.android.designcompose.getLongPressCallback
 import com.android.designcompose.getMatchingVariant
+import com.android.designcompose.getModifier
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
 import com.android.designcompose.getVisibleState
@@ -137,6 +139,9 @@ internal class SquooshChildComposable(
 
     // TextStyle to be used in ComponentReplacementContext if replacing a text node
     val textStyle: TextStyle? = null,
+
+    // Optional custom modifier applied to this child node
+    val customModifier: Modifier? = null,
 )
 
 internal class SquooshOverlayComposable(val nodeId: String, val extras: FrameExtras)
@@ -176,6 +181,8 @@ internal class ParentComponentData(
         return true
     }
 }
+
+internal fun Modifier?.takeIfNotEmpty(): Modifier? = this?.takeUnless { it === Modifier }
 
 /// Iterate over a given view tree recursively, applying customizations that will select
 /// variants or affect layout. The output of this function is a `SquooshResolvedNode` which
@@ -402,6 +409,10 @@ internal fun resolveVariantsRecursively(
             unresolvedName = viewFromTree.name,
         )
 
+    val customModifier =
+        (customizations.getModifier(viewFromTree.name) ?: customizations.getModifier(view.name))
+            .takeIfNotEmpty()
+
     var skipChildren = false // Set to true for customizations that replace children
     var skipComposableList =
         false // Set to true for scrolling view because it has its own SquooshRoot()
@@ -412,6 +423,7 @@ internal fun resolveVariantsRecursively(
                 node = resolvedView,
                 parentComponents = parentComps,
                 textStyle = textStyle,
+                customModifier = customModifier,
             )
         )
         // Make sure that the renderer knows that it needs to do an external render for this
@@ -427,6 +439,7 @@ internal fun resolveVariantsRecursively(
                 scrollView = view,
                 node = resolvedView,
                 parentComponents = parentComps,
+                customModifier = customModifier,
             )
         )
         resolvedView.needsChildRender = true
@@ -455,6 +468,8 @@ internal fun resolveVariantsRecursively(
                     component = @Composable { childComponent() },
                     node = replacementChild,
                     parentComponents = parentComps,
+                    customModifier =
+                        customizations.getModifier(replacementChild.view.name).takeIfNotEmpty(),
                 )
             )
         }
@@ -470,13 +485,14 @@ internal fun resolveVariantsRecursively(
             composableList,
         )
         skipChildren = true
-    } else if (hasSupportedInteraction) {
-        // Add a SquooshChildComposable to handle the interaction.
+    } else if (hasSupportedInteraction || (!isRoot && customModifier != null)) {
+        // Add a SquooshChildComposable to handle the interaction or custom modifier.
         composableList?.addChild(
             SquooshChildComposable(
                 component = null,
                 node = resolvedView,
                 parentComponents = parentComps,
+                customModifier = customModifier,
             )
         )
     }

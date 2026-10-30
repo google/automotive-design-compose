@@ -25,11 +25,12 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 
 // HTTP Proxy configuration.
-internal data class HttpProxyConfig(val proxySpec: String)
+@Keep internal data class HttpProxyConfig(val proxySpec: String)
 
 // Proxy configuration.
 //
 // Only HTTP proxy supported.
+@Keep
 internal class ProxyConfig {
     var httpProxyConfig: HttpProxyConfig? = null
 }

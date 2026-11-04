@@ -35,6 +35,15 @@ class JniTest {
     }
 
     @Test
+    fun testJniProxyConfigFieldLookup() {
+        val httpProxyField = ProxyConfig::class.java.getDeclaredField("httpProxyConfig")
+        assertThat(httpProxyField.type).isEqualTo(HttpProxyConfig::class.java)
+
+        val proxySpecField = HttpProxyConfig::class.java.getDeclaredField("proxySpec")
+        assertThat(proxySpecField.type).isEqualTo(String::class.java)
+    }
+
+    @Test
     fun testTextSize() {
         val textSize = TextSize(10f, 20f)
         assertThat(textSize.width).isEqualTo(10f)

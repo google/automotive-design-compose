@@ -16,12 +16,26 @@
 
 package com.android.designcompose
 
-open class FetchException : RuntimeException()
+import androidx.annotation.Keep
 
-class AccessDeniedException : FetchException()
+// Instantiated across JNI by `map_err_to_exception` in `crates/dc_jni/src/error_map.rs`
+// via `JNIEnv::ThrowNew`, which requires `@Keep` and an explicit `(String)` constructor.
+@Keep
+open class FetchException @JvmOverloads constructor(message: String? = null) :
+    RuntimeException(message)
 
-class FigmaFileNotFoundException : FetchException()
+@Keep
+class AccessDeniedException @JvmOverloads constructor(message: String? = null) :
+    FetchException(message)
 
-class RateLimitedException : FetchException()
+@Keep
+class FigmaFileNotFoundException @JvmOverloads constructor(message: String? = null) :
+    FetchException(message)
 
-class InternalFigmaErrorException : FetchException()
+@Keep
+class RateLimitedException @JvmOverloads constructor(message: String? = null) :
+    FetchException(message)
+
+@Keep
+class InternalFigmaErrorException @JvmOverloads constructor(message: String? = null) :
+    FetchException(message)

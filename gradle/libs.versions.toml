@@ -15,7 +15,7 @@
 [versions]
 # DesignCompose
 # LINT.IfChange
-designcompose = "0.39.6-SNAPSHOT"
+designcompose = "1.0.0-SNAPSHOT"
 # LINT.ThenChange(Cargo.toml)
 
 

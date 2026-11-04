@@ -26,6 +26,9 @@ import com.android.designcompose.AnimatedAction
 import com.android.designcompose.ShaderHelper
 import com.android.designcompose.VariableState
 import com.android.designcompose.decompose
+import com.android.designcompose.definition.element.Background
+import com.android.designcompose.definition.element.Color as ProtoColor
+import com.android.designcompose.definition.element.ColorOrVar
 import com.android.designcompose.definition.element.ShaderData
 import com.android.designcompose.definition.element.ShaderUniformValue.ValueTypeCase
 import com.android.designcompose.definition.element.ShaderUniformValueKt.floatVec
@@ -56,6 +59,7 @@ import com.android.designcompose.layout_interface.layout
 import com.android.designcompose.toLayoutTransform
 import com.android.designcompose.utils.fixedHeight
 import com.android.designcompose.utils.fixedWidth
+import kotlin.math.roundToInt
 
 // Squoosh animation design
 //
@@ -461,6 +465,68 @@ internal class SquooshAnimatedStrokeShader(
     }
 }
 
+internal fun lerpSolidPaints(
+    from: List<Background>,
+    to: List<Background>,
+    t: Float,
+): List<Background> {
+    val result = ArrayList<Background>(to.size)
+    for (i in to.indices) {
+        val fromBg = from[i]
+        val toBg = to[i]
+        val fromColor = fromBg.solid.color
+        val toColor = toBg.solid.color
+        val r = ((1f - t) * fromColor.r + t * toColor.r).roundToInt().coerceIn(0, 255)
+        val g = ((1f - t) * fromColor.g + t * toColor.g).roundToInt().coerceIn(0, 255)
+        val b = ((1f - t) * fromColor.b + t * toColor.b).roundToInt().coerceIn(0, 255)
+        val a = ((1f - t) * fromColor.a + t * toColor.a).roundToInt().coerceIn(0, 255)
+        val opacity = ((1f - t) * fromBg.opacity + t * toBg.opacity).coerceIn(0f, 1f)
+
+        val interpColor = ProtoColor.newBuilder().setR(r).setG(g).setB(b).setA(a).build()
+        val interpSolid = ColorOrVar.newBuilder().setColor(interpColor).build()
+        val newBg = toBg.toBuilder().setSolid(interpSolid).setOpacity(opacity).build()
+        result.add(newBg)
+    }
+    return result
+}
+
+internal class SquooshAnimatedBackgroundAndStroke(
+    target: SquooshResolvedNode,
+    private val fromStyle: ViewStyle,
+    private val toStyle: ViewStyle,
+    transition: AnimationTransition,
+) : SquooshAnimatedItem(target, transition) {
+    override fun apply(value: Float) {
+        val fromNodeStyle = fromStyle.nodeStyle
+        val toNodeStyle = toStyle.nodeStyle
+        target.style =
+            target.style.withNodeStyle { s ->
+                if (fromNodeStyle.backgroundsList != toNodeStyle.backgroundsList) {
+                    s.clearBackgrounds()
+                    s.addAllBackgrounds(
+                        lerpSolidPaints(
+                            fromNodeStyle.backgroundsList,
+                            toNodeStyle.backgroundsList,
+                            value,
+                        )
+                    )
+                }
+                if (fromNodeStyle.stroke != toNodeStyle.stroke) {
+                    val fromStroke = fromNodeStyle.stroke
+                    val toStroke = toNodeStyle.stroke
+                    s.stroke =
+                        toStroke
+                            .toBuilder()
+                            .clearStrokes()
+                            .addAllStrokes(
+                                lerpSolidPaints(fromStroke.strokesList, toStroke.strokesList, value)
+                            )
+                            .build()
+                }
+            }
+    }
+}
+
 // XXX: No transform, coz no decomposition-recomposition implemented yet.
 //      No colors or strokes or corners.
 
@@ -756,6 +822,10 @@ private fun mergeRecursive(
             )
         }
 
+        if (needsStyleTween(from.style, to.style) && canInterpolateStyle(from.style, to.style)) {
+            anims.add(SquooshAnimatedBackgroundAndStroke(n, from.style, to.style, transition))
+        }
+
         return n
     } else {
         // Ok, we need to clone both the "from" and "to" and make a crossfade animation between
@@ -807,6 +877,31 @@ private fun findChildNamed(
     return null
 }
 
+internal fun isSolidColorPaint(bg: Background): Boolean = bg.hasSolid() && bg.solid.hasColor()
+
+internal fun canInterpolatePaints(a: List<Background>, b: List<Background>): Boolean =
+    a.size == b.size && a.indices.all { i -> isSolidColorPaint(a[i]) && isSolidColorPaint(b[i]) }
+
+internal fun canInterpolateStyle(a: ViewStyle, b: ViewStyle): Boolean {
+    val aNode = a.nodeStyle
+    val bNode = b.nodeStyle
+    val backgroundsOk =
+        aNode.backgroundsList == bNode.backgroundsList ||
+            canInterpolatePaints(aNode.backgroundsList, bNode.backgroundsList)
+    val strokesOk =
+        aNode.stroke == bNode.stroke ||
+            run {
+                val sa = aNode.stroke
+                val sb = bNode.stroke
+                sa.strokeAlign == sb.strokeAlign &&
+                    sa.strokeWeight == sb.strokeWeight &&
+                    sa.hasShaderData() == sb.hasShaderData() &&
+                    (!sa.hasShaderData() || sa.shaderData == sb.shaderData) &&
+                    canInterpolatePaints(sa.strokesList, sb.strokesList)
+            }
+    return backgroundsOk && strokesOk
+}
+
 // We can tween between two views (and thus don't need one of them in the tree) if:
 //  - They have the same shader but with different uniform values.
 //  - They are both Containers
@@ -823,7 +918,7 @@ private fun isTweenable(a: View, b: View): Boolean {
     ) {
         return true
     }
-    if (needsStyleTween(a.style, b.style)) return false
+    if (needsStyleTween(a.style, b.style) && !canInterpolateStyle(a.style, b.style)) return false
 
     val aShape = a.data.containerOrNull?.shapeOrNull
     val bShape = b.data.containerOrNull?.shapeOrNull

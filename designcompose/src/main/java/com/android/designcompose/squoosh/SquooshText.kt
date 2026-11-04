@@ -43,6 +43,7 @@ import com.android.designcompose.TextMeasureData
 import com.android.designcompose.VariableState
 import com.android.designcompose.definition.element.LineHeight.LineHeightTypeCase
 import com.android.designcompose.definition.element.TextDecoration
+import com.android.designcompose.definition.view.NodeStyle
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewData
 import com.android.designcompose.definition.view.fontSizeOrNull
@@ -81,6 +82,8 @@ internal class TextMeasureCache {
         val customBrush: androidx.compose.ui.graphics.Brush?,
         val annotatedText: String,
         val textStyle: TextStyle,
+        val viewData: ViewData?,
+        val nodeStyle: NodeStyle,
         // XXX: Do we need to use the annotated string? This impl might break localization.
     )
 
@@ -159,12 +162,17 @@ internal fun squooshComputeTextInfo(
     // brush function changes (e.g., from State updates) invalidate the cache.
     val customBrush = customizations.getBrush(customizedNodeName)
 
+    val currentViewData = overrideViewData ?: v.data
+    val currentNodeStyle = v.style.nodeStyle
+
     val cachedText = textMeasureCache.get(layoutId)
     if (
         cachedText != null &&
             cachedText.text == customizedText &&
             cachedText.customStyle == customTextStyle &&
-            cachedText.customBrush == customBrush
+            cachedText.customBrush == customBrush &&
+            cachedText.viewData == currentViewData &&
+            cachedText.nodeStyle == currentNodeStyle
     ) {
         textHash.add(cachedText.annotatedText)
         textMeasureCache.put(layoutId, cachedText)
@@ -359,6 +367,8 @@ internal fun squooshComputeTextInfo(
             customBrush,
             annotatedText.text,
             textStyle,
+            currentViewData,
+            currentNodeStyle,
         ),
     )
 

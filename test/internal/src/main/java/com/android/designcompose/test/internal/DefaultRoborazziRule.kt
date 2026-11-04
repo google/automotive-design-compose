@@ -28,15 +28,18 @@ const val ROBO_CAPTURE_DIR = "src/testDebug/roborazzi"
 val DEFAULT_ROBORAZZI_OPTIONS =
     RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.05f))
 
-fun ComposeContentTestRule.captureRootRoboImage(screenshotName: String) {
-    onRoot()
-        .captureRoboImage(
-            filePath = "$screenshotName.png",
-            roborazziOptions = DEFAULT_ROBORAZZI_OPTIONS,
-        )
+fun ComposeContentTestRule.captureRootRoboImage(
+    screenshotName: String,
+    roborazziOptions: RoborazziOptions = DEFAULT_ROBORAZZI_OPTIONS,
+) {
+    onRoot().captureRoboImage(filePath = "$screenshotName.png", roborazziOptions = roborazziOptions)
 }
 
 fun designComposeRoborazziRule(className: String) =
     RoborazziRule(
-        options = RoborazziRule.Options(outputDirectoryPath = "$ROBO_CAPTURE_DIR/$className")
+        options =
+            RoborazziRule.Options(
+                outputDirectoryPath = "$ROBO_CAPTURE_DIR/$className",
+                roborazziOptions = DEFAULT_ROBORAZZI_OPTIONS,
+            )
     )

@@ -2216,6 +2216,9 @@ fn visit_node(
                     filter_op::FilterOpType::Blur(effect.radius / 2.0),
                 ));
             }
+            figma_schema::EffectType::Unknown => {
+                eprintln!("Warning: Skipping unknown effect type on node");
+            }
         }
     }
 

@@ -22,12 +22,13 @@ use crate::meter_schema::MeterJson;
 
 use crate::Error;
 use crate::{
+    animation_override::parse_squoosh_plugin_override,
     component_context::ComponentContext,
-    document::HiddenNodePolicy,
     extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy},
     figma_schema,
     image_context::ImageContext,
     variable_utils::{bound_variables_color, FromFigmaVar},
+    HiddenNodePolicy,
 };
 use dc_bundle::font::{FontFeature, FontStyle, FontWeight, Hyperlink, TextDecoration};
 use dc_bundle::geometry::dimension_proto::Dimension;
@@ -39,8 +40,6 @@ use dc_bundle::variable::NumOrVar;
 use dc_bundle::view_shape;
 use dc_bundle::view_shape::ViewShape;
 
-use crate::animation_override::AnimationOverride;
-use crate::animation_spec_schema::AnimationOverrideJson;
 use crate::figma_schema::LayoutPositioning;
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
 use crate::scalableui_schema::ScalableUiDataJson;
@@ -1104,6 +1103,45 @@ fn compute_background(
     }
 }
 
+/// Extracts node reactions from Figma REST `interactions` (authoritative whenever
+/// `node.interactions` is non-empty) or falls back to legacy `vsw-reactions` plugin data.
+fn extract_node_reactions(
+    node: &figma_schema::Node,
+    plugin_data: Option<&HashMap<String, String>>,
+    component_context: &mut ComponentContext,
+) -> Vec<Reaction> {
+    if !node.interactions.is_empty() {
+        let rest_reactions: Vec<Reaction> =
+            node.interactions.iter().flat_map(|i| i.to_reactions()).collect();
+        component_context.add_destination_nodes(&rest_reactions);
+        return rest_reactions;
+    }
+
+    let Some(vsw_reactions) = plugin_data.and_then(|vsw_data| vsw_data.get("vsw-reactions")) else {
+        return Vec::new();
+    };
+    match serde_json::from_str::<Vec<ReactionJson>>(vsw_reactions.as_str()) {
+        Ok(mut parsed) => {
+            let reactions: Vec<Reaction> = parsed
+                .drain(..)
+                .filter_map(|r| {
+                    let maybe_reaction: Option<Reaction> = r.into();
+                    if maybe_reaction.is_none() {
+                        warn!("Warning: reaction has empty action. Json: {}", vsw_reactions);
+                    }
+                    maybe_reaction
+                })
+                .collect();
+            component_context.add_destination_nodes(&reactions);
+            reactions
+        }
+        Err(e) => {
+            warn!("Error parsing reaction: {}. Json: {}", e, vsw_reactions);
+            Vec::new()
+        }
+    }
+}
+
 // We have a 1:1 correspondence between Nodes and Views which is super nice.
 fn visit_node(
     node: &figma_schema::Node,
@@ -1206,44 +1244,10 @@ fn visit_node(
         }
     }
 
-    // If there's interaction info from our plugin that syncs interactive data then
-    // parse it out.
+    // Extract prototype reactions from Figma REST `interactions` or legacy `vsw-reactions`.
     let reactions: Option<Vec<Reaction>> = {
-        if let Some(vsw_data) = plugin_data {
-            if let Some(reactions) = vsw_data.get("vsw-reactions") {
-                serde_json::from_str(reactions.as_str())
-                    .map(|mut x: Vec<ReactionJson>| {
-                        // Convert from ReactionJson to Reaction
-                        let reaction: Vec<Reaction> = x
-                            .drain(..)
-                            .map(|r| Into::<Option<Reaction>>::into(r))
-                            .filter(|maybe_reaction| {
-                                if maybe_reaction.is_none() {
-                                    warn!(
-                                        "Warning: reaction has empty action. Json: {}",
-                                        reactions
-                                    );
-                                }
-                                maybe_reaction.is_some()
-                            })
-                            .map(|some_reaction| some_reaction.unwrap())
-                            .collect();
-
-                        // Tell the component context about these reactions, too.
-                        component_context.add_destination_nodes(&reaction);
-
-                        Some(reaction)
-                    })
-                    .unwrap_or_else(|e| {
-                        warn!("Error parsing reaction: {}. Json: {}", e, reactions);
-                        None
-                    })
-            } else {
-                None
-            }
-        } else {
-            None
-        }
+        let extracted = extract_node_reactions(node, plugin_data, component_context);
+        (!extracted.is_empty()).then_some(extracted)
     };
 
     // We have some extra info for frames from the plugin which isn't present
@@ -2233,36 +2237,8 @@ fn visit_node(
         RenderMethod::RENDER_METHOD_NONE,
         node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
     );
-    let mut parsed_plugin_override = None;
-    if let Some(plugin_data) = node.shared_plugin_data.get("designcompose") {
-        let anim_str_opt = plugin_data.get("squoosh");
-        if let Some(anim_str) = anim_str_opt {
-            log::info!(
-                "Figma Import: Found squoosh animation plugin data string on node {}: {}",
-                node.id,
-                anim_str
-            );
-            match serde_json::from_str::<AnimationOverrideJson>(anim_str) {
-                Ok(anim) => {
-                    log::info!("Figma Import: Successfully parsed squoosh animation format for node {}, name: {}", node.id, node.name);
-                    parsed_plugin_override = Some(anim);
-                }
-                Err(e) => {
-                    log::error!("Figma Import: Failed to parse squoosh animation plugin data for node {}: {:?}", node.id, e);
-                    println!("Figma Import: Failed to parse squoosh animation plugin data for node {}: {:?}", node.id, e);
-                }
-            }
-        } else {
-            log::debug!("Figma Import: No animation plugin data found for node {}", node.id);
-        }
-    }
-
-    if let Some(anim) = parsed_plugin_override {
-        view.style_mut().node_style_mut().animation_override =
-            Some(AnimationOverride::from(&anim).into()).into();
-    } else if let Some(animation_override) = &node.animation_override {
-        view.style_mut().node_style_mut().animation_override =
-            Some(AnimationOverride::from(animation_override).into()).into();
+    if let Some(anim_override) = parse_squoosh_plugin_override(node) {
+        view.style_mut().node_style_mut().animation_override = Some(anim_override).into();
     }
 
     // Iterate over our visible children, but not vectors because they always
@@ -2383,7 +2359,7 @@ mod tests {
             &HashMap::new(),
             &mut component_context,
             &mut image_context,
-            crate::document::HiddenNodePolicy::Keep,
+            HiddenNodePolicy::Keep,
             &mut key_to_global_id_map,
         )
         .unwrap();
@@ -2427,7 +2403,7 @@ mod tests {
             &HashMap::new(),
             &mut component_context,
             &mut image_context,
-            crate::document::HiddenNodePolicy::Keep,
+            HiddenNodePolicy::Keep,
             &mut key_to_global_id_map,
         )
         .unwrap();
@@ -2479,7 +2455,7 @@ mod tests {
             &HashMap::new(),
             &mut component_context,
             &mut image_context,
-            crate::document::HiddenNodePolicy::Keep,
+            HiddenNodePolicy::Keep,
             &mut key_to_global_id_map,
         )
         .unwrap();
@@ -2564,7 +2540,7 @@ mod tests {
             &HashMap::new(),
             &mut component_context,
             &mut image_context,
-            crate::document::HiddenNodePolicy::Keep,
+            HiddenNodePolicy::Keep,
             &mut key_to_global_id_map,
         )
         .unwrap();
@@ -2617,7 +2593,7 @@ fn test_layout_wrap_no_wrap() {
         &HashMap::new(),
         &mut component_context,
         &mut image_context,
-        crate::document::HiddenNodePolicy::Keep,
+        HiddenNodePolicy::Keep,
         &mut key_to_global_id_map,
     )
     .unwrap();
@@ -2662,7 +2638,7 @@ fn test_layout_wrap_override() {
         &HashMap::new(),
         &mut component_context,
         &mut image_context,
-        crate::document::HiddenNodePolicy::Keep,
+        HiddenNodePolicy::Keep,
         &mut key_to_global_id_map,
     )
     .unwrap();
@@ -2703,7 +2679,7 @@ fn test_animation_override_plugin_data() {
         &HashMap::new(),
         &mut component_context,
         &mut image_context,
-        crate::document::HiddenNodePolicy::Keep,
+        HiddenNodePolicy::Keep,
         &mut key_to_global_id_map,
     )
     .unwrap();
@@ -2766,7 +2742,7 @@ fn test_absolute_position_in_autolayout_import() {
         &HashMap::new(),
         &mut component_context,
         &mut image_context,
-        crate::document::HiddenNodePolicy::Keep,
+        HiddenNodePolicy::Keep,
         &mut key_to_global_id_map,
     )
     .unwrap();
@@ -2862,7 +2838,7 @@ fn test_opacity_serialization() {
             &HashMap::new(),
             &mut component_context,
             &mut image_context,
-            crate::document::HiddenNodePolicy::Keep,
+            HiddenNodePolicy::Keep,
             &mut key_to_global_id_map,
         )
         .unwrap()
@@ -2882,4 +2858,225 @@ fn test_opacity_serialization() {
     let view_half = convert_node(json_half);
     let node_style_half = view_half.style.as_ref().unwrap().node_style.as_ref().unwrap();
     assert_eq!(node_style_half.opacity, Some(0.5));
+}
+
+#[test]
+fn test_rest_interactions_populate_view_reactions() {
+    let cs_json = r#"{
+        "id": "100:0",
+        "name": "ButtonSet",
+        "type": "COMPONENT_SET",
+        "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 200, "height": 200 },
+        "children": [
+            {
+                "id": "100:1",
+                "name": "Theme=Dark, State=Default",
+                "type": "COMPONENT",
+                "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+                "absoluteBoundingBox": { "x": 0, "y": 0, "width": 100, "height": 50 },
+                "children": [
+                    {
+                        "id": "100:11",
+                        "name": "HitTarget",
+                        "type": "FRAME",
+                        "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+                        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 100, "height": 50 },
+                        "interactions": [
+                            {
+                                "trigger": { "type": "ON_HOVER" },
+                                "actions": [
+                                    {
+                                        "type": "NODE",
+                                        "destinationId": "100:2",
+                                        "navigation": "CHANGE_TO",
+                                        "transition": {
+                                            "type": "SMART_ANIMATE",
+                                            "easing": {
+                                                "type": "CUSTOM_CUBIC_BEZIER",
+                                                "easingFunctionCubicBezier": {
+                                                    "x1": 0.4, "y1": 0.0, "x2": 0.2, "y2": 1.0
+                                                }
+                                            },
+                                            "duration": 0.2
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "100:2",
+                "name": "State=Hovered, Theme=Dark",
+                "type": "COMPONENT",
+                "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+                "absoluteBoundingBox": { "x": 0, "y": 60, "width": 100, "height": 50 }
+            }
+        ]
+    }"#;
+
+    let cs_node: figma_schema::Node = serde_json::from_str(cs_json).unwrap();
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+
+    let cs_view = create_component_flexbox(
+        &cs_node,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context,
+        &mut image_context,
+        HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+
+    let dc_bundle::view::view_data::View_data_type::Container(cs_container) =
+        cs_view.data.as_ref().unwrap().view_data_type.as_ref().unwrap()
+    else {
+        panic!("Expected container on ComponentSet");
+    };
+    let v1 = &cs_container.children[0];
+    let dc_bundle::view::view_data::View_data_type::Container(v1_container) =
+        v1.data.as_ref().unwrap().view_data_type.as_ref().unwrap()
+    else {
+        panic!("Expected container on variant 1");
+    };
+    let hit_target = &v1_container.children[0];
+    assert_eq!(hit_target.reactions.len(), 1);
+}
+
+#[test]
+fn test_rest_interactions_preferred_over_stale_vsw_reactions() {
+    let json = r#"{
+        "id": "300:1",
+        "name": "DualNode",
+        "type": "FRAME",
+        "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 50, "height": 50 },
+        "sharedPluginData": {
+            "designcompose": {
+                "vsw-reactions": "[{\"action\":{\"type\":\"BACK\"},\"trigger\":{\"type\":\"ON_CLICK\"}}]"
+            }
+        },
+        "interactions": [
+            {
+                "trigger": { "type": "ON_PRESS" },
+                "actions": [{ "type": "CLOSE" }]
+            }
+        ]
+    }"#;
+    let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+    let view = create_component_flexbox(
+        &node,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context,
+        &mut image_context,
+        HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+    assert_eq!(view.reactions.len(), 1);
+    assert!(matches!(
+        view.reactions[0].action.as_ref().unwrap().action_type,
+        Some(dc_bundle::reaction::action::Action_type::Close(_))
+    ));
+}
+
+#[test]
+fn test_extract_node_reactions_authoritative_rest_vs_vsw_fallback() {
+    // Case (b): Non-empty REST node.interactions with only unsupported/null-trigger actions
+    // must NOT resurrect stale vsw-reactions from plugin data.
+    let non_empty_unsupported_json = r#"{
+        "id": "301:1",
+        "name": "RestAuthoritativeEmpty",
+        "type": "FRAME",
+        "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 50, "height": 50 },
+        "sharedPluginData": {
+            "designcompose": {
+                "vsw-reactions": "[{\"action\":{\"type\":\"BACK\"},\"trigger\":{\"type\":\"ON_CLICK\"}}]"
+            }
+        },
+        "interactions": [
+            {
+                "trigger": { "type": "ON_CLICK" },
+                "actions": [{ "type": "SET_VARIABLE", "variableId": "v1" }]
+            },
+            {
+                "trigger": { "type": "ON_MEDIA_END" },
+                "actions": [{ "type": "CLOSE" }]
+            }
+        ]
+    }"#;
+    let node_b: figma_schema::Node = serde_json::from_str(non_empty_unsupported_json).unwrap();
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context_b = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+    let view_b = create_component_flexbox(
+        &node_b,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context_b,
+        &mut image_context,
+        HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+    assert!(
+        view_b.reactions.is_empty(),
+        "Non-empty node.interactions must suppress stale vsw-reactions fallback"
+    );
+
+    // Case (c): Empty REST node.interactions falls back to vsw-reactions and registers
+    // destination node IDs in ComponentContext.
+    let empty_rest_with_vsw_json = r#"{
+        "id": "301:2",
+        "name": "LegacyFallback",
+        "type": "FRAME",
+        "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 50, "height": 50 },
+        "sharedPluginData": {
+            "designcompose": {
+                "vsw-reactions": "[{\"action\":{\"type\":\"NODE\",\"destinationId\":\"99:1\",\"navigation\":\"NAVIGATE\",\"preserveScrollPosition\":false},\"trigger\":{\"type\":\"ON_CLICK\"}}]"
+            }
+        },
+        "interactions": []
+    }"#;
+    let dest_node: figma_schema::Node = serde_json::from_str(
+        r#"{
+            "id": "99:1",
+            "name": "DestFrame",
+            "type": "FRAME",
+            "constraints": { "vertical": "TOP", "horizontal": "LEFT" }
+        }"#,
+    )
+    .unwrap();
+    let node_c: figma_schema::Node = serde_json::from_str(empty_rest_with_vsw_json).unwrap();
+    let mut component_context_c = ComponentContext::new(&vec![]);
+    let view_c = create_component_flexbox(
+        &node_c,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context_c,
+        &mut image_context,
+        HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+    assert_eq!(view_c.reactions.len(), 1);
+    let mut id_index = HashMap::new();
+    id_index.insert("99:1".to_string(), &dest_node);
+    let referenced = component_context_c.referenced_list(&id_index);
+    assert_eq!(referenced.len(), 1);
+    assert_eq!(referenced[0].1.id, "99:1");
 }

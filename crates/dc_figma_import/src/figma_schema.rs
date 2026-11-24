@@ -1051,6 +1051,8 @@ pub struct Node {
     pub absolute_render_bounds: Option<Rectangle>,
     #[serde(default)]
     pub shared_plugin_data: HashMap<String, HashMap<String, String>>,
+    #[serde(default, deserialize_with = "crate::reaction_schema::deserialize_lossy_vec")]
+    pub interactions: Vec<crate::reaction_schema::InteractionJson>,
     #[serde(skip)]
     pub animation_override: Option<crate::animation_spec_schema::AnimationOverrideJson>,
     #[serde(flatten)]

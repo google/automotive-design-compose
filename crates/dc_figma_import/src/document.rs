@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::{
+    animation_override::AnimationOverridePropagator,
     component_context::ComponentContext,
     error::Error,
     extended_layout_schema::ExtendedAutoLayout,
@@ -62,11 +63,7 @@ struct SmartCacheEntry {
 static SMART_CACHE: LazyLock<Mutex<HashMap<String, SmartCacheEntry>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum HiddenNodePolicy {
-    Skip,
-    Keep,
-}
+pub use crate::HiddenNodePolicy;
 
 /// Helper function to deserialize JSON strings while reporting errors mapped with the exact property path.
 /// This aids troubleshooting by indicating precisely which JSON node caused failure.
@@ -1448,165 +1445,6 @@ impl Document {
         // First we gather all of nodes that we're going to convert and find all of the
         // child nodes that can't be rendered. Then we ask Figma to do a batch render on
         // them. Finally we convert and return the set of toolkit nodes.
-        fn index_node<'a>(
-            node: &'a figma_schema::Node,
-            parent_node: Option<&'a figma_schema::Node>,
-            name_index: &mut HashMap<String, &'a figma_schema::Node>,
-            id_index: &mut HashMap<String, &'a figma_schema::Node>,
-            variant_index: &mut HashMap<(String, String), &'a figma_schema::Node>,
-            component_set_name_index: &mut HashMap<String, &'a figma_schema::Node>,
-            component_id_index: &mut HashMap<String, &'a figma_schema::Node>,
-            hidden_node_policy: HiddenNodePolicy,
-        ) {
-            // Ignore hidden nodes
-            if !node.visible && hidden_node_policy == HiddenNodePolicy::Skip {
-                return;
-            }
-
-            // If we have a parent that is a component set, add to the variant index
-            let mut is_variant = false;
-            if let Some(parent) = parent_node {
-                if let figma_schema::NodeData::ComponentSet { .. } = parent.data {
-                    is_variant = true;
-                    variant_index.insert((node.name.clone(), parent.name.clone()), node);
-                }
-            }
-
-            if !is_variant {
-                // If there's already a node with the same name, then only replace it if
-                // we're a component.
-                if name_index.get(&node.name).is_some() {
-                    if let figma_schema::NodeData::Component { .. } = node.data {
-                        name_index.insert(node.name.clone(), node);
-                    }
-                } else {
-                    name_index.insert(node.name.clone(), node);
-                }
-            }
-            id_index.insert(node.id.clone(), node);
-            for child in &node.children {
-                index_node(
-                    child,
-                    Some(node),
-                    name_index,
-                    id_index,
-                    variant_index,
-                    component_set_name_index,
-                    component_id_index,
-                    hidden_node_policy,
-                );
-            }
-            if let figma_schema::NodeData::ComponentSet { .. } = node.data {
-                component_set_name_index.insert(node.name.clone(), node);
-                for child in &node.children {
-                    component_id_index.insert(child.id.clone(), node);
-                }
-            }
-        }
-
-        // For each node in nodes or an ancestor of a node in nodes, if it is a component
-        // instance, add the component set associated with the instance into node_name_hash.
-        fn find_component_sets(
-            nodes: &Vec<&figma_schema::Node>,
-            component_set_index: &HashMap<String, &figma_schema::Node>,
-            node_name_hash: &mut HashSet<NodeQuery>,
-        ) {
-            for node in nodes {
-                if let figma_schema::NodeData::Instance { frame: _, component_id } = &node.data {
-                    let component_set = component_set_index.get(component_id);
-                    if let Some(cs) = component_set {
-                        node_name_hash.insert(NodeQuery::NodeComponentSet(cs.name.clone()));
-
-                        // Recurse on the children of the component set since variants can change
-                        // to any of them at runtime
-                        let cs_children: Vec<&figma_schema::Node> = cs.children.iter().collect();
-                        find_component_sets(&cs_children, component_set_index, node_name_hash);
-                    }
-                }
-
-                let children: Vec<&figma_schema::Node> = node.children.iter().collect();
-                find_component_sets(&children, component_set_index, node_name_hash);
-            }
-        }
-
-        // For each node that is a component set, add all of its children (which are variants)
-        // into the node name hash so that we retrieve those nodes. Also add them to the
-        // component_set_hash, which hashes a component set node name to all of its children.
-        fn add_variant_node_names(
-            node: &figma_schema::Node,
-            node_name_hash: &mut HashSet<NodeQuery>,
-            component_set_hash: &mut HashMap<String, Vec<String>>,
-        ) {
-            if let figma_schema::NodeData::ComponentSet { .. } = &node.data {
-                // Add the component set's children to node_name_has if either the component set itself
-                // is in the node_name_hash, or one of the child variants is in node_name_hash
-                let mut add_children = node_name_hash
-                    .contains(&NodeQuery::NodeName(node.name.clone()))
-                    || node_name_hash.contains(&NodeQuery::NodeComponentSet(node.name.clone()));
-                if !add_children {
-                    'outer: for child in &node.children {
-                        let child_name_parts = child.name.split(',');
-                        for variant_name in child_name_parts {
-                            let variant_name = variant_name.to_string();
-                            let variant_parts: Vec<&str> = variant_name.split('=').collect();
-                            if variant_parts.len() == 2 {
-                                // Format is property_name=value, so check if the property_name is in node_name_hash
-                                if node_name_hash
-                                    .contains(&NodeQuery::NodeName(variant_parts[0].to_string()))
-                                {
-                                    add_children = true;
-                                    break 'outer;
-                                }
-                            }
-                        }
-                    }
-                }
-                if add_children {
-                    for child in &node.children {
-                        let child_node_query =
-                            NodeQuery::NodeVariant(child.name.clone(), node.name.clone());
-                        if !node_name_hash.contains(&child_node_query) {
-                            node_name_hash.insert(child_node_query);
-                        }
-                    }
-                }
-                let mut variant_list: Vec<String> = vec![];
-                for child in &node.children {
-                    variant_list.push(child.name.clone());
-                }
-                component_set_hash.insert(node.name.clone(), variant_list);
-            }
-            // Recurse on all children
-            for child in &node.children {
-                add_variant_node_names(child, node_name_hash, component_set_hash);
-            }
-        }
-
-        // Search the node hierarchy for nodes that have plugin data that specifies an overflow
-        // node. Add these nodes to node_name_hash so that we fetch them.
-        fn add_overflow_nodes(node: &figma_schema::Node, node_name_hash: &mut HashSet<NodeQuery>) {
-            if node.shared_plugin_data.contains_key("designcompose") {
-                let plugin_data = node.shared_plugin_data.get("designcompose");
-                if let Some(vsw_data) = plugin_data {
-                    if let Some(plugin_layout) = vsw_data.get("vsw-extended-auto-layout") {
-                        let extended_auto_layout: Option<ExtendedAutoLayout> =
-                            serde_json::from_str(plugin_layout.as_str()).ok();
-                        if let Some(extended_auto_layout) = extended_auto_layout {
-                            if extended_auto_layout.limit_content {
-                                let lcd = extended_auto_layout.limit_content_data;
-                                node_name_hash.insert(NodeQuery::NodeId(lcd.overflow_node_id));
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Recurse on all children
-            for child in &node.children {
-                add_overflow_nodes(child, node_name_hash);
-            }
-        }
-
         let mut name_index = HashMap::new();
         let mut id_index = HashMap::new();
         let mut variant_index = HashMap::new();
@@ -1796,32 +1634,24 @@ impl Document {
             }
         }
 
-        // Convert node_names into a HashSet. Then, for any node names that are a component set,
-        // add all of its children (which are variants) into the node name hash.
-        // Also add all component sets to component_set_hash, mapping the component set name to
-        // a list of all their variant children.
+        let resolve_query_node = |query: &NodeQuery| -> Option<&figma_schema::Node> {
+            match query {
+                NodeQuery::NodeId(id) => id_index.get(id).copied(),
+                NodeQuery::NodeName(node_name) => name_index.get(node_name).copied(),
+                NodeQuery::NodeComponentSet(node_name) => {
+                    component_set_name_index.get(node_name).copied()
+                }
+                NodeQuery::NodeVariant(node_name, parent_name) => {
+                    variant_index.get(&(node_name.clone(), parent_name.clone())).copied()
+                }
+            }
+        };
+
+        // Convert explicit node_names into a HashSet, expand any directly-queried component sets
+        // or overflow nodes first, and then expand component-set instances by exact component ID
+        // so same-named component sets (e.g., two "ProgressBar" sets) don't cross-trigger each
+        // other via `NodeQuery::NodeComponentSet(name)` or `component_set_name_index` collisions.
         let mut node_name_hash: HashSet<NodeQuery> = HashSet::from_iter(node_names.iter().cloned());
-        // Convert node_names into a list of nodes. We'll use this list in find_component_sets to
-        // add any component sets whose instances are in the tree of any nodes in query_nodes. This
-        // ensures that we have access to other component variants.
-        let query_nodes: Vec<&figma_schema::Node> = node_names
-            .iter()
-            .map(|name| {
-                // Look up the node if it's defined.
-                let maybe_node = match &name {
-                    NodeQuery::NodeId(id) => id_index.get(id),
-                    NodeQuery::NodeName(node_name) => name_index.get(node_name),
-                    NodeQuery::NodeComponentSet(node_name) => name_index.get(node_name),
-                    NodeQuery::NodeVariant(node_name, parent_name) => {
-                        variant_index.get(&(node_name.clone(), parent_name.clone()))
-                    }
-                };
-                maybe_node
-            })
-            .filter(|maybe_node| maybe_node.is_some())
-            .map(|node| *node.unwrap()) // safe to unwrap
-            .collect();
-        find_component_sets(&query_nodes, &component_id_index, &mut node_name_hash);
         let mut component_set_hash: HashMap<String, Vec<String>> = HashMap::new();
         add_variant_node_names(
             &self.document_root.document,
@@ -1830,73 +1660,56 @@ impl Document {
         );
 
         // Some nodes may have additional plugin data that specifies an overflow node. Look for these
-        // and add them to node_name_hash
+        // and add them to node_name_hash before component-set instance expansion.
         add_overflow_nodes(&self.document_root.document, &mut node_name_hash);
 
-        // Find the initial list of nodes we want to convert. This list excludes nodes that are hidden
-        let mut nodes: Vec<(NodeQuery, &figma_schema::Node)> = node_name_hash
+        let mut initial_nodes_by_query: HashMap<NodeQuery, &figma_schema::Node> = node_name_hash
             .into_iter()
-            .map(|name| {
-                // Look up the node if it's defined.
-                let maybe_node = match &name {
-                    NodeQuery::NodeId(id) => id_index.get(id),
-                    NodeQuery::NodeName(node_name) => name_index.get(node_name),
-                    NodeQuery::NodeComponentSet(node_name) => {
-                        component_set_name_index.get(node_name)
-                    }
-                    NodeQuery::NodeVariant(node_name, parent_name) => {
-                        variant_index.get(&(node_name.clone(), parent_name.clone()))
-                    }
-                };
-
-                // Yield up both the query and the node so that we can return the
-                // query with the converted node.
-                (name, maybe_node)
-            })
-            .filter(|(_, maybe_node)| maybe_node.is_some())
-            .map(|(k, node)| (k, *node.unwrap())) // safe to unwrap
+            .filter_map(|query| resolve_query_node(&query).map(|node| (query, node)))
             .collect();
+        let mut initial_sorted: Vec<(&NodeQuery, &&figma_schema::Node)> =
+            initial_nodes_by_query.iter().collect();
+        initial_sorted
+            .sort_by(|(a, _), (b, _)| node_query_sort_key(a).cmp(&node_query_sort_key(b)));
+        let query_nodes: Vec<&figma_schema::Node> =
+            initial_sorted.into_iter().map(|(_, node)| *node).collect();
+        let mut visited_component_sets: HashSet<String> = HashSet::new();
+        for (query, node) in expand_component_set_queries(
+            &query_nodes,
+            &component_id_index,
+            hidden_node_policy,
+            &mut visited_component_sets,
+        ) {
+            initial_nodes_by_query.entry(query).or_insert(node);
+        }
+
+        // Build a deterministically ordered list of initial nodes to convert.
+        let mut nodes: Vec<(NodeQuery, &figma_schema::Node)> =
+            initial_nodes_by_query.into_iter().collect();
+        nodes.sort_by(|(a, _), (b, _)| node_query_sort_key(a).cmp(&node_query_sort_key(b)));
 
         // We use ComponentContext to track all of the nodes that need to be converted to
         // satisfy reactions.
         let mut component_context = ComponentContext::new(&nodes);
         let mut views = HashMap::new();
+        let mut converted_views_by_id: HashMap<String, View> = HashMap::new();
+        let ignored_image_hash = build_ignored_image_hash(ignored_images, &component_set_hash);
+        let mut anim_propagator =
+            AnimationOverridePropagator::new(&id_index, &component_id_index, hidden_node_policy);
 
         loop {
-            // XXX: Very silly cloning here; why doesn't DocumentKey do this once?
-
-            // Add the ignored images into a hash map for easier access
-            let mut ignored_image_hash: HashMap<NodeQuery, HashSet<String>> = HashMap::new();
-            for (node_name, node_images) in ignored_images {
-                let mut img_set: HashSet<String> = HashSet::new();
-                for img in node_images {
-                    img_set.insert(img.to_string());
-                }
-                ignored_image_hash.insert(node_name.clone(), img_set);
-
-                // If node_name is a component set, all its variant children use the same set of ignored images
-                if let NodeQuery::NodeName(name) = node_name {
-                    let variant_list = component_set_hash.get(name);
-                    if let Some(variant_list) = variant_list {
-                        for variant_name in variant_list {
-                            let mut img_set: HashSet<String> = HashSet::new();
-                            for img in node_images {
-                                img_set.insert(img.to_string());
-                            }
-                            ignored_image_hash.insert(NodeQuery::name(variant_name), img_set);
-                        }
-                    }
-                }
-            }
-            // Now we can transform from the Figma schema to the toolkit schema.
+            // Transform each queued query from the Figma schema to the toolkit schema, reusing
+            // already-converted views when multiple query types resolve to the same Figma node ID.
             for (query, node) in nodes {
-                // Set the set of images to ignore for this node
-                let ignored_image_set = ignored_image_hash.get(&NodeQuery::name(node.name.clone()));
-                self.image_context.set_ignored_images(ignored_image_set);
+                let view = if let Some(existing_view) = converted_views_by_id.get(&node.id) {
+                    existing_view.clone()
+                } else {
+                    // Set the set of images to ignore for this node
+                    let ignored_image_set =
+                        ignored_image_hash.get(&NodeQuery::name(node.name.clone()));
+                    self.image_context.set_ignored_images(ignored_image_set);
 
-                views.insert(
-                    query,
-                    create_component_flexbox(
+                    let mut converted = create_component_flexbox(
                         node,
                         &self.document_root.components,
                         &self.document_root.component_sets,
@@ -1904,17 +1717,34 @@ impl Document {
                         &mut self.image_context,
                         hidden_node_policy,
                         &mut self.key_to_global_id_map,
-                    )?,
-                );
+                    )?;
+                    anim_propagator.propagate(&mut converted);
+                    converted_views_by_id.insert(node.id.clone(), converted.clone());
+                    converted
+                };
+                views.insert(query, view);
             }
 
-            // If we have no more nodes then we can break out.
+            // Drain newly referenced out-of-tree nodes; exit once the worklist is exhausted.
             nodes = component_context.referenced_list(&id_index);
-
-            // We use a hashset inside of ComponentContext to ensure that we don't request the same
-            // nodes over and over.
             if nodes.is_empty() {
                 break;
+            }
+
+            let mut queued_queries: HashSet<NodeQuery> =
+                nodes.iter().map(|(query, _)| query.clone()).collect();
+            let ref_nodes: Vec<&figma_schema::Node> = nodes.iter().map(|(_, node)| *node).collect();
+            for (query, node) in expand_component_set_queries(
+                &ref_nodes,
+                &component_id_index,
+                hidden_node_policy,
+                &mut visited_component_sets,
+            ) {
+                if views.contains_key(&query) || !queued_queries.insert(query.clone()) {
+                    continue;
+                }
+                component_context.mark_converted(&node.id);
+                nodes.push((query, node));
             }
         }
 
@@ -2106,9 +1936,254 @@ impl Document {
     }
 }
 
+fn index_node<'a>(
+    node: &'a figma_schema::Node,
+    parent_node: Option<&'a figma_schema::Node>,
+    name_index: &mut HashMap<String, &'a figma_schema::Node>,
+    id_index: &mut HashMap<String, &'a figma_schema::Node>,
+    variant_index: &mut HashMap<(String, String), &'a figma_schema::Node>,
+    component_set_name_index: &mut HashMap<String, &'a figma_schema::Node>,
+    component_id_index: &mut HashMap<String, &'a figma_schema::Node>,
+    hidden_node_policy: HiddenNodePolicy,
+) {
+    // Ignore hidden nodes
+    if !node.visible && hidden_node_policy == HiddenNodePolicy::Skip {
+        return;
+    }
+
+    // If we have a parent that is a component set, add to the variant index
+    let mut is_variant = false;
+    if let Some(parent) = parent_node {
+        if let figma_schema::NodeData::ComponentSet { .. } = parent.data {
+            is_variant = true;
+            variant_index.insert((node.name.clone(), parent.name.clone()), node);
+        }
+    }
+
+    if !is_variant {
+        // If there's already a node with the same name, then only replace it if
+        // we're a component.
+        if name_index.get(&node.name).is_some() {
+            if let figma_schema::NodeData::Component { .. } = node.data {
+                name_index.insert(node.name.clone(), node);
+            }
+        } else {
+            name_index.insert(node.name.clone(), node);
+        }
+    }
+    id_index.insert(node.id.clone(), node);
+    for child in &node.children {
+        index_node(
+            child,
+            Some(node),
+            name_index,
+            id_index,
+            variant_index,
+            component_set_name_index,
+            component_id_index,
+            hidden_node_policy,
+        );
+    }
+    if let figma_schema::NodeData::ComponentSet { .. } = node.data {
+        component_set_name_index.insert(node.name.clone(), node);
+        for child in &node.children {
+            if matches!(child.data, figma_schema::NodeData::Component { .. })
+                && (hidden_node_policy == HiddenNodePolicy::Keep || child.visible)
+            {
+                component_id_index.insert(child.id.clone(), node);
+            }
+        }
+    }
+}
+
+// For each node or visible descendant component instance, emit the exact component set and
+// variant nodes associated with that instance (resolved by component ID so same-named
+// ComponentSets do not collide by name, while honoring `HiddenNodePolicy`).
+fn find_component_sets<'a>(
+    node: &'a figma_schema::Node,
+    component_set_index: &HashMap<String, &'a figma_schema::Node>,
+    hidden_node_policy: HiddenNodePolicy,
+    expanded_nodes: &mut HashMap<NodeQuery, &'a figma_schema::Node>,
+    visited_sets: &mut HashSet<String>,
+) {
+    if hidden_node_policy == HiddenNodePolicy::Skip && !node.visible {
+        return;
+    }
+    if let figma_schema::NodeData::Instance { frame: _, component_id } = &node.data {
+        if let Some(&cs) = component_set_index.get(component_id) {
+            if hidden_node_policy == HiddenNodePolicy::Keep || cs.visible {
+                expanded_nodes.entry(NodeQuery::NodeComponentSet(cs.name.clone())).or_insert(cs);
+
+                // Recurse on the children of each component set at most once so cyclic
+                // component-set references terminate cleanly.
+                if visited_sets.insert(cs.id.clone()) {
+                    for child in &cs.children {
+                        if !matches!(child.data, figma_schema::NodeData::Component { .. })
+                            || (hidden_node_policy == HiddenNodePolicy::Skip && !child.visible)
+                        {
+                            continue;
+                        }
+                        expanded_nodes
+                            .entry(NodeQuery::NodeVariant(child.name.clone(), cs.name.clone()))
+                            .or_insert(child);
+                        find_component_sets(
+                            child,
+                            component_set_index,
+                            hidden_node_policy,
+                            expanded_nodes,
+                            visited_sets,
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    for child in &node.children {
+        find_component_sets(
+            child,
+            component_set_index,
+            hidden_node_policy,
+            expanded_nodes,
+            visited_sets,
+        );
+    }
+}
+
+// For each node that is a component set, add all of its children (which are variants)
+// into the node name hash so that we retrieve those nodes. Also add them to the
+// component_set_hash, which hashes a component set node name to all of its children.
+fn add_variant_node_names(
+    node: &figma_schema::Node,
+    node_name_hash: &mut HashSet<NodeQuery>,
+    component_set_hash: &mut HashMap<String, Vec<String>>,
+) {
+    if let figma_schema::NodeData::ComponentSet { .. } = &node.data {
+        // Add the component set's children to node_name_has if either the component set itself
+        // is in the node_name_hash, or one of the child variants is in node_name_hash
+        let mut add_children = node_name_hash.contains(&NodeQuery::NodeName(node.name.clone()))
+            || node_name_hash.contains(&NodeQuery::NodeComponentSet(node.name.clone()));
+        if !add_children {
+            'outer: for child in &node.children {
+                let child_name_parts = child.name.split(',');
+                for variant_name in child_name_parts {
+                    let variant_name = variant_name.to_string();
+                    let variant_parts: Vec<&str> = variant_name.split('=').collect();
+                    if variant_parts.len() == 2 {
+                        // Format is property_name=value, so check if the property_name is in node_name_hash
+                        if node_name_hash
+                            .contains(&NodeQuery::NodeName(variant_parts[0].to_string()))
+                        {
+                            add_children = true;
+                            break 'outer;
+                        }
+                    }
+                }
+            }
+        }
+        if add_children {
+            for child in &node.children {
+                let child_node_query =
+                    NodeQuery::NodeVariant(child.name.clone(), node.name.clone());
+                if !node_name_hash.contains(&child_node_query) {
+                    node_name_hash.insert(child_node_query);
+                }
+            }
+        }
+        let variants = component_set_hash.entry(node.name.clone()).or_default();
+        for child in &node.children {
+            if !variants.iter().any(|existing| existing == &child.name) {
+                variants.push(child.name.clone());
+            }
+        }
+    }
+    // Recurse on all children
+    for child in &node.children {
+        add_variant_node_names(child, node_name_hash, component_set_hash);
+    }
+}
+
+// Search the node hierarchy for nodes that have plugin data that specifies an overflow
+// node. Add these nodes to node_name_hash so that we fetch them.
+fn add_overflow_nodes(node: &figma_schema::Node, node_name_hash: &mut HashSet<NodeQuery>) {
+    if node.shared_plugin_data.contains_key("designcompose") {
+        let plugin_data = node.shared_plugin_data.get("designcompose");
+        if let Some(vsw_data) = plugin_data {
+            if let Some(plugin_layout) = vsw_data.get("vsw-extended-auto-layout") {
+                let extended_auto_layout: Option<ExtendedAutoLayout> =
+                    serde_json::from_str(plugin_layout.as_str()).ok();
+                if let Some(extended_auto_layout) = extended_auto_layout {
+                    if extended_auto_layout.limit_content {
+                        let lcd = extended_auto_layout.limit_content_data;
+                        node_name_hash.insert(NodeQuery::NodeId(lcd.overflow_node_id));
+                    }
+                }
+            }
+        }
+    }
+
+    // Recurse on all children
+    for child in &node.children {
+        add_overflow_nodes(child, node_name_hash);
+    }
+}
+
+fn node_query_sort_key(query: &NodeQuery) -> (u8, &str, &str) {
+    match query {
+        NodeQuery::NodeId(id) => (0, id.as_str(), ""),
+        NodeQuery::NodeName(name) => (1, name.as_str(), ""),
+        NodeQuery::NodeComponentSet(name) => (2, name.as_str(), ""),
+        NodeQuery::NodeVariant(name, parent) => (3, name.as_str(), parent.as_str()),
+    }
+}
+
+fn build_ignored_image_hash(
+    ignored_images: &[(NodeQuery, Vec<String>)],
+    component_set_hash: &HashMap<String, Vec<String>>,
+) -> HashMap<NodeQuery, HashSet<String>> {
+    let mut ignored_image_hash: HashMap<NodeQuery, HashSet<String>> = HashMap::new();
+    for (node_name, node_images) in ignored_images {
+        let img_set: HashSet<String> = node_images.iter().cloned().collect();
+        ignored_image_hash.insert(node_name.clone(), img_set);
+
+        // If node_name is a component set, all its variant children use the same set of ignored images
+        if let NodeQuery::NodeName(name) = node_name {
+            if let Some(variant_list) = component_set_hash.get(name) {
+                for variant_name in variant_list {
+                    let variant_img_set: HashSet<String> = node_images.iter().cloned().collect();
+                    ignored_image_hash.insert(NodeQuery::name(variant_name), variant_img_set);
+                }
+            }
+        }
+    }
+    ignored_image_hash
+}
+
+fn expand_component_set_queries<'a>(
+    seed_nodes: &[&'a figma_schema::Node],
+    component_set_index: &HashMap<String, &'a figma_schema::Node>,
+    hidden_node_policy: HiddenNodePolicy,
+    visited_sets: &mut HashSet<String>,
+) -> Vec<(NodeQuery, &'a figma_schema::Node)> {
+    let mut expanded: HashMap<NodeQuery, &'a figma_schema::Node> = HashMap::new();
+    for &seed in seed_nodes {
+        find_component_sets(
+            seed,
+            component_set_index,
+            hidden_node_policy,
+            &mut expanded,
+            visited_sets,
+        );
+    }
+    let mut sorted: Vec<(NodeQuery, &'a figma_schema::Node)> = expanded.into_iter().collect();
+    sorted.sort_by(|(a, _), (b, _)| node_query_sort_key(a).cmp(&node_query_sort_key(b)));
+    sorted
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::animation_override::test_support::*;
 
     #[test]
     fn test_parse_document_id_formats() {
@@ -2286,42 +2361,9 @@ mod tests {
         let mut variables_responses = HashMap::new();
         variables_responses.insert("doc_test".to_string(), variables_response);
 
-        let document_root: figma_schema::FileResponse = serde_json::from_value(serde_json::json!({
-            "document": {
-                "id": "0:0",
-                "name": "Document",
-                "type": "DOCUMENT",
-                "children": []
-            },
-            "components": {},
-            "componentSets": {},
-            "name": "Test Doc",
-            "lastModified": "",
-            "version": ""
-        }))
-        .expect("Failed to deserialize mock FileResponse");
-
-        let doc = Document {
-            api_key: String::new(),
-            document_id: "doc_test".to_string(),
-            version_id: String::new(),
-            proxy_config: ProxyConfig::None,
-            document_root,
-            variables_responses,
-            image_context: ImageContext::new(HashMap::new(), HashMap::new(), &ProxyConfig::None),
-            variant_nodes: HashMap::new(),
-            component_sets: HashMap::new(),
-            branches: vec![],
-            key_to_global_id_map,
-            remote_node_responses: HashMap::new(),
-            fetched_remote_images: HashSet::new(),
-            prefetched_components: HashMap::new(),
-            node_tracker: crate::node_tracker::NodeTracker::new(),
-            last_view_hashes: HashMap::new(),
-            cached_node_ids: HashMap::new(),
-            failed_component_keys: HashSet::new(),
-            is_update: false,
-        };
+        let mut doc = make_test_document(test_file_response("Test Doc", vec![], &[], &[]));
+        doc.variables_responses = variables_responses;
+        doc.key_to_global_id_map = key_to_global_id_map;
 
         let variable_map = doc.build_variable_map();
 
@@ -2345,5 +2387,1877 @@ mod tests {
             Some(&"VariableID:12286:6095".to_string()),
             "Name map must point to the local id"
         );
+    }
+
+    fn make_test_document(document_root: figma_schema::FileResponse) -> Document {
+        Document {
+            api_key: String::new(),
+            document_id: "doc_test".to_string(),
+            version_id: String::new(),
+            proxy_config: ProxyConfig::None,
+            document_root,
+            variables_responses: HashMap::new(),
+            image_context: ImageContext::new(HashMap::new(), HashMap::new(), &ProxyConfig::None),
+            variant_nodes: HashMap::new(),
+            component_sets: HashMap::new(),
+            branches: vec![],
+            key_to_global_id_map: HashMap::new(),
+            remote_node_responses: HashMap::new(),
+            fetched_remote_images: HashSet::new(),
+            prefetched_components: HashMap::new(),
+            node_tracker: crate::node_tracker::NodeTracker::new(),
+            last_view_hashes: HashMap::new(),
+            cached_node_ids: HashMap::new(),
+            failed_component_keys: HashSet::new(),
+            is_update: false,
+        }
+    }
+
+    #[test]
+    fn test_document_nodes_propagates_matrix_to_component_set_variants_and_instance() {
+        use crate::reaction_schema::{BezierJson, EasingJson as ReactionEasingJson, TriggerJson};
+
+        let custom_bezier = ReactionEasingJson::CustomCubicBezier {
+            bezier: BezierJson { x1: 0.2, y1: 0.0, x2: 0.0, y2: 1.0 },
+        };
+        let page_children = vec![
+            test_frame("10:0", "#Main", vec![test_instance("10:1", "#Pill", "20:1", vec![])]),
+            test_component_set(
+                "20:0",
+                "PillSet",
+                vec![
+                    with_interactions(
+                        test_component("20:1", "State=Idle", vec![]),
+                        vec![smart_animate_change_to_with_easing(
+                            TriggerJson::OnHover,
+                            "20:2",
+                            custom_bezier,
+                            0.2,
+                        )],
+                    ),
+                    test_component("20:2", "State=Active", vec![]),
+                ],
+            ),
+        ];
+
+        let mut doc = make_test_document(test_file_response(
+            "ComponentSet Propagation Doc",
+            page_children,
+            &[],
+            &[],
+        ));
+        let mut errors = Vec::new();
+        let views = doc
+            .nodes(&vec![NodeQuery::name("#Main")], &vec![], &mut errors, HiddenNodePolicy::Skip)
+            .unwrap();
+        assert!(errors.is_empty());
+
+        let cs_view = views.get(&NodeQuery::NodeComponentSet("PillSet".to_string())).unwrap();
+        let idle_view = views.get(&NodeQuery::variant("State=Idle", "PillSet")).unwrap();
+        let active_view = views.get(&NodeQuery::variant("State=Active", "PillSet")).unwrap();
+        let main_view = views.get(&NodeQuery::name("#Main")).unwrap();
+        let pill_inst = main_view.find_view_by_id("10:1").expect("#Pill instance must exist");
+
+        for view in [cs_view, idle_view, active_view, pill_inst] {
+            let Some(dc_bundle::animationspec::animation_override::Animation_override::Matrix(
+                matrix,
+            )) = view_animation_override(view)
+            else {
+                panic!("Expected Matrix on {}", view.name);
+            };
+            assert_eq!(matrix.transitions.len(), 2);
+            let fwd = matrix
+                .transitions
+                .iter()
+                .find(|t| t.source_variant == "State=Idle" && t.target_variant == "State=Active")
+                .expect("Forward State=Idle -> State=Active transition must exist");
+            let Some(dc_bundle::animationspec::animations::Type::Smooth(smooth)) =
+                fwd.spec.as_ref().unwrap().animation.as_ref().unwrap().type_.as_ref()
+            else {
+                panic!("Expected Smooth animation");
+            };
+            assert_eq!(smooth.duration.as_ref().unwrap().nanos, 200_000_000);
+            match smooth.easing.as_ref().unwrap().type_.as_ref().unwrap() {
+                dc_bundle::animationspec::easing::Type::Bezier(b) => {
+                    assert!((b.p0 - 0.2).abs() < 1e-6);
+                    assert!((b.p3 - 1.0).abs() < 1e-6);
+                }
+                other => panic!("Expected Bezier easing, got {:?}", other),
+            }
+            assert!(matrix
+                .transitions
+                .iter()
+                .any(|t| t.source_variant == "State=Active" && t.target_variant == "State=Idle"));
+        }
+
+        assert!(
+            pill_inst.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "Unmodified #Pill instance must not accrue spurious overrides_table entries"
+        );
+    }
+
+    #[test]
+    fn test_document_nodes_nested_instances_isolated_without_spurious_overrides() {
+        use crate::reaction_schema::TriggerJson;
+
+        let page_children = vec![
+            test_frame(
+                "10:0",
+                "#Main",
+                vec![test_instance(
+                    "10:1",
+                    "#OuterCard",
+                    "20:1",
+                    vec![test_instance("I10:1;20:11", "#InnerPill", "30:1", vec![])],
+                )],
+            ),
+            test_component_set(
+                "20:0",
+                "CardSet",
+                vec![
+                    with_interactions(
+                        test_component(
+                            "20:1",
+                            "Card=One",
+                            vec![test_instance("20:11", "#InnerPill", "30:1", vec![])],
+                        ),
+                        vec![smart_animate_change_to(TriggerJson::OnClick, "20:2", 0.4)],
+                    ),
+                    test_component("20:2", "Card=Two", vec![]),
+                ],
+            ),
+            test_component_set(
+                "30:0",
+                "PillSet",
+                vec![
+                    with_interactions(
+                        test_component("30:1", "Pill=Idle", vec![]),
+                        vec![smart_animate_change_to(TriggerJson::OnHover, "30:2", 0.15)],
+                    ),
+                    test_component("30:2", "Pill=Active", vec![]),
+                ],
+            ),
+        ];
+
+        let mut doc =
+            make_test_document(test_file_response("TA2 Nested Doc", page_children, &[], &[]));
+        let mut errors = Vec::new();
+        let views = doc
+            .nodes(&vec![NodeQuery::name("#Main")], &vec![], &mut errors, HiddenNodePolicy::Skip)
+            .unwrap();
+        assert!(errors.is_empty());
+
+        let main_view = views.get(&NodeQuery::name("#Main")).unwrap();
+        let outer_card = main_view.find_view_by_id("10:1").expect("#OuterCard must exist");
+        let inner_pill = outer_card.find_view_by_id("I10:1;20:11").expect("#InnerPill must exist");
+
+        let Some(dc_bundle::animationspec::animation_override::Animation_override::Matrix(
+            outer_matrix,
+        )) = view_animation_override(outer_card)
+        else {
+            panic!("Expected CardSet Matrix on #OuterCard");
+        };
+        assert_eq!(outer_matrix.transitions.len(), 1);
+        assert_eq!(outer_matrix.transitions[0].source_variant, "Card=One");
+        assert_eq!(outer_matrix.transitions[0].target_variant, "Card=Two");
+
+        let Some(dc_bundle::animationspec::animation_override::Animation_override::Matrix(
+            inner_matrix,
+        )) = view_animation_override(inner_pill)
+        else {
+            panic!("Expected PillSet Matrix on nested #InnerPill");
+        };
+        assert_eq!(inner_matrix.transitions.len(), 2);
+        assert!(inner_matrix.transitions.iter().all(|t| t.source_variant.starts_with("Pill=")));
+
+        assert!(
+            outer_card.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "Nested instances matching their templates must not bloat overrides_table"
+        );
+        assert!(inner_pill.component_info.as_ref().unwrap().overrides_table.is_empty());
+    }
+
+    #[test]
+    fn test_document_nodes_four_tier_squoosh_precedence_and_overrides_table() {
+        use crate::reaction_schema::TriggerJson;
+        use dc_bundle::animationspec::animation_override::Animation_override;
+
+        // Config (b): ComponentSet has DisableAnimations on SetDisabled, Variant V=A of
+        // SetCustomVariant has custom 900ms Matrix, unmodified Instances inherit both cleanly
+        // without overrides_table clobbering them.
+        // Config (c): Instance #InstanceOverride of SetRestOnly has explicit DisableAnimations
+        // overriding SetRestOnly's REST Matrix.
+        let page_children = vec![
+            test_frame(
+                "10:0",
+                "#Main",
+                vec![
+                    test_instance("10:1", "#DisabledInst", "20:1", vec![]),
+                    test_frame(
+                        "10:20",
+                        "Row2",
+                        vec![test_instance("10:2", "#Custom900Inst", "30:1", vec![])],
+                    ),
+                    test_frame(
+                        "10:30",
+                        "Row3",
+                        vec![with_squoosh(
+                            test_instance("10:3", "#InstanceOverride", "40:1", vec![]),
+                            SQUOOSH_DISABLE,
+                        )],
+                    ),
+                ],
+            ),
+            with_squoosh(
+                test_component_set(
+                    "20:0",
+                    "SetDisabled",
+                    vec![
+                        with_interactions(
+                            test_component("20:1", "S=A", vec![]),
+                            vec![smart_animate_change_to(TriggerJson::OnClick, "20:2", 0.2)],
+                        ),
+                        test_component("20:2", "S=B", vec![]),
+                    ],
+                ),
+                SQUOOSH_DISABLE,
+            ),
+            with_squoosh(
+                test_component_set(
+                    "30:0",
+                    "SetCustomVariant",
+                    vec![
+                        with_interactions(
+                            with_squoosh(
+                                test_component("30:1", "V=A", vec![]),
+                                &squoosh_matrix_json(None, &[("V=A", "V=B", 900)]),
+                            ),
+                            vec![smart_animate_change_to(TriggerJson::OnHover, "30:2", 0.2)],
+                        ),
+                        test_component("30:2", "V=B", vec![]),
+                    ],
+                ),
+                SQUOOSH_DISABLE,
+            ),
+            test_component_set(
+                "40:0",
+                "SetRestOnly",
+                vec![
+                    with_interactions(
+                        test_component("40:1", "R=A", vec![]),
+                        vec![smart_animate_change_to(TriggerJson::OnClick, "40:2", 0.2)],
+                    ),
+                    test_component("40:2", "R=B", vec![]),
+                ],
+            ),
+        ];
+
+        let mut doc =
+            make_test_document(test_file_response("IT2 Precedence Doc", page_children, &[], &[]));
+        let mut errors = Vec::new();
+        let views = doc
+            .nodes(&vec![NodeQuery::name("#Main")], &vec![], &mut errors, HiddenNodePolicy::Skip)
+            .unwrap();
+        assert!(errors.is_empty());
+
+        let main_view = views.get(&NodeQuery::name("#Main")).unwrap();
+
+        // (b1) ComponentSet DisableAnimations propagates to both NodeVariant and unmodified Instance.
+        let disabled_variant = views.get(&NodeQuery::variant("S=A", "SetDisabled")).unwrap();
+        let disabled_inst = main_view.find_view_by_id("10:1").unwrap();
+        for view in [disabled_variant, disabled_inst] {
+            assert!(matches!(
+                view_animation_override(view),
+                Some(Animation_override::DisableAnimations(_))
+            ));
+        }
+        assert!(disabled_inst.component_info.as_ref().unwrap().overrides_table.is_empty());
+
+        // (b2) Variant Component 900ms Matrix wins over 200ms REST for V=A->V=B, adds reversible
+        // V=B->V=A at 200ms, and matches cleanly with unmodified Instance (empty overrides_table).
+        let custom_variant = views.get(&NodeQuery::variant("V=A", "SetCustomVariant")).unwrap();
+        let custom_inst = main_view.find_view_by_id("10:2").unwrap();
+        for view in [custom_variant, custom_inst] {
+            let Some(Animation_override::Matrix(m)) = view_animation_override(view) else {
+                panic!("Expected Matrix on {}", view.name);
+            };
+            assert_eq!(m.transitions.len(), 2);
+            assert_eq!(matrix_pair_nanos(m, "V=A", "V=B"), (0, 900_000_000));
+        }
+        assert!(custom_inst.component_info.as_ref().unwrap().overrides_table.is_empty());
+        // Variant V=B without its own squoosh still inherits SetCustomVariant's DisableAnimations.
+        let vb_variant = views.get(&NodeQuery::variant("V=B", "SetCustomVariant")).unwrap();
+        assert!(matches!(
+            view_animation_override(vb_variant),
+            Some(Animation_override::DisableAnimations(_))
+        ));
+
+        // (c) Explicit per-instance DisableAnimations wins on Instance while NodeVariant retains
+        // synthesized REST Matrix, and overrides_table records the instance override.
+        let rest_variant = views.get(&NodeQuery::variant("R=A", "SetRestOnly")).unwrap();
+        assert!(matches!(
+            view_animation_override(rest_variant),
+            Some(Animation_override::Matrix(_))
+        ));
+        let inst_override = main_view.find_view_by_id("10:3").unwrap();
+        assert!(matches!(
+            view_animation_override(inst_override),
+            Some(Animation_override::DisableAnimations(_))
+        ));
+        assert!(matches!(
+            overrides_table_anim_override(inst_override, "R=A"),
+            Some(Animation_override::DisableAnimations(_))
+        ));
+    }
+
+    #[test]
+    fn test_document_nodes_out_of_tree_navigate_discovers_component_set_and_propagates_matrix() {
+        use crate::reaction_schema::{BezierJson, EasingJson as ReactionEasingJson, TriggerJson};
+        use dc_bundle::animationspec::animation_override::Animation_override;
+        use dc_bundle::reaction::action::{node::Navigation, Action_type};
+
+        let custom_bezier = ReactionEasingJson::CustomCubicBezier {
+            bezier: BezierJson { x1: 0.2, y1: 0.0, x2: 0.0, y2: 1.0 },
+        };
+        let page_children = vec![
+            with_interactions(
+                test_frame("10:0", "#Start", vec![]),
+                vec![navigate_interaction(TriggerJson::OnClick, "11:0")],
+            ),
+            test_frame("11:0", "#Dest", vec![test_instance("11:1", "#DestPill", "20:1", vec![])]),
+            test_component_set(
+                "20:0",
+                "DestPillSet",
+                vec![
+                    with_interactions(
+                        test_component("20:1", "State=Idle", vec![]),
+                        vec![smart_animate_change_to_with_easing(
+                            TriggerJson::OnHover,
+                            "20:2",
+                            custom_bezier,
+                            0.25,
+                        )],
+                    ),
+                    test_component("20:2", "State=Active", vec![]),
+                ],
+            ),
+        ];
+
+        let mut doc = make_test_document(test_file_response(
+            "OutOfTree Navigate Doc",
+            page_children,
+            &[],
+            &[],
+        ));
+        let mut errors = Vec::new();
+        let views = doc
+            .nodes(&vec![NodeQuery::name("#Start")], &vec![], &mut errors, HiddenNodePolicy::Skip)
+            .expect("nodes() should succeed");
+        assert!(errors.is_empty());
+
+        let start_view = views.get(&NodeQuery::name("#Start")).expect("#Start view must exist");
+        assert!(start_view.reactions.iter().any(|r| {
+            matches!(
+                r.action.as_ref().and_then(|a| a.action_type.as_ref()),
+                Some(Action_type::Node(n))
+                    if n.destination_id.as_deref() == Some("11:0")
+                        && n.navigation.enum_value_or_default() == Navigation::NAVIGATION_NAVIGATE
+            )
+        }));
+
+        let dest_view =
+            views.get(&NodeQuery::id("11:0")).expect("Out-of-tree #Dest view must be emitted");
+        let dest_pill =
+            dest_view.find_view_by_id("11:1").expect("Placed #DestPill instance must exist");
+        let cs_view = views
+            .get(&NodeQuery::component_set("DestPillSet"))
+            .expect("DestPillSet NodeComponentSet view must be discovered and emitted");
+        let idle_view = views
+            .get(&NodeQuery::variant("State=Idle", "DestPillSet"))
+            .expect("State=Idle NodeVariant view must be discovered and emitted");
+        let active_view = views
+            .get(&NodeQuery::variant("State=Active", "DestPillSet"))
+            .expect("State=Active NodeVariant view must be discovered and emitted");
+
+        for view in [cs_view, idle_view, active_view, dest_pill] {
+            let Some(Animation_override::Matrix(matrix)) = view_animation_override(view) else {
+                panic!("Expected Matrix AnimationOverride on {}", view.name);
+            };
+            assert_eq!(matrix.transitions.len(), 2);
+            assert_eq!(matrix_pair_nanos(matrix, "State=Idle", "State=Active"), (0, 250_000_000));
+            assert!(matrix
+                .transitions
+                .iter()
+                .any(|t| t.source_variant == "State=Active" && t.target_variant == "State=Idle"));
+        }
+
+        assert!(
+            dest_pill.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "Unmodified #DestPill instance inside out-of-tree #Dest must have empty overrides_table"
+        );
+        assert!(
+            !views.contains_key(&NodeQuery::id("20:1"))
+                && !views.contains_key(&NodeQuery::id("20:2")),
+            "Extra discovered ComponentSet variants should not be redundantly emitted as NodeId views: keys={:?}",
+            views.keys().collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_document_nodes_out_of_tree_multi_hop_and_squoosh_precedence() {
+        use crate::reaction_schema::TriggerJson;
+        use dc_bundle::animationspec::animation_override::Animation_override;
+
+        // Multi-hop out-of-tree navigation:
+        // #Start (queried) -> NAVIGATE -> #Dest -> variant State=Active -> NAVIGATE -> #SubModal -> #ModalPill (Instance of ModalSet with DisableAnimations).
+        let page_children = vec![
+            test_frame(
+                "10:0",
+                "#Start",
+                vec![with_interactions(
+                    test_frame("10:1", "#GoBtn", vec![]),
+                    vec![navigate_interaction(TriggerJson::OnClick, "11:0")],
+                )],
+            ),
+            test_frame("11:0", "#Dest", vec![test_instance("11:1", "#DestPill", "20:1", vec![])]),
+            test_frame(
+                "12:0",
+                "#SubModal",
+                vec![test_instance("12:1", "#ModalPill", "30:1", vec![])],
+            ),
+            test_component_set(
+                "20:0",
+                "DestPillSet",
+                vec![
+                    with_interactions(
+                        test_component("20:1", "State=Idle", vec![]),
+                        vec![smart_animate_change_to(TriggerJson::OnClick, "20:2", 0.2)],
+                    ),
+                    with_interactions(
+                        test_component("20:2", "State=Active", vec![]),
+                        vec![navigate_interaction(TriggerJson::OnClick, "12:0")],
+                    ),
+                ],
+            ),
+            with_squoosh(
+                test_component_set(
+                    "30:0",
+                    "ModalSet",
+                    vec![
+                        with_interactions(
+                            test_component("30:1", "M=A", vec![]),
+                            vec![smart_animate_change_to(TriggerJson::OnHover, "30:2", 0.3)],
+                        ),
+                        test_component("30:2", "M=B", vec![]),
+                    ],
+                ),
+                SQUOOSH_DISABLE,
+            ),
+        ];
+
+        let mut doc = make_test_document(test_file_response(
+            "MultiHop OutOfTree Doc",
+            page_children,
+            &[],
+            &[],
+        ));
+        let mut errors = Vec::new();
+        let views = doc
+            .nodes(&vec![NodeQuery::name("#Start")], &vec![], &mut errors, HiddenNodePolicy::Skip)
+            .expect("nodes() should succeed");
+        assert!(errors.is_empty());
+
+        assert!(views.contains_key(&NodeQuery::component_set("DestPillSet")));
+        assert!(views.contains_key(&NodeQuery::variant("State=Idle", "DestPillSet")));
+        assert!(views.contains_key(&NodeQuery::variant("State=Active", "DestPillSet")));
+        assert!(views.contains_key(&NodeQuery::component_set("ModalSet")));
+        let modal_variant_a = views
+            .get(&NodeQuery::variant("M=A", "ModalSet"))
+            .expect("Second-hop ModalSet NodeVariant M=A must be discovered");
+        let sub_modal =
+            views.get(&NodeQuery::id("12:0")).expect("Second-hop #SubModal must be emitted");
+        let modal_pill =
+            sub_modal.find_view_by_id("12:1").expect("Placed #ModalPill instance must exist");
+
+        for view in [modal_variant_a, modal_pill] {
+            assert!(matches!(
+                view_animation_override(view),
+                Some(Animation_override::DisableAnimations(_))
+            ));
+        }
+        assert!(modal_pill.component_info.as_ref().unwrap().overrides_table.is_empty());
+        assert!(!views.contains_key(&NodeQuery::id("20:1")));
+        assert!(!views.contains_key(&NodeQuery::id("20:2")));
+        assert!(!views.contains_key(&NodeQuery::id("30:1")));
+        assert!(!views.contains_key(&NodeQuery::id("30:2")));
+    }
+
+    #[test]
+    fn test_document_nodes_preserves_nested_template_child_squoosh_and_overrides_table() {
+        use crate::reaction_schema::TriggerJson;
+        use dc_bundle::animationspec::animation_override::Animation_override;
+
+        let custom_squoosh = squoosh_custom_ms(400);
+        let page_children = vec![
+            test_frame(
+                "10:0",
+                "#Main",
+                vec![
+                    test_instance(
+                        "10:1",
+                        "#OuterCard",
+                        "20:1",
+                        vec![
+                            test_instance("I10:1;20:11", "#InnerPillDisable", "30:1", vec![]),
+                            test_instance("I10:1;20:12", "#InnerPillCustom", "30:1", vec![]),
+                        ],
+                    ),
+                    test_instance(
+                        "10:2",
+                        "#OuterCardDefaultOverride",
+                        "20:1",
+                        vec![
+                            with_squoosh(
+                                test_instance("I10:2;20:11", "#InnerPillDisable", "30:1", vec![]),
+                                SQUOOSH_DEFAULT,
+                            ),
+                            test_instance("I10:2;20:12", "#InnerPillCustom", "30:1", vec![]),
+                        ],
+                    ),
+                    test_instance(
+                        "10:3",
+                        "#DeepOuter",
+                        "25:1",
+                        vec![test_instance(
+                            "I10:3;25:11",
+                            "#MidCard",
+                            "20:1",
+                            vec![
+                                test_instance(
+                                    "I10:3;25:11;20:11",
+                                    "#InnerPillDisable",
+                                    "30:1",
+                                    vec![],
+                                ),
+                                test_instance(
+                                    "I10:3;25:11;20:12",
+                                    "#InnerPillCustom",
+                                    "30:1",
+                                    vec![],
+                                ),
+                            ],
+                        )],
+                    ),
+                ],
+            ),
+            test_component_set(
+                "20:0",
+                "CardSet",
+                vec![test_component(
+                    "20:1",
+                    "Card=One",
+                    vec![
+                        with_squoosh(
+                            test_instance("20:11", "#InnerPillDisable", "30:1", vec![]),
+                            SQUOOSH_DISABLE,
+                        ),
+                        with_squoosh(
+                            test_instance("20:12", "#InnerPillCustom", "30:1", vec![]),
+                            &custom_squoosh,
+                        ),
+                    ],
+                )],
+            ),
+            test_component_set(
+                "25:0",
+                "DeepCardSet",
+                vec![test_component(
+                    "25:1",
+                    "Deep=One",
+                    vec![test_instance(
+                        "25:11",
+                        "#MidCard",
+                        "20:1",
+                        vec![
+                            test_instance("I25:11;20:11", "#InnerPillDisable", "30:1", vec![]),
+                            with_squoosh(
+                                test_instance("I25:11;20:12", "#InnerPillCustom", "30:1", vec![]),
+                                SQUOOSH_DEFAULT,
+                            ),
+                        ],
+                    )],
+                )],
+            ),
+            test_component_set(
+                "30:0",
+                "PillSet",
+                vec![
+                    with_interactions(
+                        test_component("30:1", "Pill=Idle", vec![]),
+                        vec![smart_animate_change_to(TriggerJson::OnHover, "30:2", 0.15)],
+                    ),
+                    test_component("30:2", "Pill=Active", vec![]),
+                ],
+            ),
+        ];
+
+        let mut doc = make_test_document(test_file_response(
+            "Nested Template Squoosh Doc",
+            page_children,
+            &[],
+            &[],
+        ));
+        let mut errors = Vec::new();
+        let views = doc
+            .nodes(&vec![NodeQuery::name("#Main")], &vec![], &mut errors, HiddenNodePolicy::Skip)
+            .unwrap();
+        assert!(errors.is_empty());
+
+        let main_view = views.get(&NodeQuery::name("#Main")).unwrap();
+
+        // 1. Unmodified #OuterCard (10:1) preserves template children's DisableAnimations and Custom
+        //    when REST omits sharedPluginData on I10:1;20:11 and I10:1;20:12, keeping overrides_table empty.
+        let outer_card = main_view.find_view_by_id("10:1").expect("#OuterCard must exist");
+        let inner_disable =
+            outer_card.find_view_by_id("I10:1;20:11").expect("#InnerPillDisable must exist");
+        let inner_custom =
+            outer_card.find_view_by_id("I10:1;20:12").expect("#InnerPillCustom must exist");
+        assert!(matches!(
+            view_animation_override(inner_disable),
+            Some(Animation_override::DisableAnimations(_))
+        ));
+        assert!(matches!(
+            view_animation_override(inner_custom),
+            Some(Animation_override::Custom(_))
+        ));
+        assert!(
+            outer_card.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "Unmodified #OuterCard must have empty overrides_table when nested template squoosh is preserved"
+        );
+        assert!(
+            inner_disable.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "Unmodified #InnerPillDisable must have empty overrides_table"
+        );
+        assert!(
+            inner_custom.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "Unmodified #InnerPillCustom must have empty overrides_table"
+        );
+
+        // 2. Explicit "Default" override on instance child I10:2;20:11 overrides template DisableAnimations
+        //    and adopts PillSet's synthesized REST Matrix, recording the override vs template 20:11.
+        let outer_default_override =
+            main_view.find_view_by_id("10:2").expect("#OuterCardDefaultOverride must exist");
+        let child_default_override =
+            outer_default_override.find_view_by_id("I10:2;20:11").expect("I10:2;20:11 must exist");
+        assert!(matches!(
+            view_animation_override(child_default_override),
+            Some(Animation_override::Matrix(_))
+        ));
+        assert!(matches!(
+            overrides_table_anim_override(child_default_override, "#InnerPillDisable"),
+            Some(Animation_override::Matrix(_))
+        ));
+        // Sibling I10:2;20:12 without sharedPluginData still preserves template Custom.
+        let sibling_custom = outer_default_override.find_view_by_id("I10:2;20:12").unwrap();
+        assert!(matches!(
+            view_animation_override(sibling_custom),
+            Some(Animation_override::Custom(_))
+        ));
+        assert!(sibling_custom.component_info.as_ref().unwrap().overrides_table.is_empty());
+
+        // 3. Multi-level ';' template lookup:
+        //    - I10:3;25:11;20:11 skips unannotated I25:11;20:11 and finds DisableAnimations on 20:11.
+        //    - I10:3;25:11;20:12 hits intermediate explicit "Default" on I25:11;20:12, stopping before
+        //      20:12's Custom and resolving to PillSet's REST Matrix.
+        let deep_outer = main_view.find_view_by_id("10:3").expect("#DeepOuter must exist");
+        let deep_disable =
+            deep_outer.find_view_by_id("I10:3;25:11;20:11").expect("I10:3;25:11;20:11 must exist");
+        let deep_intermediate_default =
+            deep_outer.find_view_by_id("I10:3;25:11;20:12").expect("I10:3;25:11;20:12 must exist");
+        assert!(matches!(
+            view_animation_override(deep_disable),
+            Some(Animation_override::DisableAnimations(_))
+        ));
+        assert!(matches!(
+            view_animation_override(deep_intermediate_default),
+            Some(Animation_override::Matrix(_))
+        ));
+    }
+
+    #[test]
+    fn test_document_nodes_multi_tier_matrix_composition_on_press_and_remote_isolation() {
+        use crate::reaction_schema::TriggerJson;
+        use dc_bundle::animationspec::animation_override::Animation_override;
+
+        let inst_matrix_squoosh =
+            squoosh_matrix_json(None, &[("S=A", "S=B", 300), ("S=C", "S=A", 350)]);
+        let inst_custom_squoosh = squoosh_custom_ms(400);
+
+        let page_children = vec![
+            test_frame(
+                "10:0",
+                "#Main",
+                vec![
+                    with_squoosh(
+                        test_instance("10:1", "#InstMatrix", "20:1", vec![]),
+                        &inst_matrix_squoosh,
+                    ),
+                    with_squoosh(
+                        test_instance("10:2", "#InstCustom", "20:1", vec![]),
+                        &inst_custom_squoosh,
+                    ),
+                    test_frame(
+                        "10:30",
+                        "Row3",
+                        vec![with_squoosh(
+                            test_instance("10:3", "#InstNoOverride", "20:1", vec![]),
+                            SQUOOSH_DEFAULT,
+                        )],
+                    ),
+                    test_instance("10:4", "#RemoteButton", "999:1", vec![]),
+                ],
+            ),
+            build_multi_tier_button_cs("20:0", "SetMulti", TriggerJson::OnPress),
+            with_squoosh(
+                test_component_set(
+                    "30:0",
+                    "Button",
+                    vec![
+                        with_interactions(
+                            test_component("30:1", "Btn=A", vec![]),
+                            vec![smart_animate_change_to(TriggerJson::OnClick, "30:2", 0.2)],
+                        ),
+                        test_component("30:2", "Btn=B", vec![]),
+                    ],
+                ),
+                SQUOOSH_DISABLE,
+            ),
+        ];
+
+        let mut doc = make_test_document(test_file_response(
+            "MultiTier And Remote Isolation Doc",
+            page_children,
+            &[("999:1", "remote_btn_k", "Btn=Remote", "999:0")],
+            &[("999:0", "cs_remote_b", "Button")],
+        ));
+        doc.prefetched_components.insert(
+            "remote_btn_k".to_string(),
+            serde_json::json!({
+                "error": false,
+                "status": 200,
+                "meta": {
+                    "key": "remote_btn_k",
+                    "file_key": "doc_test",
+                    "node_id": "999:1",
+                    "thumbnail_url": "",
+                    "name": "Btn=Remote",
+                    "description": "",
+                    "created_at": "",
+                    "updated_at": "",
+                    "containing_frame": {
+                        "name": null,
+                        "nodeId": null,
+                        "pageId": "0:1",
+                        "pageName": "Page 1",
+                        "containingStateGroup": {
+                            "name": "Button",
+                            "nodeId": "999:0"
+                        }
+                    },
+                    "user": { "id": "u1", "handle": "h1", "img_url": "" }
+                }
+            })
+            .to_string(),
+        );
+
+        let mut errors = Vec::new();
+        let views = doc
+            .nodes(&vec![NodeQuery::name("#Main")], &vec![], &mut errors, HiddenNodePolicy::Skip)
+            .unwrap();
+        assert!(errors.is_empty());
+
+        let main_view = views.get(&NodeQuery::name("#Main")).unwrap();
+
+        // #InstMatrix: Instance Matrix (S=A->S=B 300ms, S=C->S=A 350ms) + Variant Matrix +
+        // ComponentSet Matrix (S=B->S=A 600ms, default_spec 500ms) + REST ON_PRESS (S=B->S=C 250ms
+        // and reversible S=C->S=B 250ms).
+        let inst_matrix = main_view.find_view_by_id("10:1").unwrap();
+        let Some(Animation_override::Matrix(m)) = view_animation_override(inst_matrix) else {
+            panic!("Expected Matrix on #InstMatrix");
+        };
+        assert_eq!(smooth_nanos(m.default_spec.as_ref().unwrap()), 500_000_000);
+        assert_eq!(m.transitions.len(), 5);
+        assert_eq!(matrix_pair_nanos(m, "S=A", "S=B"), (0, 300_000_000));
+        assert_eq!(matrix_pair_nanos(m, "S=C", "S=A"), (0, 350_000_000));
+        assert_eq!(matrix_pair_nanos(m, "S=B", "S=A"), (0, 600_000_000));
+        assert_eq!(matrix_pair_nanos(m, "S=B", "S=C"), (0, 250_000_000));
+        assert_eq!(matrix_pair_nanos(m, "S=C", "S=B"), (0, 250_000_000));
+        assert!(
+            matches!(
+                overrides_table_anim_override(inst_matrix, "S=A"),
+                Some(Animation_override::Matrix(_))
+            ),
+            "#InstMatrix instance override must be recorded in overrides_table"
+        );
+
+        // #InstCustom: Instance Custom replaces lower-tier Matrices outright.
+        let inst_custom = main_view.find_view_by_id("10:2").unwrap();
+        assert!(matches!(
+            view_animation_override(inst_custom),
+            Some(Animation_override::Custom(_))
+        ));
+        assert!(
+            matches!(
+                overrides_table_anim_override(inst_custom, "S=A"),
+                Some(Animation_override::Custom(_))
+            ),
+            "#InstCustom instance override must be recorded in overrides_table"
+        );
+
+        // #InstNoOverride ("Default"): inherits Variant S=A composed Matrix (900ms S=A->S=B,
+        // 600ms S=B->S=A, 500ms default_spec, 250ms ON_PRESS forward + reverse), empty overrides_table.
+        let inst_no_ov = main_view.find_view_by_id("10:3").unwrap();
+        let Some(Animation_override::Matrix(no_ov_m)) = view_animation_override(inst_no_ov) else {
+            panic!("Expected Matrix on #InstNoOverride");
+        };
+        assert_eq!(smooth_nanos(no_ov_m.default_spec.as_ref().unwrap()), 500_000_000);
+        assert_eq!(no_ov_m.transitions.len(), 4);
+        assert_eq!(matrix_pair_nanos(no_ov_m, "S=A", "S=B"), (0, 900_000_000));
+        assert!(
+            inst_no_ov.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "#InstNoOverride matching composed Variant S=A must have empty overrides_table"
+        );
+
+        // #RemoteButton: unresolved remote componentId ("999:1") whose component_set_name matches
+        // local "Button" ComponentSet (DisableAnimations + REST) must NOT inherit local override.
+        let remote_btn = main_view.find_view_by_id("10:4").unwrap();
+        assert_eq!(remote_btn.component_info.as_ref().unwrap().component_set_name, "Button");
+        assert_eq!(remote_btn.component_info.as_ref().unwrap().id, "999:1");
+        assert!(
+            view_animation_override(remote_btn).is_none(),
+            "Unresolved remote instance must not inherit local Button ComponentSet DisableAnimations"
+        );
+    }
+
+    #[test]
+    fn test_document_nodes_terminates_on_cyclic_component_sets_and_cyclic_navigate() {
+        use crate::reaction_schema::TriggerJson;
+        use dc_bundle::animationspec::animation_override::Animation_override;
+
+        // Mutual ComponentSet cycle (SetA <-> SetB), self-referential ComponentSet (SetSelf -> SetSelf),
+        // and mutual + self-cyclic NAVIGATE paths (#Start <-> #PageB -> #PageB).
+        let page_children = vec![
+            with_interactions(
+                test_frame(
+                    "10:0",
+                    "#Start",
+                    vec![
+                        test_instance("10:1", "#InstA", "20:1", vec![]),
+                        test_instance("10:2", "#InstSelf", "40:1", vec![]),
+                    ],
+                ),
+                vec![navigate_interaction(TriggerJson::OnClick, "11:0")],
+            ),
+            with_interactions(
+                test_frame("11:0", "#PageB", vec![]),
+                vec![
+                    navigate_interaction(TriggerJson::OnClick, "10:0"),
+                    navigate_interaction(TriggerJson::OnHover, "11:0"),
+                ],
+            ),
+            test_component_set(
+                "20:0",
+                "SetA",
+                vec![
+                    with_interactions(
+                        test_component(
+                            "20:1",
+                            "A=One",
+                            vec![test_instance("20:11", "#InstB", "30:1", vec![])],
+                        ),
+                        vec![smart_animate_change_to(TriggerJson::OnClick, "20:2", 0.2)],
+                    ),
+                    test_component("20:2", "A=Two", vec![]),
+                ],
+            ),
+            test_component_set(
+                "30:0",
+                "SetB",
+                vec![test_component(
+                    "30:1",
+                    "B=One",
+                    vec![test_instance("30:11", "#BackToA", "20:2", vec![])],
+                )],
+            ),
+            test_component_set(
+                "40:0",
+                "SetSelf",
+                vec![test_component(
+                    "40:1",
+                    "Self=One",
+                    vec![test_instance("40:11", "#SelfChild", "40:1", vec![])],
+                )],
+            ),
+        ];
+
+        let mut doc = make_test_document(test_file_response(
+            "Cyclic Sets And Navigate Doc",
+            page_children,
+            &[],
+            &[],
+        ));
+        let mut errors = Vec::new();
+        let views = doc
+            .nodes(&vec![NodeQuery::name("#Start")], &vec![], &mut errors, HiddenNodePolicy::Skip)
+            .expect("Cyclic ComponentSets and NAVIGATE reactions must terminate without overflow");
+        assert!(errors.is_empty());
+
+        assert!(views.contains_key(&NodeQuery::name("#Start")));
+        assert!(views.contains_key(&NodeQuery::id("11:0")));
+        assert!(views.contains_key(&NodeQuery::component_set("SetA")));
+        assert!(views.contains_key(&NodeQuery::component_set("SetB")));
+        assert!(views.contains_key(&NodeQuery::component_set("SetSelf")));
+        assert!(views.contains_key(&NodeQuery::variant("B=One", "SetB")));
+        assert!(views.contains_key(&NodeQuery::variant("Self=One", "SetSelf")));
+
+        let a_one = views.get(&NodeQuery::variant("A=One", "SetA")).unwrap();
+        let Some(Animation_override::Matrix(m)) = view_animation_override(a_one) else {
+            panic!("Expected SetA Matrix on A=One");
+        };
+        assert_eq!(matrix_pair_nanos(m, "A=One", "A=Two"), (0, 200_000_000));
+    }
+
+    #[test]
+    fn test_document_nodes_dual_node_id_and_node_variant_queries_convert_once() {
+        use crate::reaction_schema::TriggerJson;
+        use dc_bundle::animationspec::animation_override::Animation_override;
+
+        let make_dual_doc = |start: figma_schema::Node, extras: Vec<figma_schema::Node>| {
+            let mut page_children = vec![start];
+            page_children.extend(extras);
+            page_children.push(test_component_set(
+                "20:0",
+                "SetDual",
+                vec![
+                    with_interactions(
+                        test_component("20:1", "D=One", vec![]),
+                        vec![
+                            smart_animate_change_to(TriggerJson::OnHover, "20:2", 0.2),
+                            navigate_interaction(TriggerJson::OnClick, "12:0"),
+                        ],
+                    ),
+                    test_component("20:2", "D=Two", vec![]),
+                ],
+            ));
+            page_children.push(test_frame("12:0", "#Leaf", vec![]));
+            make_test_document(test_file_response("Dual Query Doc", page_children, &[], &[]))
+        };
+
+        // (a) Direct dual queries NodeId("20:1") + NodeVariant("D=One", "SetDual") convert once.
+        let mut doc_direct = make_dual_doc(test_frame("10:0", "#Unused", vec![]), vec![]);
+        let mut errors_a = Vec::new();
+        let views_a = doc_direct
+            .nodes(
+                &vec![NodeQuery::id("20:1"), NodeQuery::variant("D=One", "SetDual")],
+                &vec![],
+                &mut errors_a,
+                HiddenNodePolicy::Skip,
+            )
+            .unwrap();
+        assert!(errors_a.is_empty());
+        let direct_id = views_a.get(&NodeQuery::id("20:1")).unwrap();
+        let direct_var = views_a.get(&NodeQuery::variant("D=One", "SetDual")).unwrap();
+        assert_eq!(
+            direct_id.unique_id, direct_var.unique_id,
+            "Dual NodeId + NodeVariant queries must reuse the same converted View (single unique_id)"
+        );
+        assert_eq!(direct_id, direct_var);
+        assert!(matches!(view_animation_override(direct_id), Some(Animation_override::Matrix(_))));
+
+        // (b) Out-of-tree discovery hitting both NAVIGATE->20:1 and #OtherWithInst(Instance 20:1)
+        //     converts 20:1 once, expands #Leaf ("12:0"), and keeps #DualInst overrides_table empty.
+        let mut doc_discover = make_dual_doc(
+            with_interactions(
+                test_frame("10:0", "#Start", vec![]),
+                vec![
+                    navigate_interaction(TriggerJson::OnClick, "11:0"),
+                    navigate_interaction(TriggerJson::OnHover, "20:1"),
+                ],
+            ),
+            vec![test_frame(
+                "11:0",
+                "#OtherWithInst",
+                vec![test_instance("11:1", "#DualInst", "20:1", vec![])],
+            )],
+        );
+        let mut errors_b = Vec::new();
+        let views_b = doc_discover
+            .nodes(&vec![NodeQuery::name("#Start")], &vec![], &mut errors_b, HiddenNodePolicy::Skip)
+            .unwrap();
+        assert!(errors_b.is_empty());
+        let disc_id = views_b.get(&NodeQuery::id("20:1")).unwrap();
+        let disc_var = views_b.get(&NodeQuery::variant("D=One", "SetDual")).unwrap();
+        assert_eq!(
+            disc_id.unique_id, disc_var.unique_id,
+            "Out-of-tree dual NodeId + NodeVariant discovery must convert 20:1 only once"
+        );
+        assert_eq!(disc_id, disc_var);
+        assert!(views_b.contains_key(&NodeQuery::id("12:0")));
+        let other_view = views_b.get(&NodeQuery::id("11:0")).unwrap();
+        let dual_inst = other_view.find_view_by_id("11:1").unwrap();
+        assert!(dual_inst.component_info.as_ref().unwrap().overrides_table.is_empty());
+
+        // (c) When NodeVariant("D=One", "SetDual") was converted in hop 1, a later-hop NAVIGATE to
+        //     "20:1" must not re-enqueue a duplicate NodeId("20:1") conversion.
+        let mut doc_prior = make_dual_doc(
+            with_interactions(
+                test_frame("10:0", "#Start", vec![test_instance("10:1", "#Inst", "20:1", vec![])]),
+                vec![navigate_interaction(TriggerJson::OnClick, "11:0")],
+            ),
+            vec![with_interactions(
+                test_frame("11:0", "#LaterNav", vec![]),
+                vec![navigate_interaction(TriggerJson::OnClick, "20:1")],
+            )],
+        );
+        let mut errors_c = Vec::new();
+        let views_c = doc_prior
+            .nodes(&vec![NodeQuery::name("#Start")], &vec![], &mut errors_c, HiddenNodePolicy::Skip)
+            .unwrap();
+        assert!(errors_c.is_empty());
+        assert!(views_c.contains_key(&NodeQuery::variant("D=One", "SetDual")));
+        assert!(!views_c.contains_key(&NodeQuery::id("20:1")));
+    }
+
+    #[test]
+    fn test_document_nodes_hidden_node_policy_skip_suppresses_hidden_rest_destination() {
+        use crate::reaction_schema::TriggerJson;
+
+        let build_doc = || {
+            let page_children = vec![
+                test_frame(
+                    "10:0",
+                    "#Main",
+                    vec![
+                        with_interactions(
+                            test_frame("10:1", "#VisibleBtn", vec![]),
+                            vec![navigate_interaction(TriggerJson::OnClick, "11:0")],
+                        ),
+                        with_visible(
+                            with_interactions(
+                                test_frame("10:2", "#HiddenBtn", vec![]),
+                                vec![navigate_interaction(TriggerJson::OnClick, "12:0")],
+                            ),
+                            false,
+                        ),
+                    ],
+                ),
+                test_frame("11:0", "#VisibleDest", vec![]),
+                test_frame("12:0", "#HiddenOnlyDest", vec![]),
+            ];
+            make_test_document(test_file_response("Hidden Policy Nav Doc", page_children, &[], &[]))
+        };
+
+        let mut errors_skip = Vec::new();
+        let views_skip = build_doc()
+            .nodes(
+                &vec![NodeQuery::name("#Main")],
+                &vec![],
+                &mut errors_skip,
+                HiddenNodePolicy::Skip,
+            )
+            .unwrap();
+        assert!(errors_skip.is_empty());
+        let main_skip = views_skip.get(&NodeQuery::name("#Main")).unwrap();
+        assert!(main_skip.find_view_by_id("10:1").is_some());
+        assert!(main_skip.find_view_by_id("10:2").is_none());
+        assert!(views_skip.contains_key(&NodeQuery::id("11:0")));
+        assert!(
+            !views_skip.contains_key(&NodeQuery::id("12:0")),
+            "HiddenNodePolicy::Skip must suppress REST NAVIGATE destination expansion from hidden children"
+        );
+
+        let mut errors_keep = Vec::new();
+        let views_keep = build_doc()
+            .nodes(
+                &vec![NodeQuery::name("#Main")],
+                &vec![],
+                &mut errors_keep,
+                HiddenNodePolicy::Keep,
+            )
+            .unwrap();
+        assert!(errors_keep.is_empty());
+        let main_keep = views_keep.get(&NodeQuery::name("#Main")).unwrap();
+        assert!(main_keep.find_view_by_id("10:2").is_some());
+        assert!(views_keep.contains_key(&NodeQuery::id("11:0")));
+        assert!(views_keep.contains_key(&NodeQuery::id("12:0")));
+    }
+
+    fn with_image_fill(mut node: figma_schema::Node, image_ref: &str) -> figma_schema::Node {
+        node.fills = vec![figma_schema::Paint {
+            visible: true,
+            opacity: 1.0,
+            data: figma_schema::PaintData::Image {
+                scale_mode: figma_schema::ScaleMode::Fill,
+                image_transform: None,
+                scaling_factor: None,
+                rotation: 0.0,
+                image_ref: Some(image_ref.to_string()),
+                gif_ref: None,
+                filters: None,
+            },
+        }];
+        node
+    }
+
+    fn seed_hermetic_images(doc: &mut Document, entries: &[(&str, &str)]) {
+        #[derive(serde::Serialize)]
+        struct SessionSeed {
+            version: u32,
+            images: HashMap<String, Option<String>>,
+            vectors: HashSet<String>,
+            image_hash: HashMap<String, crate::image_context::VectorImageId>,
+            client_images: HashSet<String>,
+        }
+
+        let images: HashMap<String, Option<String>> =
+            entries.iter().map(|(r, url)| ((*r).to_string(), Some((*url).to_string()))).collect();
+        let client_images: HashSet<String> =
+            entries.iter().map(|(_, url)| (*url).to_string()).collect();
+        let seed = SessionSeed {
+            version: 2,
+            images,
+            vectors: HashSet::new(),
+            image_hash: HashMap::new(),
+            client_images,
+        };
+        let session: ImageContextSession =
+            serde_json::from_value(serde_json::to_value(seed).unwrap())
+                .expect("SessionSeed must deserialize into ImageContextSession");
+        doc.image_context.add_session_info(session);
+    }
+
+    fn view_first_image_key(view: &View) -> Option<&str> {
+        use dc_bundle::background::background::Background_type;
+
+        match view
+            .style
+            .as_ref()?
+            .node_style
+            .as_ref()?
+            .backgrounds
+            .first()?
+            .background_type
+            .as_ref()?
+        {
+            Background_type::Image(img) => Some(img.key.as_str()),
+            _ => None,
+        }
+    }
+
+    fn build_same_named_progress_bar_sets() -> (figma_schema::Node, figma_schema::Node) {
+        use crate::reaction_schema::TriggerJson;
+
+        // First ComponentSet named "ProgressBar" (20:0): HBar=Small <-> HBar=Big (200ms).
+        let hbar_set = test_component_set(
+            "20:0",
+            "ProgressBar",
+            vec![
+                with_interactions(
+                    test_component(
+                        "20:1",
+                        "HBar=Small",
+                        vec![
+                            with_image_fill(
+                                test_frame("20:11", "#SkipBarImg", vec![]),
+                                "ref_h_skip",
+                            ),
+                            with_image_fill(
+                                test_frame("20:12", "#KeepBarImg", vec![]),
+                                "ref_h_keep",
+                            ),
+                        ],
+                    ),
+                    vec![smart_animate_change_to(TriggerJson::OnHover, "20:2", 0.2)],
+                ),
+                test_component("20:2", "HBar=Big", vec![]),
+            ],
+        );
+
+        // Second ComponentSet ALSO named "ProgressBar" (30:0): VBar=Small <-> VBar=Big (350ms).
+        // Indexed after 20:0 so `component_set_name_index["ProgressBar"]` points to 30:0.
+        let vbar_set = test_component_set(
+            "30:0",
+            "ProgressBar",
+            vec![
+                with_interactions(
+                    test_component(
+                        "30:1",
+                        "VBar=Small",
+                        vec![
+                            with_image_fill(
+                                test_frame("30:11", "#SkipBarImg", vec![]),
+                                "ref_v_skip",
+                            ),
+                            with_image_fill(
+                                test_frame("30:12", "#KeepBarImg", vec![]),
+                                "ref_v_keep",
+                            ),
+                        ],
+                    ),
+                    vec![smart_animate_change_to(TriggerJson::OnHover, "30:2", 0.35)],
+                ),
+                test_component("30:2", "VBar=Big", vec![]),
+            ],
+        );
+
+        (hbar_set, vbar_set)
+    }
+
+    #[test]
+    fn test_document_nodes_same_named_progress_bar_initial_query_preserves_hbar_variants() {
+        use dc_bundle::animationspec::animation_override::Animation_override;
+
+        let (hbar_set, vbar_set) = build_same_named_progress_bar_sets();
+        let page_children = vec![
+            test_frame("10:0", "#HBarStage", vec![test_instance("10:1", "#HBar", "20:1", vec![])]),
+            test_frame(
+                "11:0",
+                "#UnreferencedVBarStage",
+                vec![test_instance("11:1", "#VBar", "30:1", vec![])],
+            ),
+            hbar_set,
+            vbar_set,
+        ];
+
+        let mut doc = make_test_document(test_file_response(
+            "Same-Named ProgressBar Initial Doc",
+            page_children,
+            &[],
+            &[],
+        ));
+        seed_hermetic_images(
+            &mut doc,
+            &[
+                ("ref_h_skip", "mem://h_skip"),
+                ("ref_h_keep", "mem://h_keep"),
+                ("ref_v_skip", "mem://v_skip"),
+                ("ref_v_keep", "mem://v_keep"),
+            ],
+        );
+
+        let mut errors = Vec::new();
+        let views = doc
+            .nodes(
+                &vec![NodeQuery::name("#HBarStage")],
+                &vec![],
+                &mut errors,
+                HiddenNodePolicy::Skip,
+            )
+            .expect("nodes() should succeed for initial #HBarStage query");
+        assert!(errors.is_empty());
+
+        let hbar_small = views
+            .get(&NodeQuery::variant("HBar=Small", "ProgressBar"))
+            .expect("NodeVariant(HBar=Small, ProgressBar) must be preserved and converted");
+        let hbar_big = views
+            .get(&NodeQuery::variant("HBar=Big", "ProgressBar"))
+            .expect("NodeVariant(HBar=Big, ProgressBar) must be preserved and converted");
+        assert_eq!(hbar_small.id, "20:1");
+        assert_eq!(hbar_big.id, "20:2");
+
+        let stage_view = views.get(&NodeQuery::name("#HBarStage")).unwrap();
+        let hbar_inst = stage_view.find_view_by_id("10:1").expect("#HBar instance must exist");
+
+        for view in [hbar_small, hbar_big, hbar_inst] {
+            let Some(Animation_override::Matrix(matrix)) = view_animation_override(view) else {
+                panic!("Expected HBar AnimationMatrix on {}", view.name);
+            };
+            assert_eq!(matrix.transitions.len(), 2);
+            assert_eq!(matrix_pair_nanos(matrix, "HBar=Small", "HBar=Big"), (0, 200_000_000));
+            assert_eq!(matrix_pair_nanos(matrix, "HBar=Big", "HBar=Small"), (0, 200_000_000));
+        }
+        assert!(
+            hbar_inst.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "Unmodified #HBar instance must have empty overrides_table"
+        );
+
+        // Unreferenced VBar variants and unreferenced stage must not cross-leak on initial query,
+        // NodeComponentSet("ProgressBar") must point to the referenced 20:0 set (not 30:0), and
+        // variants must not be redundantly emitted under NodeId keys.
+        assert_eq!(views.get(&NodeQuery::component_set("ProgressBar")).unwrap().id, "20:0");
+        assert!(!views.contains_key(&NodeQuery::variant("VBar=Small", "ProgressBar")));
+        assert!(!views.contains_key(&NodeQuery::variant("VBar=Big", "ProgressBar")));
+        assert!(!views.contains_key(&NodeQuery::id("11:0")));
+        for raw_id in ["20:1", "20:2", "30:1", "30:2"] {
+            assert!(!views.contains_key(&NodeQuery::id(raw_id)));
+        }
+        assert!(!doc.encoded_image_map().0.contains_key("mem://v_keep"));
+    }
+
+    #[test]
+    fn test_document_nodes_same_named_progress_bar_out_of_tree_navigate_and_ignored_images() {
+        use crate::reaction_schema::TriggerJson;
+        use dc_bundle::animationspec::animation_override::Animation_override;
+
+        let image_entries = [
+            ("ref_h_skip", "mem://h_skip"),
+            ("ref_h_keep", "mem://h_keep"),
+            ("ref_v_skip", "mem://v_skip"),
+            ("ref_v_keep", "mem://v_keep"),
+        ];
+        let ignored_images =
+            vec![(NodeQuery::name("ProgressBar"), vec!["#SkipBarImg".to_string()])];
+
+        // (a) Initial #HBarStage holds HBar=Small and navigates out-of-tree to #VBarStage holding
+        //     VBar=Small: both same-named "ProgressBar" sets expand deterministically without
+        //     visited_component_sets or component_set_hash collision data loss.
+        let (hbar_set, vbar_set) = build_same_named_progress_bar_sets();
+        let page_children = vec![
+            with_interactions(
+                test_frame(
+                    "10:0",
+                    "#HBarStage",
+                    vec![test_instance("10:1", "#HBar", "20:1", vec![])],
+                ),
+                vec![navigate_interaction(TriggerJson::OnClick, "11:0")],
+            ),
+            test_frame("11:0", "#VBarStage", vec![test_instance("11:1", "#VBar", "30:1", vec![])]),
+            hbar_set,
+            vbar_set,
+        ];
+        let mut doc_both = make_test_document(test_file_response(
+            "Same-Named ProgressBar OutOfTree Navigate Doc",
+            page_children,
+            &[],
+            &[],
+        ));
+        seed_hermetic_images(&mut doc_both, &image_entries);
+
+        let mut errors_both = Vec::new();
+        let views_both = doc_both
+            .nodes(
+                &vec![NodeQuery::name("#HBarStage")],
+                &ignored_images,
+                &mut errors_both,
+                HiddenNodePolicy::Skip,
+            )
+            .expect("nodes() should succeed across out-of-tree NAVIGATE to second ProgressBar set");
+        assert!(errors_both.is_empty());
+
+        let hbar_small = views_both
+            .get(&NodeQuery::variant("HBar=Small", "ProgressBar"))
+            .expect("HBar=Small variant must remain converted");
+        let hbar_big = views_both
+            .get(&NodeQuery::variant("HBar=Big", "ProgressBar"))
+            .expect("HBar=Big variant must remain converted");
+        let vbar_small = views_both
+            .get(&NodeQuery::variant("VBar=Small", "ProgressBar"))
+            .expect("Out-of-tree VBar=Small variant must be expanded and converted");
+        let vbar_big = views_both
+            .get(&NodeQuery::variant("VBar=Big", "ProgressBar"))
+            .expect("Out-of-tree VBar=Big variant must be expanded and converted");
+        assert_eq!(hbar_small.id, "20:1");
+        assert_eq!(hbar_big.id, "20:2");
+        assert_eq!(vbar_small.id, "30:1");
+        assert_eq!(vbar_big.id, "30:2");
+
+        let hbar_stage = views_both.get(&NodeQuery::name("#HBarStage")).unwrap();
+        let hbar_inst = hbar_stage.find_view_by_id("10:1").unwrap();
+        let vbar_stage = views_both
+            .get(&NodeQuery::id("11:0"))
+            .expect("Out-of-tree #VBarStage destination frame must be converted");
+        let vbar_inst = vbar_stage.find_view_by_id("11:1").unwrap();
+
+        for view in [hbar_small, hbar_big, hbar_inst] {
+            let Some(Animation_override::Matrix(m)) = view_animation_override(view) else {
+                panic!("Expected HBar Matrix on {}", view.name);
+            };
+            assert_eq!(m.transitions.len(), 2);
+            assert_eq!(matrix_pair_nanos(m, "HBar=Small", "HBar=Big"), (0, 200_000_000));
+        }
+        for view in [vbar_small, vbar_big, vbar_inst] {
+            let Some(Animation_override::Matrix(m)) = view_animation_override(view) else {
+                panic!("Expected VBar Matrix on {}", view.name);
+            };
+            assert_eq!(m.transitions.len(), 2);
+            assert_eq!(matrix_pair_nanos(m, "VBar=Small", "VBar=Big"), (0, 350_000_000));
+        }
+        assert!(hbar_inst.component_info.as_ref().unwrap().overrides_table.is_empty());
+        assert!(vbar_inst.component_info.as_ref().unwrap().overrides_table.is_empty());
+        for raw_id in ["20:1", "20:2", "30:1", "30:2"] {
+            assert!(
+                !views_both.contains_key(&NodeQuery::id(raw_id)),
+                "Variant {raw_id} must not be redundantly emitted as NodeId"
+            );
+        }
+
+        // Verify ignored_images for NodeQuery::name("ProgressBar") applied to BOTH ProgressBar sets
+        // (HBar=Small in set 20:0 was not overwritten by VBar=* in set 30:0).
+        assert_eq!(view_first_image_key(hbar_small.find_view_by_id("20:11").unwrap()), None);
+        assert_eq!(
+            view_first_image_key(hbar_small.find_view_by_id("20:12").unwrap()),
+            Some("mem://h_keep")
+        );
+        assert_eq!(view_first_image_key(vbar_small.find_view_by_id("30:11").unwrap()), None);
+        assert_eq!(
+            view_first_image_key(vbar_small.find_view_by_id("30:12").unwrap()),
+            Some("mem://v_keep")
+        );
+        let encoded_both = doc_both.encoded_image_map();
+        assert!(encoded_both.0.contains_key("mem://h_keep"));
+        assert!(encoded_both.0.contains_key("mem://v_keep"));
+        assert!(!encoded_both.0.contains_key("mem://h_skip"));
+        assert!(!encoded_both.0.contains_key("mem://v_skip"));
+
+        // (b) Pure out-of-tree NAVIGATE (#Start -> #VBarStage) with no ProgressBar in initial query
+        //     expands only the referenced VBar ProgressBar set while preserving ignored_images.
+        let (hbar_set_b, vbar_set_b) = build_same_named_progress_bar_sets();
+        let mut doc_vonly = make_test_document(test_file_response(
+            "Same-Named ProgressBar VBar-Only Navigate Doc",
+            vec![
+                with_interactions(
+                    test_frame("09:0", "#Start", vec![]),
+                    vec![navigate_interaction(TriggerJson::OnClick, "11:0")],
+                ),
+                test_frame(
+                    "11:0",
+                    "#VBarStage",
+                    vec![test_instance("11:1", "#VBar", "30:1", vec![])],
+                ),
+                hbar_set_b,
+                vbar_set_b,
+            ],
+            &[],
+            &[],
+        ));
+        seed_hermetic_images(&mut doc_vonly, &image_entries);
+
+        let mut errors_vonly = Vec::new();
+        let views_vonly = doc_vonly
+            .nodes(
+                &vec![NodeQuery::name("#Start")],
+                &ignored_images,
+                &mut errors_vonly,
+                HiddenNodePolicy::Skip,
+            )
+            .expect("nodes() should succeed on #Start -> #VBarStage out-of-tree NAVIGATE");
+        assert!(errors_vonly.is_empty());
+        assert!(views_vonly.contains_key(&NodeQuery::id("11:0")));
+        assert!(views_vonly.contains_key(&NodeQuery::variant("VBar=Small", "ProgressBar")));
+        assert!(views_vonly.contains_key(&NodeQuery::variant("VBar=Big", "ProgressBar")));
+        assert!(!views_vonly.contains_key(&NodeQuery::variant("HBar=Small", "ProgressBar")));
+        assert!(!views_vonly.contains_key(&NodeQuery::variant("HBar=Big", "ProgressBar")));
+        let vbar_small_only =
+            views_vonly.get(&NodeQuery::variant("VBar=Small", "ProgressBar")).unwrap();
+        assert_eq!(view_first_image_key(vbar_small_only.find_view_by_id("30:11").unwrap()), None);
+        assert_eq!(
+            view_first_image_key(vbar_small_only.find_view_by_id("30:12").unwrap()),
+            Some("mem://v_keep")
+        );
+    }
+
+    #[test]
+    fn test_document_nodes_hidden_node_policy_component_sets_and_hidden_variant_navigate() {
+        use crate::reaction_schema::TriggerJson;
+        use dc_bundle::animationspec::animation_override::Animation_override;
+
+        let build_doc = || {
+            let page_children = vec![
+                test_frame(
+                    "10:0",
+                    "#Main",
+                    vec![
+                        // (a) Visible Instance of VisibleRefSet (which contains a hidden variant
+                        //     Component with a NAVIGATE interaction).
+                        test_instance("10:1", "#VisibleInst", "20:1", vec![]),
+                        // (b) Hidden child Instance referencing an otherwise-unreferenced ComponentSet.
+                        with_visible(test_instance("10:2", "#HiddenInst", "30:1", vec![]), false),
+                    ],
+                ),
+                test_component_set(
+                    "20:0",
+                    "VisibleRefSet",
+                    vec![
+                        with_interactions(
+                            test_component("20:1", "State=Visible", vec![]),
+                            vec![
+                                smart_animate_change_to(TriggerJson::OnClick, "20:3", 0.2),
+                                smart_animate_change_to(TriggerJson::OnHover, "20:2", 0.35),
+                            ],
+                        ),
+                        with_visible(
+                            with_interactions(
+                                test_component("20:2", "State=HiddenDraft", vec![]),
+                                vec![navigate_interaction(TriggerJson::OnClick, "13:0")],
+                            ),
+                            false,
+                        ),
+                        test_component("20:3", "State=Active", vec![]),
+                    ],
+                ),
+                test_component_set(
+                    "30:0",
+                    "HiddenInstOnlySet",
+                    vec![
+                        with_interactions(
+                            test_component("30:1", "H=One", vec![]),
+                            vec![navigate_interaction(TriggerJson::OnClick, "14:0")],
+                        ),
+                        test_component("30:2", "H=Two", vec![]),
+                    ],
+                ),
+                test_frame("13:0", "#HiddenVariantDest", vec![]),
+                test_frame("14:0", "#HiddenInstSetDest", vec![]),
+            ];
+            make_test_document(test_file_response(
+                "Hidden Policy ComponentSets And Variant Navigate Doc",
+                page_children,
+                &[],
+                &[],
+            ))
+        };
+
+        // 1. HiddenNodePolicy::Skip omits the hidden variant, the hidden variant's NAVIGATE
+        //    destination, and the hidden child instance's otherwise-unreferenced ComponentSet.
+        let mut doc_skip = build_doc();
+        let mut errors_skip = Vec::new();
+        let views_skip = doc_skip
+            .nodes(
+                &vec![NodeQuery::name("#Main")],
+                &vec![],
+                &mut errors_skip,
+                HiddenNodePolicy::Skip,
+            )
+            .unwrap();
+        assert!(errors_skip.is_empty());
+
+        let main_skip = views_skip.get(&NodeQuery::name("#Main")).unwrap();
+        let visible_inst_skip =
+            main_skip.find_view_by_id("10:1").expect("#VisibleInst must exist under Skip");
+        assert!(
+            main_skip.find_view_by_id("10:2").is_none(),
+            "#HiddenInst must be omitted from #Main under HiddenNodePolicy::Skip"
+        );
+
+        assert!(views_skip.contains_key(&NodeQuery::component_set("VisibleRefSet")));
+        let vis_var_skip = views_skip
+            .get(&NodeQuery::variant("State=Visible", "VisibleRefSet"))
+            .expect("Visible variant State=Visible must be converted under Skip");
+        assert!(views_skip.contains_key(&NodeQuery::variant("State=Active", "VisibleRefSet")));
+        assert!(
+            !views_skip.contains_key(&NodeQuery::variant("State=HiddenDraft", "VisibleRefSet")),
+            "Hidden variant State=HiddenDraft must be omitted under HiddenNodePolicy::Skip"
+        );
+        assert!(!views_skip.contains_key(&NodeQuery::id("20:2")));
+        assert!(
+            !doc_skip.component_sets.contains_key("20:2"),
+            "index_node must omit hidden variant 20:2 from component_sets under Skip"
+        );
+        assert!(
+            !views_skip.contains_key(&NodeQuery::id("13:0")),
+            "Hidden variant NAVIGATE destination 13:0 must not expand under HiddenNodePolicy::Skip"
+        );
+
+        assert!(
+            !views_skip.contains_key(&NodeQuery::component_set("HiddenInstOnlySet")),
+            "ComponentSet referenced only by hidden child Instance must be omitted under Skip"
+        );
+        assert!(!views_skip.contains_key(&NodeQuery::variant("H=One", "HiddenInstOnlySet")));
+        assert!(!views_skip.contains_key(&NodeQuery::variant("H=Two", "HiddenInstOnlySet")));
+        assert!(!views_skip.contains_key(&NodeQuery::id("30:1")));
+        assert!(!views_skip.contains_key(&NodeQuery::id("14:0")));
+
+        let Some(Animation_override::Matrix(skip_matrix)) = view_animation_override(vis_var_skip)
+        else {
+            panic!("Expected Matrix on State=Visible under Skip");
+        };
+        assert_eq!(skip_matrix.transitions.len(), 1);
+        assert_eq!(
+            matrix_pair_nanos(skip_matrix, "State=Visible", "State=Active"),
+            (0, 200_000_000)
+        );
+        assert!(visible_inst_skip.component_info.as_ref().unwrap().overrides_table.is_empty());
+
+        // 2. HiddenNodePolicy::Keep includes the hidden variant, its NAVIGATE destination, and the
+        //    hidden child instance's ComponentSet (plus its variants and destinations).
+        let mut doc_keep = build_doc();
+        let mut errors_keep = Vec::new();
+        let views_keep = doc_keep
+            .nodes(
+                &vec![NodeQuery::name("#Main")],
+                &vec![],
+                &mut errors_keep,
+                HiddenNodePolicy::Keep,
+            )
+            .unwrap();
+        assert!(errors_keep.is_empty());
+
+        let main_keep = views_keep.get(&NodeQuery::name("#Main")).unwrap();
+        assert!(main_keep.find_view_by_id("10:1").is_some());
+        assert!(
+            main_keep.find_view_by_id("10:2").is_some(),
+            "#HiddenInst must be retained in #Main under HiddenNodePolicy::Keep"
+        );
+
+        assert!(views_keep.contains_key(&NodeQuery::component_set("VisibleRefSet")));
+        let vis_var_keep =
+            views_keep.get(&NodeQuery::variant("State=Visible", "VisibleRefSet")).unwrap();
+        assert!(
+            views_keep.contains_key(&NodeQuery::variant("State=HiddenDraft", "VisibleRefSet")),
+            "Hidden variant State=HiddenDraft must be included under HiddenNodePolicy::Keep"
+        );
+        assert_eq!(doc_keep.component_sets.get("20:2").map(String::as_str), Some("20:0"));
+        assert!(
+            views_keep.contains_key(&NodeQuery::id("13:0")),
+            "Hidden variant NAVIGATE destination 13:0 must be included under HiddenNodePolicy::Keep"
+        );
+
+        assert!(
+            views_keep.contains_key(&NodeQuery::component_set("HiddenInstOnlySet")),
+            "Hidden child instance's ComponentSet must be included under HiddenNodePolicy::Keep"
+        );
+        assert!(views_keep.contains_key(&NodeQuery::variant("H=One", "HiddenInstOnlySet")));
+        assert!(views_keep.contains_key(&NodeQuery::variant("H=Two", "HiddenInstOnlySet")));
+        assert!(views_keep.contains_key(&NodeQuery::id("14:0")));
+
+        let Some(Animation_override::Matrix(keep_matrix)) = view_animation_override(vis_var_keep)
+        else {
+            panic!("Expected Matrix on State=Visible under Keep");
+        };
+        assert_eq!(keep_matrix.transitions.len(), 3);
+        assert_eq!(
+            matrix_pair_nanos(keep_matrix, "State=Visible", "State=HiddenDraft"),
+            (0, 350_000_000)
+        );
+    }
+
+    #[test]
+    fn test_document_nodes_default_no_override_canonicalization_and_template_reset_overrides() {
+        use dc_bundle::animationspec::animation_override::Animation_override;
+
+        // StaticSet (20:0) and StaticPillSet (30:0) have NO REST SMART_ANIMATE transitions.
+        let page_children = vec![
+            test_frame(
+                "10:0",
+                "#Main",
+                vec![
+                    // Unmodified top-level instance of a variant that carries {"override":"Default"}.
+                    test_instance("10:1", "#InstOfDefaultVariant", "20:1", vec![]),
+                    // Top-level instance carrying {"override":"Default"} of a plain variant.
+                    with_squoosh(
+                        test_instance("10:2", "#DefaultOnTopInstance", "20:2", vec![]),
+                        SQUOOSH_DEFAULT,
+                    ),
+                    // Outer instance whose ';'-delimited child I10:3;40:11 resets template 40:11's
+                    // DisableAnimations to "Default" without any synthesized REST matrix, while
+                    // sibling I10:3;40:12 has "Default" over plain template 40:12.
+                    test_instance(
+                        "10:3",
+                        "#OuterCardReset",
+                        "40:1",
+                        vec![
+                            with_squoosh(
+                                test_instance("I10:3;40:11", "#InnerPillReset", "30:1", vec![]),
+                                SQUOOSH_DEFAULT,
+                            ),
+                            with_squoosh(
+                                test_instance("I10:3;40:12", "#InnerPillPlain", "30:1", vec![]),
+                                SQUOOSH_DEFAULT,
+                            ),
+                        ],
+                    ),
+                    // Deep outer instance whose unmodified descendants inherit intermediate template
+                    // I50:11;40:11's reset (Some(NoOverride)) and I50:11;40:12's canonicalized None.
+                    test_instance(
+                        "10:4",
+                        "#DeepOuter",
+                        "50:1",
+                        vec![test_instance(
+                            "I10:4;50:11",
+                            "#MidCard",
+                            "40:1",
+                            vec![
+                                test_instance(
+                                    "I10:4;50:11;40:11",
+                                    "#InnerPillReset",
+                                    "30:1",
+                                    vec![],
+                                ),
+                                test_instance(
+                                    "I10:4;50:11;40:12",
+                                    "#InnerPillPlain",
+                                    "30:1",
+                                    vec![],
+                                ),
+                            ],
+                        )],
+                    ),
+                ],
+            ),
+            with_squoosh(
+                test_component_set(
+                    "20:0",
+                    "StaticSet",
+                    vec![
+                        with_squoosh(
+                            test_component("20:1", "S=DefaultVar", vec![]),
+                            SQUOOSH_DEFAULT,
+                        ),
+                        test_component("20:2", "S=Plain", vec![]),
+                    ],
+                ),
+                SQUOOSH_DEFAULT,
+            ),
+            test_component_set(
+                "30:0",
+                "StaticPillSet",
+                vec![
+                    test_component("30:1", "Pill=Idle", vec![]),
+                    test_component("30:2", "Pill=Active", vec![]),
+                ],
+            ),
+            test_component_set(
+                "40:0",
+                "CardSet",
+                vec![test_component(
+                    "40:1",
+                    "Card=One",
+                    vec![
+                        with_squoosh(
+                            test_instance("40:11", "#InnerPillReset", "30:1", vec![]),
+                            SQUOOSH_DISABLE,
+                        ),
+                        test_instance("40:12", "#InnerPillPlain", "30:1", vec![]),
+                    ],
+                )],
+            ),
+            test_component_set(
+                "50:0",
+                "DeepCardSet",
+                vec![test_component(
+                    "50:1",
+                    "Deep=One",
+                    vec![test_instance(
+                        "50:11",
+                        "#MidCard",
+                        "40:1",
+                        vec![
+                            with_squoosh(
+                                test_instance("I50:11;40:11", "#InnerPillReset", "30:1", vec![]),
+                                SQUOOSH_DEFAULT,
+                            ),
+                            with_squoosh(
+                                test_instance("I50:11;40:12", "#InnerPillPlain", "30:1", vec![]),
+                                SQUOOSH_DEFAULT,
+                            ),
+                        ],
+                    )],
+                )],
+            ),
+        ];
+
+        let mut doc = make_test_document(test_file_response(
+            "Default NoOverride Canonicalization And Template Reset Doc",
+            page_children,
+            &[],
+            &[],
+        ));
+        let mut errors = Vec::new();
+        let views = doc
+            .nodes(&vec![NodeQuery::name("#Main")], &vec![], &mut errors, HiddenNodePolicy::Skip)
+            .unwrap();
+        assert!(errors.is_empty());
+
+        // 1. Standalone variants, ComponentSet, and top-level instances with "Default" and no REST
+        //    transitions canonicalize animation_override to None without spurious overrides_table entries.
+        let static_cs = views.get(&NodeQuery::component_set("StaticSet")).unwrap();
+        let var_default = views.get(&NodeQuery::variant("S=DefaultVar", "StaticSet")).unwrap();
+        let var_plain = views.get(&NodeQuery::variant("S=Plain", "StaticSet")).unwrap();
+        assert!(view_animation_override(static_cs).is_none());
+        assert!(view_animation_override(var_default).is_none());
+        assert!(view_animation_override(var_plain).is_none());
+
+        let main_view = views.get(&NodeQuery::name("#Main")).unwrap();
+        let inst_of_default_var = main_view.find_view_by_id("10:1").unwrap();
+        let default_on_top_inst = main_view.find_view_by_id("10:2").unwrap();
+        assert!(view_animation_override(inst_of_default_var).is_none());
+        assert!(view_animation_override(default_on_top_inst).is_none());
+        assert!(
+            inst_of_default_var.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "Unmodified instance of 'Default'-annotated variant must have empty overrides_table"
+        );
+        assert!(
+            default_on_top_inst.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "Top-level instance with 'Default' and no REST transitions must have empty overrides_table"
+        );
+
+        // 2. ';'-delimited instance child resetting active template DisableAnimations without a REST
+        //    matrix retains Some(NoOverride) and records the reset in overrides_table, while sibling
+        //    with "Default" over plain template canonicalizes to None with empty overrides_table.
+        let card_one = views.get(&NodeQuery::variant("Card=One", "CardSet")).unwrap();
+        assert!(matches!(
+            view_animation_override(card_one.find_view_by_id("40:11").unwrap()),
+            Some(Animation_override::DisableAnimations(_))
+        ));
+        assert!(view_animation_override(card_one.find_view_by_id("40:12").unwrap()).is_none());
+
+        let outer_reset = main_view.find_view_by_id("10:3").unwrap();
+        let child_reset = outer_reset.find_view_by_id("I10:3;40:11").unwrap();
+        let child_plain_default = outer_reset.find_view_by_id("I10:3;40:12").unwrap();
+        assert!(
+            matches!(view_animation_override(child_reset), Some(Animation_override::NoOverride(_))),
+            "';'-delimited child resetting DisableAnimations without REST matrix must retain Some(NoOverride)"
+        );
+        assert!(
+            matches!(
+                overrides_table_anim_override(child_reset, "#InnerPillReset"),
+                Some(Animation_override::NoOverride(_))
+            ),
+            "Resetting active template DisableAnimations must record Some(NoOverride) in overrides_table"
+        );
+        assert!(view_animation_override(child_plain_default).is_none());
+        assert!(
+            child_plain_default.component_info.as_ref().unwrap().overrides_table.is_empty(),
+            "';'-delimited child with 'Default' over plain template must not bloat overrides_table"
+        );
+
+        // 3. Intermediate template I50:11;40:11 inside Deep=One retains Some(NoOverride), and
+        //    unmodified deep nested descendant I10:4;50:11;40:11 agrees with its intermediate
+        //    template without spurious overrides_table entries.
+        let deep_one = views.get(&NodeQuery::variant("Deep=One", "DeepCardSet")).unwrap();
+        let mid_template_reset = deep_one.find_view_by_id("I50:11;40:11").unwrap();
+        let mid_template_plain = deep_one.find_view_by_id("I50:11;40:12").unwrap();
+        assert!(matches!(
+            view_animation_override(mid_template_reset),
+            Some(Animation_override::NoOverride(_))
+        ));
+        assert!(mid_template_reset.component_info.as_ref().unwrap().overrides_table.is_empty());
+        assert!(view_animation_override(mid_template_plain).is_none());
+        assert!(mid_template_plain.component_info.as_ref().unwrap().overrides_table.is_empty());
+
+        let deep_outer = main_view.find_view_by_id("10:4").unwrap();
+        let deep_mid = deep_outer.find_view_by_id("I10:4;50:11").unwrap();
+        let deep_descendant_reset = deep_outer.find_view_by_id("I10:4;50:11;40:11").unwrap();
+        let deep_descendant_plain = deep_outer.find_view_by_id("I10:4;50:11;40:12").unwrap();
+        assert!(matches!(
+            view_animation_override(deep_descendant_reset),
+            Some(Animation_override::NoOverride(_))
+        ));
+        assert_eq!(
+            deep_descendant_reset.style().node_style().animation_override,
+            mid_template_reset.style().node_style().animation_override,
+            "Unmodified deep nested reset descendant must agree with intermediate template I50:11;40:11"
+        );
+        assert_eq!(
+            deep_descendant_plain.style().node_style().animation_override,
+            mid_template_plain.style().node_style().animation_override
+        );
+        for unmodified in [deep_outer, deep_mid, deep_descendant_reset, deep_descendant_plain] {
+            assert!(
+                unmodified.component_info.as_ref().unwrap().overrides_table.is_empty(),
+                "Unmodified deep nested view {} must have empty overrides_table",
+                unmodified.id
+            );
+        }
     }
 }

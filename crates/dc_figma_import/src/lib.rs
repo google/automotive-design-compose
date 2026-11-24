@@ -44,12 +44,17 @@ pub mod tools;
 mod transform_flexbox;
 mod variable_utils;
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum HiddenNodePolicy {
+    Skip,
+    Keep,
+}
+
 // Exports for library users
 pub use dc_bundle::design_compose_definition::DesignComposeDefinition;
 pub use dc_bundle::design_compose_definition::DesignComposeDefinitionHeader;
 pub use dc_bundle::geometry::Rectangle;
 pub use document::Document;
-pub use document::HiddenNodePolicy;
 pub use error::Error;
 pub use image_context::ImageContextSession;
 pub use proxy_config::ProxyConfig;
